@@ -10,10 +10,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'date is required' }, { status: 400 })
     }
 
+    // Parse numeric fields, convert empty strings to null
+    const numericFields = ['energy_level', 'agni', 'weight', 'body_fat', 'sleep_hours', 'hrv', 'calories']
+    const sanitized: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(fields)) {
+      if (numericFields.includes(k)) {
+        const n = Number(v)
+        sanitized[k] = (v === '' || v === null || v === undefined || isNaN(n)) ? null : n
+      } else {
+        sanitized[k] = v
+      }
+    }
+
     // Upsert: insert or update by date
     const { data, error } = await supabaseAdmin
       .from('daily_records')
-      .upsert({ date, ...fields }, { onConflict: 'date' })
+      .upsert({ date, ...sanitized }, { onConflict: 'date' })
       .select()
       .single()
 
