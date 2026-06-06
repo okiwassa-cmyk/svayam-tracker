@@ -1,0 +1,49 @@
+export type DailyRecord = {
+  id: string
+  date: string
+  energy_level: number | null
+  agni: number | null
+  bowel_movement: boolean
+  sleep_hours: number | null
+  soxai_score: number | null
+  hrv: number | null
+  weight: number | null
+  body_fat: number | null
+  tier1_score: number | null
+  tier2_score: number | null
+  tier3_score: number | null
+  calories: number | null
+  note: string | null
+  created_at: string
+}
+
+export type Habit = {
+  id: string
+  name: string
+  tier: 1 | 2 | 3
+  emoji: string
+  sort_order: number
+}
+
+export type HabitLog = {
+  id: string
+  date: string
+  habit_id: string
+  completed: boolean
+  created_at: string
+}
+
+export type MealLog = {
+  id: string
+  date: string
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  description: string | null
+  calories_estimate: number | null
+  kapha_score: 'excellent' | 'good' | 'caution' | 'avoid' | null
+  pitta_score: 'excellent' | 'good' | 'caution' | 'avoid' | null
+  advice: string | null
+  image_url: string | null
+  created_at: string
+}
+
+export type HabitWithLog = Habit & { completed: boolean; log_id?: string }
