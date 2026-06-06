@@ -4,11 +4,17 @@ import { supabaseAdmin } from '@/lib/supabase'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { date, ...fields } = body
+    const { date: bodyDate, ...fields } = body
 
-    if (!date) {
-      return NextResponse.json({ error: 'date is required' }, { status: 400 })
-    }
+    // Use provided date or fall back to today in JST
+    const date = bodyDate && /^\d{4}-\d{2}-\d{2}$/.test(String(bodyDate))
+      ? String(bodyDate)
+      : new Date().toLocaleDateString('ja-JP', {
+          timeZone: 'Asia/Tokyo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).replace(/\//g, '-')
 
     // Parse numeric fields, convert empty strings to null
     const numericFields = ['energy_level', 'agni', 'weight', 'body_fat', 'sleep_hours', 'hrv', 'calories']
