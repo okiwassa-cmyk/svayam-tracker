@@ -19,8 +19,10 @@ export default function MorningPage() {
   const router = useRouter()
   const today = getTodayJST()
 
-  const [energy, setEnergy] = useState(5)
-  const [agni, setAgni] = useState(5)
+  // 1=スッキリ/なし/ある, 2=普通/少し/少し, 3=だるい/多い/ない
+  const [clarity, setClarity] = useState<1|2|3>(2)
+  const [tongue, setTongue] = useState<1|2|3>(1)
+  const [hunger, setHunger] = useState<1|2|3>(1)
   const [bowel, setBowel] = useState<boolean | null>(null) // kept for DB compat
   const [weight, setWeight] = useState('')
   const [bodyFat, setBodyFat] = useState('')
@@ -38,8 +40,10 @@ export default function MorningPage() {
       .then((r) => r.json())
       .then(({ data }) => {
         if (!data) return
-        if (data.energy_level) setEnergy(data.energy_level)
-        if (data.agni) setAgni(data.agni)
+        if (data.morning_clarity) setClarity(data.morning_clarity as 1|2|3)
+        else if (data.energy_level) setClarity(data.energy_level >= 7 ? 1 : data.energy_level >= 4 ? 2 : 3)
+        if (data.tongue_coating) setTongue(data.tongue_coating as 1|2|3)
+        if (data.morning_hunger) setHunger(data.morning_hunger as 1|2|3)
         if (data.bowel_movement != null) setBowel(data.bowel_movement)
         if (data.weight) setWeight(String(data.weight))
         if (data.body_fat) setBodyFat(String(data.body_fat))
@@ -64,13 +68,22 @@ export default function MorningPage() {
   async function handleSave() {
     setSaving(true)
     try {
+      // Map choices to numeric values for charts
+      const clarityToEnergy: Record<number, number> = { 1: 8, 2: 5, 3: 2 }
+      const tongueScore: Record<number, number> = { 1: 9, 2: 5, 3: 2 }
+      const hungerScore: Record<number, number> = { 1: 9, 2: 5, 3: 2 }
+      const agniVal = Math.round((tongueScore[tongue] + hungerScore[hunger]) / 2)
+
       const res = await fetch('/api/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date: today,
-          energy_level: energy,
-          agni,
+          morning_clarity: clarity,
+          tongue_coating: tongue,
+          morning_hunger: hunger,
+          energy_level: clarityToEnergy[clarity],
+          agni: agniVal,
           weight: weight ? parseFloat(weight) : null,
           body_fat: bodyFat ? parseFloat(bodyFat) : null,
           waist_cm: waistCm ? parseFloat(waistCm) : null,
@@ -149,26 +162,40 @@ export default function MorningPage() {
           </section>
         )}
 
-        {/* Energy */}
-        <SliderSection
-          label="エネルギーレベル"
-          icon="/icons/energy.png"
-          value={energy}
-          onChange={setEnergy}
-          min={1}
-          max={10}
-          color="amber"
+        {/* Morning Clarity */}
+        <ChoiceSection
+          label="🌅 目覚め"
+          options={[
+            { value: 1, label: 'スッキリ', icon: '✨' },
+            { value: 2, label: '普通', icon: '😐' },
+            { value: 3, label: 'だるい', icon: '😴' },
+          ]}
+          value={clarity}
+          onChange={(v) => setClarity(v as 1|2|3)}
         />
 
-        {/* Agni */}
-        <SliderSection
-          label="アグニ（消化力）"
-          icon="/icons/fire.png"
-          value={agni}
-          onChange={setAgni}
-          min={1}
-          max={10}
-          color="orange"
+        {/* Tongue Coating */}
+        <ChoiceSection
+          label="👅 舌苔（起床後に確認）"
+          options={[
+            { value: 1, label: 'なし', icon: '😊' },
+            { value: 2, label: '少し', icon: '🤔' },
+            { value: 3, label: '多い', icon: '😕' },
+          ]}
+          value={tongue}
+          onChange={(v) => setTongue(v as 1|2|3)}
+        />
+
+        {/* Morning Hunger */}
+        <ChoiceSection
+          label="🔥 朝の空腹感（アグニ）"
+          options={[
+            { value: 1, label: 'お腹空いた', icon: '🌟' },
+            { value: 2, label: '少し', icon: '😊' },
+            { value: 3, label: '空かない', icon: '😐' },
+          ]}
+          value={hunger}
+          onChange={(v) => setHunger(v as 1|2|3)}
         />
 
         {/* Bowel Movement */}
@@ -217,41 +244,32 @@ export default function MorningPage() {
   )
 }
 
-function SliderSection({
-  label, icon, value, onChange, min, max, color,
+function ChoiceSection({
+  label, options, value, onChange,
 }: {
   label: string
-  icon?: string
+  options: { value: number; label: string; icon: string }[]
   value: number
   onChange: (v: number) => void
-  min: number
-  max: number
-  color: string
 }) {
-  const colorMap: Record<string, string> = {
-    amber: 'accent-amber-700',
-    orange: 'accent-amber-800',
-  }
   return (
     <section className="bg-white rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-stone-600 flex items-center gap-2">
-          {icon && <Image src={icon} alt="" width={18} height={18} className="opacity-50" />}
-          {label}
-        </h2>
-        <span className="text-2xl font-bold text-stone-800">{value}</span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={`w-full h-2 rounded-full ${colorMap[color]} cursor-pointer`}
-      />
-      <div className="flex justify-between text-xs text-stone-400 mt-1">
-        <span>{min} 最低</span>
-        <span>最高 {max}</span>
+      <h2 className="text-sm font-semibold text-stone-600 mb-3">{label}</h2>
+      <div className="grid grid-cols-3 gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={`py-3 rounded-xl flex flex-col items-center gap-1 transition-all active:scale-95 ${
+              value === opt.value
+                ? 'bg-amber-700 text-white shadow-sm'
+                : 'bg-stone-50 text-stone-600'
+            }`}
+          >
+            <span className="text-xl">{opt.icon}</span>
+            <span className="text-xs font-semibold">{opt.label}</span>
+          </button>
+        ))}
       </div>
     </section>
   )
