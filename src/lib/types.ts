@@ -36,6 +36,7 @@ export type Habit = {
   tier: 1 | 2 | 3
   emoji: string
   sort_order: number
+  frequency: number
 }
 
 export type HabitLog = {

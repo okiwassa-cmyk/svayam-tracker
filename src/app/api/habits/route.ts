@@ -30,6 +30,19 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ data: result })
 }
 
+// PATCH: update habit frequency
+export async function PATCH(req: NextRequest) {
+  const { id, frequency } = await req.json()
+  const { data, error } = await supabaseAdmin
+    .from('habits')
+    .update({ frequency })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ data })
+}
+
 // POST: toggle habit completion
 export async function POST(req: NextRequest) {
   try {

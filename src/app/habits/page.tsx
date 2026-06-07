@@ -33,10 +33,20 @@ const tierColors = {
   3: { header: 'bg-violet-700', badge: 'bg-violet-50 text-violet-700', check: 'bg-violet-600', label: 'Tier 3 · 週3日' },
 }
 
+const FREQ_OPTIONS = [
+  { value: 7, label: '毎日' },
+  { value: 5, label: '週5' },
+  { value: 4, label: '週4' },
+  { value: 3, label: '週3' },
+  { value: 2, label: '週2' },
+  { value: 1, label: '週1' },
+]
+
 export default function HabitsPage() {
   const today = getTodayJST()
   const [habits, setHabits] = useState<HabitWithLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [editMode, setEditMode] = useState(false)
 
   const loadHabits = useCallback(async () => {
     const res = await fetch(`/api/habits?date=${today}`)
@@ -48,6 +58,15 @@ export default function HabitsPage() {
   useEffect(() => {
     loadHabits()
   }, [loadHabits])
+
+  async function updateFrequency(habitId: string, frequency: number) {
+    setHabits((prev) => prev.map((h) => h.id === habitId ? { ...h, frequency } : h))
+    await fetch('/api/habits', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: habitId, frequency }),
+    })
+  }
 
   async function toggle(habit: HabitWithLog) {
     const newCompleted = !habit.completed
@@ -74,9 +93,17 @@ export default function HabitsPage() {
           <Image src="/icons/habits.png" alt="" width={24} height={24} className="invert opacity-90" />
           習慣チェック
         </h1>
-        <p className="text-teal-200 text-sm mt-0.5">
-          {loading ? '読み込み中...' : `${completedTotal}/${habits.length} 達成`}
-        </p>
+        <div className="flex items-center justify-between mt-0.5">
+          <p className="text-teal-200 text-sm">
+            {loading ? '読み込み中...' : `${completedTotal}/${habits.length} 達成`}
+          </p>
+          <button
+            onClick={() => setEditMode((v) => !v)}
+            className={`text-xs px-3 py-1 rounded-full font-semibold transition-all ${editMode ? 'bg-white text-teal-800' : 'bg-teal-600 text-white'}`}
+          >
+            {editMode ? '完了' : '頻度を編集'}
+          </button>
+        </div>
       </header>
 
       {loading ? (
@@ -97,37 +124,56 @@ export default function HabitsPage() {
                 </div>
                 <div className="divide-y divide-stone-50">
                   {tierHabits.map((habit) => (
-                    <button
-                      key={habit.id}
-                      onClick={() => toggle(habit)}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-stone-50 transition-colors text-left"
-                    >
-                      {/* Checkbox */}
-                      <div
-                        className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${
-                          habit.completed ? c.check : 'border-2 border-stone-200'
-                        }`}
+                    <div key={habit.id}>
+                      <button
+                        onClick={() => !editMode && toggle(habit)}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-stone-50 transition-colors text-left"
                       >
-                        {habit.completed && (
-                          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
+                        {/* Checkbox */}
+                        <div
+                          className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${
+                            habit.completed ? c.check : 'border-2 border-stone-200'
+                          }`}
+                        >
+                          {habit.completed && (
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        {/* Label */}
+                        {habitIcons[habit.name] ? (
+                          <Image src={habitIcons[habit.name]} alt="" width={20} height={20} className="opacity-50 flex-shrink-0" />
+                        ) : (
+                          <span className="text-lg mr-1">{habit.emoji}</span>
                         )}
-                      </div>
-                      {/* Label */}
-                      {habitIcons[habit.name] ? (
-                        <Image src={habitIcons[habit.name]} alt="" width={20} height={20} className="opacity-50 flex-shrink-0" />
-                      ) : (
-                        <span className="text-lg mr-1">{habit.emoji}</span>
+                        <span className={`text-sm flex-1 ${habit.completed ? 'text-stone-400 line-through' : 'text-stone-700 font-medium'}`}>
+                          {habit.name}
+                        </span>
+                        {!editMode && (
+                          <span className="text-xs text-stone-300">
+                            {FREQ_OPTIONS.find((f) => f.value === (habit.frequency ?? 7))?.label ?? '毎日'}
+                          </span>
+                        )}
+                      </button>
+                      {editMode && (
+                        <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                          {FREQ_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => updateFrequency(habit.id, opt.value)}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                                (habit.frequency ?? 7) === opt.value
+                                  ? `${c.check} text-white`
+                                  : 'bg-stone-100 text-stone-500'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
                       )}
-                      <span
-                        className={`text-sm ${
-                          habit.completed ? 'text-stone-400 line-through' : 'text-stone-700 font-medium'
-                        }`}
-                      >
-                        {habit.name}
-                      </span>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </section>
