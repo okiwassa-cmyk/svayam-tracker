@@ -30,6 +30,7 @@ const mealTypes = [
 export default function MealPage() {
   const today = getTodayJST()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [tab, setTab] = useState<'record' | 'history'>('record')
   const [mode, setMode] = useState<'photo' | 'text'>('photo')
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -38,7 +39,10 @@ export default function MealPage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [result, setResult] = useState<{ description: string; calories_estimate: number; kapha_score: string; pitta_score: string; advice: string } | null>(null)
   const [meals, setMeals] = useState<MealLog[]>([])
+  const [history, setHistory] = useState<MealLog[]>([])
   const [loadingMeals, setLoadingMeals] = useState(true)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const loadMeals = useCallback(async () => {
     const res = await fetch(`/api/meal?date=${today}`)
@@ -46,6 +50,15 @@ export default function MealPage() {
     setMeals(data ?? [])
     setLoadingMeals(false)
   }, [today])
+
+  const loadHistory = useCallback(async () => {
+    if (loadingHistory) return
+    setLoadingHistory(true)
+    const res = await fetch('/api/meal?history=true')
+    const { data } = await res.json()
+    setHistory(data ?? [])
+    setLoadingHistory(false)
+  }, [loadingHistory])
 
   useEffect(() => {
     loadMeals()
@@ -103,13 +116,29 @@ export default function MealPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="bg-stone-600 text-white px-4 pt-12 pb-6">
-        <p className="text-stone-300 text-sm">{today}</p>
-        <h1 className="text-2xl font-bold mt-1">🍽 食事記録</h1>
-        <p className="text-stone-300 text-sm mt-0.5">写真またはテキストでドーシャ判定</p>
+      <header className="bg-stone-600 text-white px-4 pt-12 pb-4">
+        <h1 className="text-2xl font-bold">食事記録</h1>
+        <p className="text-stone-300 text-sm mt-0.5">ドーシャ判定・過去の記録</p>
+        {/* Tab bar */}
+        <div className="flex gap-1 mt-4 bg-stone-500/40 rounded-xl p-1">
+          <button
+            onClick={() => setTab('record')}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === 'record' ? 'bg-white text-stone-700' : 'text-stone-200'}`}
+          >
+            今日記録する
+          </button>
+          <button
+            onClick={() => { setTab('history'); loadHistory() }}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === 'history' ? 'bg-white text-stone-700' : 'text-stone-200'}`}
+          >
+            履歴
+          </button>
+        </div>
       </header>
 
       <div className="px-4 py-4 space-y-4">
+        {tab === 'history' && <HistoryView history={history} loading={loadingHistory} mealTypes={mealTypes} scoreLabels={scoreLabels} expandedId={expandedId} setExpandedId={setExpandedId} />}
+        {tab === 'record' && <>
         {/* Upload / Text */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           {/* Mode toggle */}
@@ -260,9 +289,81 @@ export default function MealPage() {
             </div>
           )}
         </section>
+        </>}
       </div>
 
       <BottomNav />
+    </div>
+  )
+}
+
+function HistoryView({
+  history, loading, mealTypes, scoreLabels, expandedId, setExpandedId,
+}: {
+  history: MealLog[]
+  loading: boolean
+  mealTypes: { value: string; label: string }[]
+  scoreLabels: Record<string, { text: string; class: string }>
+  expandedId: string | null
+  setExpandedId: (id: string | null) => void
+}) {
+  if (loading) return <div className="text-center text-stone-400 text-sm py-8">読み込み中...</div>
+  if (history.length === 0) return <div className="text-center text-stone-400 text-sm py-8">まだ記録がありません</div>
+
+  // Group by date
+  const byDate: Record<string, MealLog[]> = {}
+  for (const m of history) {
+    if (!byDate[m.date]) byDate[m.date] = []
+    byDate[m.date].push(m)
+  }
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(byDate).map(([date, meals]) => (
+        <section key={date}>
+          <p className="text-xs font-semibold text-stone-400 mb-2">
+            {new Date(date + 'T00:00:00+09:00').toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
+          </p>
+          <div className="space-y-2">
+            {meals.map((meal) => (
+              <button
+                key={meal.id}
+                onClick={() => setExpandedId(expandedId === meal.id ? null : meal.id)}
+                className="w-full bg-white rounded-2xl p-4 shadow-sm text-left"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs text-stone-400 font-medium">
+                      {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
+                    </span>
+                    <p className="font-semibold text-stone-700 text-sm mt-0.5 truncate">{meal.description}</p>
+                    {meal.calories_estimate && (
+                      <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    {meal.kapha_score && (
+                      <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
+                        カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                      </span>
+                    )}
+                    {meal.pitta_score && (
+                      <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
+                        ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {expandedId === meal.id && meal.advice && (
+                  <p className="text-xs text-stone-500 mt-3 bg-stone-50 rounded-lg p-3 leading-relaxed text-left">
+                    {meal.advice}
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }

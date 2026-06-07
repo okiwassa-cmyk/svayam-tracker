@@ -94,6 +94,18 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const date = searchParams.get('date')
+  const history = searchParams.get('history') // "true" to fetch last 30 days
+
+  if (history === 'true') {
+    const { data, error } = await supabaseAdmin
+      .from('meal_logs')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(100)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ data })
+  }
 
   if (!date) {
     return NextResponse.json({ error: 'date is required' }, { status: 400 })
@@ -110,4 +122,18 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ data })
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  const { error } = await supabaseAdmin
+    .from('meal_logs')
+    .delete()
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }
