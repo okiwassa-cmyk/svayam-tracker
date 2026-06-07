@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
+import NotificationToggle from '@/components/NotificationToggle'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -135,6 +136,12 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+          </section>
+
+          {/* Notifications */}
+          <section className="bg-white rounded-2xl p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-stone-600 mb-3">通知設定</h2>
+            <NotificationToggle />
           </section>
 
           {/* Info */}

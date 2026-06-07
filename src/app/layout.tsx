@@ -10,6 +10,8 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Svayam Tracker",
   description: "アーユルヴェーダ×科学 体重管理実験トラッカー",
+  manifest: "/manifest.json",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Svayam" },
 };
 
 export default function RootLayout({

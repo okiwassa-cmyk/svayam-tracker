@@ -65,10 +65,18 @@ export default async function HomePage() {
   const morningDone = record?.energy_level != null
   const eveningDone = record?.tier1_score != null
 
-  const scoreLabel = (score: 'excellent' | 'good' | 'caution' | 'avoid' | null | undefined) => {
-    if (!score) return ''
-    return { excellent: '◎', good: '○', caution: '△', avoid: '✗' }[score]
-  }
+  const phase = experimentDay != null && experimentDay > 0
+    ? experimentDay <= 30 ? 1 : experimentDay <= 60 ? 2 : experimentDay <= 90 ? 3 : null
+    : null
+  const phaseDay = phase != null && experimentDay != null
+    ? experimentDay - (phase - 1) * 30
+    : null
+  const PHASES = [
+    { label: 'Phase 1', name: '導入期', desc: '習慣の土台を作る', color: 'bg-emerald-600', light: 'bg-emerald-50 border-emerald-100 text-emerald-800' },
+    { label: 'Phase 2', name: '強化期', desc: '習慣を深め、体の変化を観察', color: 'bg-teal-600', light: 'bg-teal-50 border-teal-100 text-teal-800' },
+    { label: 'Phase 3', name: '定着期', desc: 'ライフスタイルとして根付かせる', color: 'bg-cyan-600', light: 'bg-cyan-50 border-cyan-100 text-cyan-800' },
+  ]
+  const currentPhase = phase != null ? PHASES[phase - 1] : null
 
   return (
     <div className="min-h-screen pb-20">
@@ -94,6 +102,29 @@ export default async function HomePage() {
       </header>
 
       <div className="px-4 py-4 space-y-4">
+        {/* Phase Banner */}
+        {currentPhase && phase != null && phaseDay != null && (
+          <section className={`rounded-2xl p-4 border ${currentPhase.light}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <span className="text-xs font-bold opacity-70">{currentPhase.label}</span>
+                <h2 className="text-base font-bold">{currentPhase.name}</h2>
+                <p className="text-xs opacity-70 mt-0.5">{currentPhase.desc}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-black">{phaseDay}<span className="text-xs font-normal opacity-60">/30日</span></p>
+                <p className="text-xs opacity-60">全体 {experimentDay}日目</p>
+              </div>
+            </div>
+            <div className="h-1.5 bg-white/60 rounded-full overflow-hidden mt-2">
+              <div
+                className={`h-full ${currentPhase.color} rounded-full transition-all`}
+                style={{ width: `${Math.min((phaseDay / 30) * 100, 100)}%` }}
+              />
+            </div>
+          </section>
+        )}
+
         {/* Today's Status */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-500 mb-3">今日のステータス</h2>
