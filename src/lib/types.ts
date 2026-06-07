@@ -24,6 +24,9 @@ export type UserSettings = {
   target_weight: number | null
   target_waist: number | null
   fasting_day: number | null
+  wake_time: string | null
+  lunch_time: string | null
+  sleep_time: string | null
   updated_at: string
 }
 

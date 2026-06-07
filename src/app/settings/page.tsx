@@ -12,6 +12,9 @@ export default function SettingsPage() {
   const [targetWeight, setTargetWeight] = useState('')
   const [targetWaist, setTargetWaist] = useState('')
   const [fastingDay, setFastingDay] = useState<number | null>(null)
+  const [wakeTime, setWakeTime] = useState('06:00')
+  const [lunchTime, setLunchTime] = useState('12:00')
+  const [sleepTime, setSleepTime] = useState('22:00')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -25,6 +28,9 @@ export default function SettingsPage() {
         if (data.target_weight) setTargetWeight(String(data.target_weight))
         if (data.target_waist) setTargetWaist(String(data.target_waist))
         if (data.fasting_day != null) setFastingDay(data.fasting_day)
+        if (data.wake_time) setWakeTime(data.wake_time)
+        if (data.lunch_time) setLunchTime(data.lunch_time)
+        if (data.sleep_time) setSleepTime(data.sleep_time)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -41,6 +47,9 @@ export default function SettingsPage() {
           target_weight: targetWeight || null,
           target_waist: targetWaist || null,
           fasting_day: fastingDay,
+          wake_time: wakeTime,
+          lunch_time: lunchTime,
+          sleep_time: sleepTime,
         }),
       })
       setSaved(true)
@@ -135,6 +144,29 @@ export default function SettingsPage() {
                   className="w-full text-sm bg-stone-50 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-stone-400/40"
                 />
               </div>
+            </div>
+          </section>
+
+          {/* Rhythm */}
+          <section className="bg-white rounded-2xl p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-stone-600 mb-1">マイリズム（目標時刻）</h2>
+            <p className="text-xs text-stone-400 mb-3">この3つを毎日同じ時間にすることがカファ改善の鍵です</p>
+            <div className="space-y-3">
+              {[
+                { label: '🌅 起床', value: wakeTime, onChange: setWakeTime },
+                { label: '🌿 昼食', value: lunchTime, onChange: setLunchTime },
+                { label: '🌙 就寝', value: sleepTime, onChange: setSleepTime },
+              ].map(({ label, value, onChange }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-stone-700">{label}</span>
+                  <input
+                    type="time"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="text-sm bg-stone-50 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-stone-400/40 font-mono"
+                  />
+                </div>
+              ))}
             </div>
           </section>
 

@@ -125,6 +125,18 @@ export default async function HomePage() {
           </section>
         )}
 
+        {/* My Rhythm */}
+        {(settings?.wake_time || settings?.lunch_time || settings?.sleep_time) && (
+          <section className="bg-white rounded-2xl p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-stone-500 mb-3">今日のリズム目標</h2>
+            <div className="grid grid-cols-3 gap-2">
+              <RhythmCard icon="🌅" label="起床" time={settings.wake_time ?? '06:00'} />
+              <RhythmCard icon="🌿" label="昼食" time={settings.lunch_time ?? '12:00'} />
+              <RhythmCard icon="🌙" label="就寝" time={settings.sleep_time ?? '22:00'} />
+            </div>
+          </section>
+        )}
+
         {/* Today's Status */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-500 mb-3">今日のステータス</h2>
@@ -274,6 +286,16 @@ function StatusCard({ label, done, detail }: { label: string; done: boolean; det
         <span className="text-xs font-semibold text-stone-500">{label}</span>
       </div>
       <p className={`text-xs ${done ? 'text-teal-700' : 'text-stone-400'}`}>{detail}</p>
+    </div>
+  )
+}
+
+function RhythmCard({ icon, label, time }: { icon: string; label: string; time: string }) {
+  return (
+    <div className="bg-stone-50 rounded-xl p-3 text-center">
+      <p className="text-base mb-0.5">{icon}</p>
+      <p className="text-xs text-stone-400 mb-0.5">{label}</p>
+      <p className="text-sm font-bold text-stone-700 font-mono">{time}</p>
     </div>
   )
 }
