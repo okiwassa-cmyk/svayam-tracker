@@ -161,7 +161,7 @@ export default function MealPage() {
               <span className="text-sm">写真を撮影・選択（任意）</span>
             </button>
           )}
-          <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
 
           <div className="p-4 space-y-3">
             {/* Meal type */}
