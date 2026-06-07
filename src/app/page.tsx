@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import BottomNav from '@/components/BottomNav'
+import EncouragementCard from '@/components/EncouragementCard'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { DailyRecord, HabitLog, Habit, UserSettings } from '@/lib/types'
 
@@ -212,7 +213,21 @@ export default async function HomePage() {
               <span>食事を記録</span>
             </Link>
           </div>
+          <Link
+            href="/review"
+            className="mt-3 flex items-center justify-between px-4 py-3 rounded-2xl bg-teal-50 border border-teal-100 active:scale-95"
+          >
+            <span className="text-sm font-semibold text-teal-700">今週のレビューを見る</span>
+            <span className="text-teal-400 text-sm">→</span>
+          </Link>
         </section>
+
+        {/* Encouragement */}
+        <EncouragementCard
+          habitRate={totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : null}
+          energy={record?.energy_level ?? null}
+          experimentDay={experimentDay}
+        />
       </div>
 
       <BottomNav />
