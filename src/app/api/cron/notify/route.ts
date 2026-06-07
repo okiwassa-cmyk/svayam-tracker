@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // 12:00 UTC = 21:00 JST (evening)
 
 const NOTIFICATIONS: Record<string, { title: string; body: string; url: string }> = {
+  '21': { title: '🌅 朝のディナチャリア', body: '朝日を浴びる・舌磨き・歯磨き・ガヴァラ', url: '/habits' },
   '22': { title: '☀️ おはようございます', body: '白湯を飲んで、朝の記録をつけましょう', url: '/morning' },
   '3':  { title: '🌿 昼食の時間です', body: '今日一番大きい食事を。食後は記録を', url: '/meal' },
   '12': { title: '🌙 夜の記録', body: '今日の習慣チェックと夜の記録を忘れずに', url: '/evening' },
