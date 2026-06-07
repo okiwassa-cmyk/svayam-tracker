@@ -14,9 +14,9 @@ function getTodayJST() {
   }).replace(/\//g, '-')
 }
 
-const tier1Habits = ['白湯を飲む', '昼食を一番大きくする', '間食しない', '18〜19時までに夕食', '22〜23時までに就寝']
-const tier2Habits = ['運動（30〜60分）', '舌磨き', 'オイルプリング', '食後散歩', 'ハーブティー']
-const tier3Habits = ['ガルシャナ（乾布摩擦）', 'アビヤンガ', '瞑想・呼吸法', 'デジタルデトックス']
+const tier1Habits = ['白湯を飲む', '昼食時にお腹が空いている', '間食しない', '18〜19時までに夕食', '22〜23時までに就寝', '舌磨き', 'オイルプリング']
+const tier2Habits = ['運動（30〜60分）']
+const tier3Habits = ['アビヤンガまたはガルシャナ', 'ヨガ・瞑想・呼吸法', 'ファスティング（木曜）']
 
 export default function EveningPage() {
   const router = useRouter()
@@ -85,7 +85,7 @@ export default function EveningPage() {
           tier={1}
           label="Tier 1 — 毎日の基本習慣"
           habits={tier1Habits}
-          max={5}
+          max={7}
           value={tier1}
           onChange={setTier1}
           color="green"
@@ -96,7 +96,7 @@ export default function EveningPage() {
           tier={2}
           label="Tier 2 — 週5日目標"
           habits={tier2Habits}
-          max={5}
+          max={1}
           value={tier2}
           onChange={setTier2}
           color="blue"
@@ -107,7 +107,7 @@ export default function EveningPage() {
           tier={3}
           label="Tier 3 — 週3日目標"
           habits={tier3Habits}
-          max={4}
+          max={3}
           value={tier3}
           onChange={setTier3}
           color="purple"
@@ -142,7 +142,7 @@ export default function EveningPage() {
         <section className="bg-slate-50 rounded-2xl p-4">
           <p className="text-sm font-semibold text-slate-700 mb-1">今日のスコア</p>
           <p className="text-3xl font-bold text-slate-800">{tier1}-{tier2}-{tier3}</p>
-          <p className="text-xs text-slate-500 mt-0.5">Tier1/5 · Tier2/5 · Tier3/4</p>
+          <p className="text-xs text-slate-500 mt-0.5">Tier1/7 · Tier2/1 · Tier3/3</p>
         </section>
 
         {/* Save */}

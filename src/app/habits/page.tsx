@@ -7,19 +7,15 @@ import type { HabitWithLog } from '@/lib/types'
 
 const habitIcons: Record<string, string> = {
   '白湯を飲む': '/icons/cup.png',
-  '昼食を一番大きくする': '/icons/eating.png',
+  '昼食時にお腹が空いている': '/icons/eating.png',
   '間食しない': '/icons/no-sign.png',
   '18〜19時までに夕食': '/icons/clock.png',
   '22〜23時までに就寝': '/icons/sleep.png',
-  '運動（30〜60分）': '/icons/swim.png',
   '舌磨き': '/icons/tongue.png',
   'オイルプリング': '/icons/drops.png',
-  '食後散歩': '/icons/walk.png',
-  'ハーブティー': '/icons/teapot.png',
-  'ガルシャナ（乾布摩擦）': '/icons/hand.png',
-  'アビヤンガ': '/icons/hand.png',
-  '瞑想・呼吸法': '/icons/meditation.png',
-  'デジタルデトックス': '/icons/no-phone.png',
+  '運動（30〜60分）': '/icons/swim.png',
+  'アビヤンガまたはガルシャナ': '/icons/hand.png',
+  'ヨガ・瞑想・呼吸法': '/icons/meditation.png',
 }
 
 function getTodayJST() {
