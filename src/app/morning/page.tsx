@@ -170,7 +170,7 @@ export default function MorningPage() {
 
         {/* Morning Clarity */}
         <ChoiceSection
-          label="🌅 目覚め"
+          label="目覚め"
           options={[
             { value: 1, label: 'スッキリ', icon: '✨' },
             { value: 2, label: '普通', icon: '😐' },
@@ -182,7 +182,7 @@ export default function MorningPage() {
 
         {/* Tongue Coating */}
         <ChoiceSection
-          label="👅 舌苔（起床後に確認）"
+          label="舌苔（起床後に確認）"
           options={[
             { value: 1, label: 'なし', icon: '😊' },
             { value: 2, label: '少し', icon: '🤔' },
@@ -194,7 +194,7 @@ export default function MorningPage() {
 
         {/* Morning Hunger */}
         <ChoiceSection
-          label="🔥 朝の空腹感（アグニ）"
+          label="朝の空腹感（アグニ）"
           options={[
             { value: 1, label: 'お腹空いた', icon: '🌟' },
             { value: 2, label: '少し', icon: '😊' },
@@ -274,7 +274,6 @@ function ChoiceSection({
                 : 'bg-stone-50 text-stone-600'
             }`}
           >
-            <span className="text-xl">{opt.icon}</span>
             <span className="text-xs font-semibold">{opt.label}</span>
           </button>
         ))}
