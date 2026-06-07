@@ -1,14 +1,15 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 const navItems = [
-  { href: '/', label: 'ホーム', emoji: '🏠' },
-  { href: '/habits', label: '習慣', emoji: '✅' },
-  { href: '/meal', label: '食事', emoji: '🍽' },
-  { href: '/dashboard', label: 'グラフ', emoji: '📊' },
-  { href: '/guide', label: 'ガイド', emoji: '🌿' },
+  { href: '/', label: 'ホーム', icon: '/icons/sun.png' },
+  { href: '/habits', label: '習慣', icon: '/icons/habits.png' },
+  { href: '/meal', label: '食事', icon: '/icons/meal.png' },
+  { href: '/dashboard', label: 'グラフ', icon: '/icons/chart.png' },
+  { href: '/guide', label: 'ガイド', icon: '/icons/guide.png' },
 ]
 
 export default function BottomNav() {
@@ -26,7 +27,14 @@ export default function BottomNav() {
               active ? 'text-green-700 font-semibold' : 'text-stone-400'
             }`}
           >
-            <span className="text-xl">{item.emoji}</span>
+            <Image
+              src={item.icon}
+              alt={item.label}
+              width={24}
+              height={24}
+              className={active ? 'opacity-100' : 'opacity-30'}
+              style={{ filter: active ? 'invert(27%) sepia(60%) saturate(600%) hue-rotate(94deg) brightness(90%)' : 'none' }}
+            />
             <span>{item.label}</span>
           </Link>
         )
