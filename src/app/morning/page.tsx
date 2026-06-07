@@ -88,7 +88,8 @@ export default function MorningPage() {
       <div className="px-4 py-4 space-y-5">
         {/* Energy */}
         <SliderSection
-          label="⚡ エネルギーレベル"
+          label="エネルギーレベル"
+          icon="/icons/energy.png"
           value={energy}
           onChange={setEnergy}
           min={1}
@@ -98,7 +99,8 @@ export default function MorningPage() {
 
         {/* Agni */}
         <SliderSection
-          label="🔥 アグニ（消化力）"
+          label="アグニ（消化力）"
+          icon="/icons/fire.png"
           value={agni}
           onChange={setAgni}
           min={1}
@@ -111,12 +113,12 @@ export default function MorningPage() {
 
         {/* Biometrics */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-stone-600 mb-3">📊 バイオデータ（任意）</h2>
+          <h2 className="text-sm font-semibold text-stone-600 mb-3">バイオデータ（任意）</h2>
           <div className="grid grid-cols-2 gap-3">
-            <InputField label="体重 (kg)" value={weight} onChange={setWeight} placeholder="68.5" type="decimal" />
+            <InputField label="体重 (kg)" icon="/icons/weight.png" value={weight} onChange={setWeight} placeholder="68.5" type="decimal" />
             <InputField label="体脂肪率 (%)" value={bodyFat} onChange={setBodyFat} placeholder="22.0" type="decimal" />
-            <InputField label="睡眠時間 (h)" value={sleepHours} onChange={setSleepHours} placeholder="7.5" type="decimal" />
-            <InputField label="HRV (ms)" value={hrv} onChange={setHrv} placeholder="45" type="number" />
+            <InputField label="睡眠時間 (h)" icon="/icons/sleep.png" value={sleepHours} onChange={setSleepHours} placeholder="7.5" type="decimal" />
+            <InputField label="HRV (ms)" icon="/icons/hrv.png" value={hrv} onChange={setHrv} placeholder="45" type="number" />
           </div>
         </section>
 
@@ -152,9 +154,10 @@ export default function MorningPage() {
 }
 
 function SliderSection({
-  label, value, onChange, min, max, color,
+  label, icon, value, onChange, min, max, color,
 }: {
   label: string
+  icon?: string
   value: number
   onChange: (v: number) => void
   min: number
@@ -168,7 +171,10 @@ function SliderSection({
   return (
     <section className="bg-white rounded-2xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-stone-600">{label}</h2>
+        <h2 className="text-sm font-semibold text-stone-600 flex items-center gap-2">
+          {icon && <Image src={icon} alt="" width={18} height={18} className="opacity-50" />}
+          {label}
+        </h2>
         <span className="text-2xl font-bold text-stone-800">{value}</span>
       </div>
       <input
@@ -188,9 +194,10 @@ function SliderSection({
 }
 
 function InputField({
-  label, value, onChange, placeholder, type,
+  label, icon, value, onChange, placeholder, type,
 }: {
   label: string
+  icon?: string
   value: string
   onChange: (v: string) => void
   placeholder: string
@@ -198,7 +205,10 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="text-xs text-stone-500 mb-1 block">{label}</label>
+      <label className="text-xs text-stone-500 mb-1 flex items-center gap-1">
+        {icon && <Image src={icon} alt="" width={13} height={13} className="opacity-40" />}
+        {label}
+      </label>
       <input
         type={type === 'decimal' ? 'number' : 'number'}
         inputMode={type === 'decimal' ? 'decimal' : 'numeric'}
