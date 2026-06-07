@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-export default function NotificationToggle() {
+export default function NotificationToggle({ wakeTime, lunchTime, sleepTime }: { wakeTime?: string; lunchTime?: string; sleepTime?: string } = {}) {
   const [status, setStatus] = useState<'loading' | 'unsupported' | 'denied' | 'granted' | 'default'>('loading')
   const [subscribed, setSubscribed] = useState(false)
   const [working, setWorking] = useState(false)
@@ -75,7 +75,7 @@ export default function NotificationToggle() {
       <div>
         <p className="text-sm font-semibold text-stone-700">プッシュ通知</p>
         <p className="text-xs text-stone-400 mt-0.5">
-          {subscribed ? '7:00 / 12:00 / 21:00 に通知が届きます' : 'オフ'}
+          {subscribed ? `${wakeTime ?? '7:00'} / ${lunchTime ?? '12:00'} / ${sleepTime ?? '21:00'} に通知が届きます` : 'オフ'}
         </p>
       </div>
       <button

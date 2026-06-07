@@ -173,7 +173,7 @@ export default function SettingsPage() {
           {/* Notifications */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-stone-600 mb-3">通知設定</h2>
-            <NotificationToggle />
+            <NotificationToggle wakeTime={wakeTime} lunchTime={lunchTime} sleepTime={sleepTime} />
           </section>
 
           {/* Info */}
