@@ -257,6 +257,13 @@ export default async function HomePage() {
             </Link>
           </div>
           <Link
+            href="/guide"
+            className="mt-3 flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-50 border border-amber-100 active:scale-95"
+          >
+            <span className="text-sm font-semibold text-amber-700">食事ガイド（カロリー目安・食材）</span>
+            <span className="text-amber-400 text-sm">→</span>
+          </Link>
+          <Link
             href="/review"
             className="mt-3 flex items-center justify-between px-4 py-3 rounded-2xl bg-teal-50 border border-teal-100 active:scale-95"
           >

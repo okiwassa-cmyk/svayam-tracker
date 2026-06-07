@@ -113,7 +113,10 @@ export default function MealPage() {
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-stone-600 text-white px-4 pt-12 pb-4">
-        <h1 className="text-2xl font-bold">食事記録</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">食事記録</h1>
+          <a href="/guide" className="text-xs bg-stone-500/60 px-3 py-1.5 rounded-full text-stone-200 font-semibold">食事ガイド</a>
+        </div>
         <p className="text-stone-300 text-sm mt-0.5">ドーシャ判定・過去の記録</p>
         {/* Tab bar */}
         <div className="flex gap-1 mt-4 bg-stone-500/40 rounded-xl p-1">
@@ -129,6 +132,12 @@ export default function MealPage() {
           >
             履歴
           </button>
+          <a
+            href="/guide"
+            className="flex-1 py-1.5 rounded-lg text-sm font-semibold text-center text-stone-200"
+          >
+            ガイド
+          </a>
         </div>
       </header>
 
