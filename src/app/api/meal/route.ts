@@ -10,20 +10,15 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const image = formData.get('image') as File | null
+    const textDescription = formData.get('text_description') as string | null
     const date = formData.get('date') as string
     const mealType = formData.get('meal_type') as string
 
-    if (!image || !date) {
-      return NextResponse.json({ error: 'image and date are required' }, { status: 400 })
+    if ((!image && !textDescription) || !date) {
+      return NextResponse.json({ error: 'image or text_description and date are required' }, { status: 400 })
     }
 
-    // Convert image to base64
-    const arrayBuffer = await image.arrayBuffer()
-    const base64 = Buffer.from(arrayBuffer).toString('base64')
-    const mediaType = image.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
-
-    const prompt = `あなたはアーユルヴェーダ専門家です。この食事写真を分析してください。
-ユーザーの体質：カファ・ピッタ（インドのドクター診断済み）
+    const systemPrompt = `あなたはアーユルヴェーダ専門家です。ユーザーの体質：カファ・ピッタ（インドのドクター診断済み）
 
 以下の形式でJSONのみを返してください（他のテキストは不要）：
 {
@@ -40,28 +35,24 @@ export async function POST(req: NextRequest) {
 - caution（△）：乳製品・甘いもの・冷たいもの・量が多い
 - avoid（✗）：揚げ物・精製糖・冷たい飲み物・加工食品`
 
+    let messageContent: Anthropic.MessageParam['content']
+
+    if (image) {
+      const arrayBuffer = await image.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+      const mediaType = image.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+      messageContent = [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+        { type: 'text', text: `${systemPrompt}\n\nこの食事写真を分析してください。` },
+      ]
+    } else {
+      messageContent = `${systemPrompt}\n\n次の食事を分析してください：${textDescription}`
+    }
+
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64,
-              },
-            },
-            {
-              type: 'text',
-              text: prompt,
-            },
-          ],
-        },
-      ],
+      messages: [{ role: 'user', content: messageContent }],
     })
 
     const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
