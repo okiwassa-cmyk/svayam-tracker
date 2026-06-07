@@ -37,6 +37,7 @@ export type Habit = {
   emoji: string
   sort_order: number
   frequency: number
+  days_of_week: string | null
 }
 
 export type HabitLog = {

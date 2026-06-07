@@ -32,10 +32,10 @@ export async function GET(req: NextRequest) {
 
 // PATCH: update habit frequency
 export async function PATCH(req: NextRequest) {
-  const { id, frequency } = await req.json()
+  const { id, frequency, days_of_week } = await req.json()
   const { data, error } = await supabaseAdmin
     .from('habits')
-    .update({ frequency })
+    .update({ frequency, days_of_week: days_of_week ?? null })
     .eq('id', id)
     .select()
     .single()

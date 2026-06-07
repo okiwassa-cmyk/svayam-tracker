@@ -33,14 +33,17 @@ const tierColors = {
   3: { header: 'bg-violet-700', badge: 'bg-violet-50 text-violet-700', check: 'bg-violet-600', label: 'Tier 3 · 週3日' },
 }
 
-const FREQ_OPTIONS = [
-  { value: 7, label: '毎日' },
-  { value: 5, label: '週5' },
-  { value: 4, label: '週4' },
-  { value: 3, label: '週3' },
-  { value: 2, label: '週2' },
-  { value: 1, label: '週1' },
-]
+const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+
+function parseDays(days: string | null): number[] {
+  if (!days) return [0, 1, 2, 3, 4, 5, 6]
+  return days.split(',').map(Number)
+}
+
+function formatDays(days: number[]): string {
+  if (days.length === 7) return '毎日'
+  return days.map((d) => DAY_LABELS[d]).join('・')
+}
 
 export default function HabitsPage() {
   const today = getTodayJST()
@@ -59,12 +62,14 @@ export default function HabitsPage() {
     loadHabits()
   }, [loadHabits])
 
-  async function updateFrequency(habitId: string, frequency: number) {
-    setHabits((prev) => prev.map((h) => h.id === habitId ? { ...h, frequency } : h))
+  async function updateDays(habitId: string, days: number[]) {
+    const days_of_week = days.length === 7 ? null : days.sort((a, b) => a - b).join(',')
+    const frequency = days.length
+    setHabits((prev) => prev.map((h) => h.id === habitId ? { ...h, frequency, days_of_week } : h))
     await fetch('/api/habits', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: habitId, frequency }),
+      body: JSON.stringify({ id: habitId, frequency, days_of_week }),
     })
   }
 
@@ -152,25 +157,34 @@ export default function HabitsPage() {
                         </span>
                         {!editMode && (
                           <span className="text-xs text-stone-300">
-                            {FREQ_OPTIONS.find((f) => f.value === (habit.frequency ?? 7))?.label ?? '毎日'}
+                            {formatDays(parseDays(habit.days_of_week ?? null))}
                           </span>
                         )}
                       </button>
                       {editMode && (
-                        <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-                          {FREQ_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={() => updateFrequency(habit.id, opt.value)}
-                              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                                (habit.frequency ?? 7) === opt.value
-                                  ? `${c.check} text-white`
-                                  : 'bg-stone-100 text-stone-500'
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                        <div className="px-4 pb-3">
+                          <div className="flex gap-1.5">
+                            {DAY_LABELS.map((label, i) => {
+                              const selectedDays = parseDays(habit.days_of_week ?? null)
+                              const selected = selectedDays.includes(i)
+                              return (
+                                <button
+                                  key={i}
+                                  onClick={() => {
+                                    const newDays = selected
+                                      ? selectedDays.filter((d) => d !== i)
+                                      : [...selectedDays, i]
+                                    if (newDays.length > 0) updateDays(habit.id, newDays)
+                                  }}
+                                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                                    selected ? `${c.check} text-white` : 'bg-stone-100 text-stone-400'
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
