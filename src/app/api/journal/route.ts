@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from 'next/server'
+import Anthropic from '@anthropic-ai/sdk'
+import { supabaseAdmin } from '@/lib/supabase'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+function getTodayJST() {
+  return new Date().toLocaleDateString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).replace(/\//g, '-')
+}
+
+const SYSTEM_PROMPT = `あなたはアーユルヴェーダ専門の食事アドバイザーです。
+ユーザーの体質：カファ・ピッタ（インドのドクター診断済み）
+
+【カファ・ピッタ体質の食事原則】
+- 温かく・軽め・スパイシーな食事が理想（カファ軽減）
+- 過度に辛いものは避ける（ピッタ刺激に注意）
+- 推奨食材：キビ・大麦・豆類・葉野菜・生姜・ターメリック・クミン
+- 避けるもの：乳製品・精製糖・冷たい飲み物・揚げ物・夜7時以降の食事
+- 昼食を最も大きく、朝夕は軽めに
+- 木曜日はファスティングデー
+
+【会話スタイル】
+- 日本語で答える
+- 親しみやすく、具体的に
+- 食材名や料理名は日本語で
+- 長すぎず、要点を絞って回答
+- 量の目安も伝える
+
+今日食べた食事のコンテキストがあれば、それを踏まえてアドバイスする。`
+
+export async function POST(req: NextRequest) {
+  try {
+    const { messages, todayMeals } = await req.json()
+
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({ error: 'messages required' }, { status: 400 })
+    }
+
+    // Build context from today's meals
+    let mealContext = ''
+    if (todayMeals && todayMeals.length > 0) {
+      mealContext = '\n\n【今日すでに食べたもの】\n' + todayMeals.map((m: { meal_type: string; description: string; kapha_score: string }) =>
+        `- ${m.meal_type}: ${m.description}（カファ評価: ${m.kapha_score}）`
+      ).join('\n')
+    }
+
+    const systemWithContext = SYSTEM_PROMPT + mealContext
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 600,
+      system: systemWithContext,
+      messages: messages.map((m: { role: string; content: string }) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    })
+
+    const reply = response.content[0].type === 'text' ? response.content[0].text : ''
+    return NextResponse.json({ reply })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}
