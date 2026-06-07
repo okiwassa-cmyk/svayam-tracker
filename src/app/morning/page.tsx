@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import BowelLogger from '@/components/BowelLogger'
 
 function getTodayJST() {
@@ -75,10 +76,13 @@ export default function MorningPage() {
   return (
     <div className="min-h-screen pb-8">
       {/* Header */}
-      <header className="bg-amber-500 text-white px-4 pt-12 pb-6">
-        <Link href="/" className="text-amber-100 text-sm mb-2 inline-block">← ホームへ</Link>
-        <h1 className="text-2xl font-bold">🌅 朝の記録</h1>
-        <p className="text-amber-100 text-sm mt-0.5">{today}</p>
+      <header className="bg-amber-800 text-white px-4 pt-12 pb-6">
+        <Link href="/" className="text-amber-200 text-sm mb-2 inline-block">← ホームへ</Link>
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Image src="/icons/sunrise.png" alt="" width={26} height={26} className="invert opacity-90" />
+          朝の記録
+        </h1>
+        <p className="text-amber-200 text-sm mt-0.5">{today}</p>
       </header>
 
       <div className="px-4 py-4 space-y-5">
@@ -123,7 +127,7 @@ export default function MorningPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="今日の体調、気づきなど..."
-            className="w-full text-sm text-stone-700 bg-stone-50 rounded-xl p-3 resize-none outline-none focus:ring-2 focus:ring-amber-300"
+            className="w-full text-sm text-stone-700 bg-stone-50 rounded-xl p-3 resize-none outline-none focus:ring-2 focus:ring-amber-700/30"
             rows={3}
           />
         </section>
@@ -134,10 +138,10 @@ export default function MorningPage() {
           disabled={saving || saved}
           className={`w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 ${
             saved
-              ? 'bg-green-500'
+              ? 'bg-teal-600'
               : saving
               ? 'bg-stone-300'
-              : 'bg-amber-500 shadow-md'
+              : 'bg-amber-800 shadow-md'
           }`}
         >
           {saved ? '✅ 記録完了！' : saving ? '保存中...' : '記録を保存'}
@@ -158,8 +162,8 @@ function SliderSection({
   color: string
 }) {
   const colorMap: Record<string, string> = {
-    amber: 'accent-amber-500',
-    orange: 'accent-orange-500',
+    amber: 'accent-amber-700',
+    orange: 'accent-amber-800',
   }
   return (
     <section className="bg-white rounded-2xl p-4 shadow-sm">
@@ -202,7 +206,7 @@ function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full text-sm bg-stone-50 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-amber-300"
+        className="w-full text-sm bg-stone-50 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-amber-700/30"
       />
     </div>
   )

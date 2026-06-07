@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP', {
@@ -69,10 +70,13 @@ export default function EveningPage() {
   return (
     <div className="min-h-screen pb-8">
       {/* Header */}
-      <header className="bg-indigo-700 text-white px-4 pt-12 pb-6">
-        <Link href="/" className="text-indigo-200 text-sm mb-2 inline-block">← ホームへ</Link>
-        <h1 className="text-2xl font-bold">🌙 夜の記録</h1>
-        <p className="text-indigo-200 text-sm mt-0.5">{today}</p>
+      <header className="bg-slate-700 text-white px-4 pt-12 pb-6">
+        <Link href="/" className="text-slate-300 text-sm mb-2 inline-block">← ホームへ</Link>
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Image src="/icons/moon.png" alt="" width={24} height={24} className="invert opacity-90" />
+          夜の記録
+        </h1>
+        <p className="text-slate-300 text-sm mt-0.5">{today}</p>
       </header>
 
       <div className="px-4 py-4 space-y-5">
@@ -118,7 +122,7 @@ export default function EveningPage() {
             value={calories}
             onChange={(e) => setCalories(e.target.value)}
             placeholder="1800"
-            className="w-full text-sm bg-stone-50 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full text-sm bg-stone-50 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-slate-400/40"
           />
         </section>
 
@@ -129,16 +133,16 @@ export default function EveningPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="今日の気づき、明日への一言..."
-            className="w-full text-sm text-stone-700 bg-stone-50 rounded-xl p-3 resize-none outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full text-sm text-stone-700 bg-stone-50 rounded-xl p-3 resize-none outline-none focus:ring-2 focus:ring-slate-400/40"
             rows={3}
           />
         </section>
 
         {/* Summary */}
-        <section className="bg-indigo-50 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-indigo-700 mb-1">今日のスコア</p>
-          <p className="text-3xl font-bold text-indigo-800">{tier1}-{tier2}-{tier3}</p>
-          <p className="text-xs text-indigo-500 mt-0.5">Tier1/5 · Tier2/5 · Tier3/4</p>
+        <section className="bg-slate-50 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-slate-700 mb-1">今日のスコア</p>
+          <p className="text-3xl font-bold text-slate-800">{tier1}-{tier2}-{tier3}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Tier1/5 · Tier2/5 · Tier3/4</p>
         </section>
 
         {/* Save */}
@@ -150,7 +154,7 @@ export default function EveningPage() {
               ? 'bg-green-500'
               : saving
               ? 'bg-stone-300'
-              : 'bg-indigo-600 shadow-md'
+              : 'bg-slate-700 shadow-md'
           }`}
         >
           {saved ? '✅ 記録完了！' : saving ? '保存中...' : '記録を保存'}
@@ -176,19 +180,19 @@ function TierSection({
       bg: 'bg-green-50',
       text: 'text-green-700',
       btn: 'bg-stone-100 text-stone-400',
-      activebtn: 'bg-green-500 text-white',
+      activebtn: 'bg-teal-600 text-white',
     },
     blue: {
       bg: 'bg-blue-50',
       text: 'text-blue-700',
       btn: 'bg-stone-100 text-stone-400',
-      activebtn: 'bg-blue-500 text-white',
+      activebtn: 'bg-sky-700 text-white',
     },
     purple: {
       bg: 'bg-purple-50',
       text: 'text-purple-700',
       btn: 'bg-stone-100 text-stone-400',
-      activebtn: 'bg-purple-500 text-white',
+      activebtn: 'bg-violet-700 text-white',
     },
   }
   const c = colorMap[color]

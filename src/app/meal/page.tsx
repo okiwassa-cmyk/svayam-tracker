@@ -93,10 +93,10 @@ export default function MealPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="bg-orange-600 text-white px-4 pt-12 pb-6">
-        <p className="text-orange-200 text-sm">{today}</p>
+      <header className="bg-stone-600 text-white px-4 pt-12 pb-6">
+        <p className="text-stone-300 text-sm">{today}</p>
         <h1 className="text-2xl font-bold mt-1">🍽 食事記録</h1>
-        <p className="text-orange-200 text-sm mt-0.5">写真でドーシャ判定</p>
+        <p className="text-stone-300 text-sm mt-0.5">写真でドーシャ判定</p>
       </header>
 
       <div className="px-4 py-4 space-y-4">
@@ -112,7 +112,7 @@ export default function MealPage() {
                 onClick={() => setMealType(m.value)}
                 className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   mealType === m.value
-                    ? 'bg-orange-500 text-white'
+                    ? 'bg-stone-600 text-white'
                     : 'bg-stone-100 text-stone-500'
                 }`}
               >

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import BottomNav from '@/components/BottomNav'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { DailyRecord, HabitLog, Habit } from '@/lib/types'
@@ -61,10 +62,10 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <header className="bg-green-700 text-white px-4 pt-12 pb-6">
-        <p className="text-green-200 text-sm">{formatDate(today)}</p>
-        <h1 className="text-2xl font-bold mt-1">Svayam 🌿</h1>
-        <p className="text-green-200 text-sm mt-0.5">アーユルヴェーダ実験トラッカー</p>
+      <header className="bg-stone-700 text-white px-4 pt-12 pb-6">
+        <p className="text-stone-300 text-sm">{formatDate(today)}</p>
+        <h1 className="text-2xl font-bold mt-1">Svayam</h1>
+        <p className="text-stone-300 text-sm mt-0.5">アーユルヴェーダ実験トラッカー</p>
       </header>
 
       <div className="px-4 py-4 space-y-4">
@@ -89,11 +90,11 @@ export default async function HomePage() {
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-stone-500">習慣達成率</h2>
-            <span className="text-green-700 font-bold">{completedHabits}/{totalHabits}</span>
+            <span className="text-teal-700 font-bold">{completedHabits}/{totalHabits}</span>
           </div>
           <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-500 rounded-full transition-all"
+              className="h-full bg-teal-600 rounded-full transition-all"
               style={{ width: `${totalHabits ? (completedHabits / totalHabits) * 100 : 0}%` }}
             />
           </div>
@@ -104,7 +105,7 @@ export default async function HomePage() {
                 <span
                   key={h.id}
                   className={`text-xs px-2 py-0.5 rounded-full ${
-                    done ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-400'
+                    done ? 'bg-teal-50 text-teal-700' : 'bg-stone-100 text-stone-400'
                   }`}
                 >
                   {h.emoji} {done ? '✓' : '○'}
@@ -149,22 +150,22 @@ export default async function HomePage() {
               href="/morning"
               className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl font-semibold text-sm transition-all ${
                 morningDone
-                  ? 'bg-green-50 text-green-600 border-2 border-green-200'
-                  : 'bg-green-700 text-white shadow-md active:scale-95'
+                  ? 'bg-amber-50 text-amber-800 border-2 border-amber-200'
+                  : 'bg-amber-800 text-white shadow-md active:scale-95'
               }`}
             >
-              <span className="text-2xl">🌅</span>
+              <Image src="/icons/sunrise.png" alt="" width={28} height={28} className={morningDone ? 'opacity-60' : 'invert opacity-90'} />
               <span>{morningDone ? '朝の記録（編集）' : '朝の記録'}</span>
             </Link>
             <Link
               href="/evening"
               className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl font-semibold text-sm transition-all ${
                 eveningDone
-                  ? 'bg-amber-50 text-amber-600 border-2 border-amber-200'
-                  : 'bg-amber-600 text-white shadow-md active:scale-95'
+                  ? 'bg-slate-100 text-slate-600 border-2 border-slate-200'
+                  : 'bg-slate-700 text-white shadow-md active:scale-95'
               }`}
             >
-              <span className="text-2xl">🌙</span>
+              <Image src="/icons/moon.png" alt="" width={24} height={24} className={eveningDone ? 'opacity-50' : 'invert opacity-90'} />
               <span>{eveningDone ? '夜の記録（編集）' : '夜の記録'}</span>
             </Link>
           </div>
@@ -173,14 +174,14 @@ export default async function HomePage() {
               href="/habits"
               className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
             >
-              <span className="text-2xl">✅</span>
+              <Image src="/icons/habits.png" alt="" width={24} height={24} className="opacity-40" />
               <span>習慣チェック</span>
             </Link>
             <Link
               href="/meal"
               className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
             >
-              <span className="text-2xl">📷</span>
+              <Image src="/icons/meal.png" alt="" width={24} height={24} className="opacity-40" />
               <span>食事を記録</span>
             </Link>
           </div>
@@ -196,10 +197,10 @@ function StatusCard({ label, done, detail }: { label: string; done: boolean; det
   return (
     <div className={`p-3 rounded-xl ${done ? 'bg-green-50' : 'bg-stone-50'}`}>
       <div className="flex items-center gap-1.5 mb-1">
-        <span className={`w-2 h-2 rounded-full ${done ? 'bg-green-500' : 'bg-stone-300'}`} />
+        <span className={`w-2 h-2 rounded-full ${done ? 'bg-teal-600' : 'bg-stone-300'}`} />
         <span className="text-xs font-semibold text-stone-500">{label}</span>
       </div>
-      <p className={`text-xs ${done ? 'text-green-700' : 'text-stone-400'}`}>{detail}</p>
+      <p className={`text-xs ${done ? 'text-teal-700' : 'text-stone-400'}`}>{detail}</p>
     </div>
   )
 }

@@ -91,10 +91,10 @@ export default function GuidePage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="bg-emerald-600 text-white px-4 pt-12 pb-6">
-        <Link href="/" className="text-emerald-200 text-sm mb-2 inline-block">← ホームへ</Link>
+      <header className="bg-teal-800 text-white px-4 pt-12 pb-6">
+        <Link href="/" className="text-teal-200 text-sm mb-2 inline-block">← ホームへ</Link>
         <h1 className="text-2xl font-bold">カファ・ピッタ食事ガイド</h1>
-        <p className="text-emerald-200 text-sm mt-0.5">タップで開閉</p>
+        <p className="text-teal-200 text-sm mt-0.5">タップで開閉</p>
       </header>
 
       <div className="px-4 py-4 space-y-3">
