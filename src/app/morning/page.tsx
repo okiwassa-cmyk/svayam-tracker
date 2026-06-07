@@ -29,6 +29,8 @@ export default function MorningPage() {
   const [waistCm, setWaistCm] = useState('')
   const [sleepHours, setSleepHours] = useState('')
   const [hrv, setHrv] = useState('')
+  const [steps, setSteps] = useState('')
+  const [calories, setCalories] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -50,6 +52,8 @@ export default function MorningPage() {
         if (data.waist_cm) setWaistCm(String(data.waist_cm))
         if (data.sleep_hours) setSleepHours(String(data.sleep_hours))
         if (data.hrv) setHrv(String(data.hrv))
+        if (data.steps) setSteps(String(data.steps))
+        if (data.calories) setCalories(String(data.calories))
         if (data.note) setNote(data.note)
       })
 
@@ -89,6 +93,8 @@ export default function MorningPage() {
           waist_cm: waistCm ? parseFloat(waistCm) : null,
           sleep_hours: sleepHours ? parseFloat(sleepHours) : null,
           hrv: hrv ? parseInt(hrv) : null,
+          steps: steps ? parseInt(steps) : null,
+          calories: calories ? parseInt(calories) : null,
           note: note || null,
         }),
       })
@@ -210,6 +216,8 @@ export default function MorningPage() {
             <InputField label="腹囲 (cm)" value={waistCm} onChange={setWaistCm} placeholder="80.0" type="decimal" />
             <InputField label="睡眠時間 (h)" icon="/icons/sleep.png" value={sleepHours} onChange={setSleepHours} placeholder="7.5" type="decimal" />
             <InputField label="HRV (ms)" icon="/icons/hrv.png" value={hrv} onChange={setHrv} placeholder="45" type="number" />
+            <InputField label="歩数" value={steps} onChange={setSteps} placeholder="8000" type="number" />
+            <InputField label="摂取カロリー (kcal)" value={calories} onChange={setCalories} placeholder="1800" type="number" />
           </div>
         </section>
 
