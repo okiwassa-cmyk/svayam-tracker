@@ -53,6 +53,7 @@ export type MealLog = {
   pitta_score: 'excellent' | 'good' | 'caution' | 'avoid' | null
   advice: string | null
   image_url: string | null
+  user_note: string | null
   created_at: string
 }
 

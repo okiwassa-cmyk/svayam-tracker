@@ -31,7 +31,6 @@ export default function MealPage() {
   const today = getTodayJST()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [tab, setTab] = useState<'record' | 'history'>('record')
-  const [mode, setMode] = useState<'photo' | 'text'>('photo')
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [textInput, setTextInput] = useState('')
@@ -43,6 +42,7 @@ export default function MealPage() {
   const [loadingMeals, setLoadingMeals] = useState(true)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [editingNote, setEditingNote] = useState<{ id: string; note: string } | null>(null)
 
   const loadMeals = useCallback(async () => {
     const res = await fetch(`/api/meal?date=${today}`)
@@ -60,9 +60,7 @@ export default function MealPage() {
     setLoadingHistory(false)
   }, [loadingHistory])
 
-  useEffect(() => {
-    loadMeals()
-  }, [loadMeals])
+  useEffect(() => { loadMeals() }, [loadMeals])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -72,45 +70,38 @@ export default function MealPage() {
     const reader = new FileReader()
     reader.onload = (ev) => setPreview(ev.target?.result as string)
     reader.readAsDataURL(f)
-    analyzeFile(f)
   }
 
-  async function analyzeFile(f: File) {
+  async function analyze() {
+    if (!file && !textInput.trim()) return
     setAnalyzing(true)
     try {
       const fd = new FormData()
-      fd.append('image', f)
+      if (file) fd.append('image', file)
+      if (textInput.trim()) fd.append('text_description', textInput.trim())
       fd.append('date', today)
       fd.append('meal_type', mealType)
-      await submitAnalysis(fd)
+      const res = await fetch('/api/meal', { method: 'POST', body: fd })
+      const { analysis, error } = await res.json()
+      if (error) { alert('エラー: ' + error); return }
+      setResult(analysis)
       setFile(null)
       setPreview(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    } finally {
-      setAnalyzing(false)
-    }
-  }
-
-  async function analyzeText() {
-    if (!textInput.trim()) return
-    setAnalyzing(true)
-    try {
-      const fd = new FormData()
-      fd.append('text_description', textInput.trim())
-      fd.append('date', today)
-      fd.append('meal_type', mealType)
-      await submitAnalysis(fd)
       setTextInput('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      loadMeals()
     } finally {
       setAnalyzing(false)
     }
   }
 
-  async function submitAnalysis(fd: FormData) {
-    const res = await fetch('/api/meal', { method: 'POST', body: fd })
-    const { analysis, error } = await res.json()
-    if (error) { alert('エラー: ' + error); return }
-    setResult(analysis)
+  async function saveNote(id: string, note: string) {
+    await fetch('/api/meal', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, user_note: note || null }),
+    })
+    setEditingNote(null)
     loadMeals()
   }
 
@@ -144,94 +135,70 @@ export default function MealPage() {
       <div className="px-4 py-4 space-y-4">
         {tab === 'history' && <HistoryView history={history} loading={loadingHistory} mealTypes={mealTypes} scoreLabels={scoreLabels} expandedId={expandedId} setExpandedId={setExpandedId} />}
         {tab === 'record' && <>
-        {/* Upload / Text */}
-        <section className="bg-white rounded-2xl p-4 shadow-sm">
-          {/* Mode toggle */}
-          <div className="flex gap-1 mb-4 bg-stone-100 rounded-xl p-1">
-            <button
-              onClick={() => setMode('photo')}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${mode === 'photo' ? 'bg-white text-stone-700 shadow-sm' : 'text-stone-400'}`}
-            >
-              📷 写真
-            </button>
-            <button
-              onClick={() => setMode('text')}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${mode === 'text' ? 'bg-white text-stone-700 shadow-sm' : 'text-stone-400'}`}
-            >
-              ✏️ テキスト
-            </button>
-          </div>
-
-          {/* Meal type selector */}
-          <div className="flex gap-2 mb-3">
-            {mealTypes.map((m) => (
+        {/* Input section */}
+        <section className="bg-white rounded-2xl overflow-hidden shadow-sm">
+          {/* Photo area */}
+          {preview ? (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview} alt="食事写真" className="w-full object-cover max-h-64" />
               <button
-                key={m.value}
-                onClick={() => setMealType(m.value)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  mealType === m.value
-                    ? 'bg-stone-600 text-white'
-                    : 'bg-stone-100 text-stone-500'
-                }`}
+                onClick={() => { setPreview(null); setFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs"
               >
-                {m.label}
+                ✕
               </button>
-            ))}
-          </div>
-
-          {mode === 'photo' ? (
-            <>
-              {!preview ? (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={analyzing}
-                  className="w-full border-2 border-dashed border-stone-200 rounded-xl p-8 flex flex-col items-center gap-2 text-stone-400 active:bg-stone-50"
-                >
-                  <span className="text-4xl">📷</span>
-                  <span className="text-sm">タップして撮影・選択</span>
-                  <span className="text-xs">選択すると自動で分析します</span>
-                </button>
-              ) : (
-                <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={preview} alt="食事写真" className="w-full rounded-xl object-cover max-h-64" />
-                  {analyzing && (
-                    <div className="absolute inset-0 bg-black/40 rounded-xl flex flex-col items-center justify-center gap-2">
-                      <span className="text-3xl animate-pulse">🌿</span>
-                      <span className="text-white text-sm font-semibold">分析中...</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </>
+            </div>
           ) : (
-            <>
-              <textarea
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                placeholder="例：鶏むね肉の蒸し野菜添え、玄米ご飯、みそ汁"
-                className="w-full text-sm bg-stone-50 rounded-xl p-3 resize-none outline-none focus:ring-2 focus:ring-stone-400/30 mb-3"
-                rows={3}
-              />
-              <button
-                onClick={analyzeText}
-                disabled={!textInput.trim() || analyzing}
-                className={`w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95 ${
-                  textInput.trim() && !analyzing ? 'bg-stone-600 shadow-md' : 'bg-stone-300'
-                }`}
-              >
-                {analyzing ? '🤔 分析中...' : '🌿 ドーシャ判定する'}
-              </button>
-            </>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-stone-400 border-b border-stone-100 active:bg-stone-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span className="text-sm">写真を撮影・選択（任意）</span>
+            </button>
           )}
+          <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} className="hidden" />
+
+          <div className="p-4 space-y-3">
+            {/* Meal type */}
+            <div className="flex gap-2">
+              {mealTypes.map((m) => (
+                <button
+                  key={m.value}
+                  onClick={() => setMealType(m.value)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    mealType === m.value ? 'bg-stone-600 text-white' : 'bg-stone-100 text-stone-500'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Text input */}
+            <textarea
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              placeholder="食べたもの・食材をメモ（写真だけでもOK）"
+              className="w-full text-sm bg-stone-50 rounded-xl p-3 resize-none outline-none focus:ring-2 focus:ring-stone-400/30"
+              rows={2}
+            />
+
+            {/* Analyze button */}
+            <button
+              onClick={analyze}
+              disabled={(!file && !textInput.trim()) || analyzing}
+              className={`w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95 ${
+                (file || textInput.trim()) && !analyzing ? 'bg-stone-700 shadow-md' : 'bg-stone-300'
+              }`}
+            >
+              {analyzing ? '分析中...' : 'ドーシャ判定する'}
+            </button>
+          </div>
         </section>
 
         {/* Result */}
@@ -303,6 +270,33 @@ export default function MealPage() {
                     </div>
                     {meal.advice && (
                       <p className="text-xs text-stone-500 mt-2 bg-stone-50 rounded-lg p-2">{meal.advice}</p>
+                    )}
+                    {/* User note */}
+                    {editingNote?.id === meal.id ? (
+                      <div className="mt-2 flex gap-2">
+                        <textarea
+                          value={editingNote.note}
+                          onChange={(e) => setEditingNote({ id: meal.id, note: e.target.value })}
+                          placeholder="メモを追加..."
+                          rows={2}
+                          className="flex-1 text-xs bg-stone-50 rounded-lg p-2 outline-none focus:ring-2 focus:ring-stone-400/30 resize-none"
+                          autoFocus
+                        />
+                        <div className="flex flex-col gap-1">
+                          <button onClick={() => saveNote(meal.id, editingNote.note)} className="text-xs bg-stone-700 text-white px-2 py-1 rounded-lg">保存</button>
+                          <button onClick={() => setEditingNote(null)} className="text-xs bg-stone-100 text-stone-500 px-2 py-1 rounded-lg">取消</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditingNote({ id: meal.id, note: meal.user_note ?? '' })}
+                        className="mt-2 w-full text-left"
+                      >
+                        {meal.user_note
+                          ? <p className="text-xs text-stone-600 bg-amber-50 rounded-lg p-2">{meal.user_note}</p>
+                          : <p className="text-xs text-stone-300 mt-1">+ メモを追加</p>
+                        }
+                      </button>
                     )}
                   </div>
                 </div>
