@@ -27,11 +27,6 @@ function getTodayJST() {
   }).replace(/\//g, '-')
 }
 
-const tierColors = {
-  1: { header: 'bg-teal-700', badge: 'bg-teal-50 text-teal-700', check: 'bg-teal-600', label: 'Tier 1 · 毎日' },
-  2: { header: 'bg-sky-700', badge: 'bg-sky-50 text-sky-700', check: 'bg-sky-600', label: 'Tier 2 · 週5日' },
-  3: { header: 'bg-violet-700', badge: 'bg-violet-50 text-violet-700', check: 'bg-violet-600', label: 'Tier 3 · 週3日' },
-}
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -86,7 +81,6 @@ export default function HabitsPage() {
     })
   }
 
-  const tiers = [1, 2, 3] as const
   const completedTotal = habits.filter((h) => h.completed).length
 
   return (
@@ -117,82 +111,67 @@ export default function HabitsPage() {
         </div>
       ) : (
         <div className="px-4 py-4 space-y-4">
-          {tiers.map((tier) => {
-            const tierHabits = habits.filter((h) => h.tier === tier)
-            const done = tierHabits.filter((h) => h.completed).length
-            const c = tierColors[tier]
-            return (
-              <section key={tier} className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                <div className={`${c.header} px-4 py-3 flex items-center justify-between`}>
-                  <span className="text-white font-semibold text-sm">{c.label}</span>
-                  <span className="text-white font-bold">{done}/{tierHabits.length}</span>
-                </div>
-                <div className="divide-y divide-stone-50">
-                  {tierHabits.map((habit) => (
-                    <div key={habit.id}>
-                      <button
-                        onClick={() => !editMode && toggle(habit)}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-stone-50 transition-colors text-left"
-                      >
-                        {/* Checkbox */}
-                        <div
-                          className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${
-                            habit.completed ? c.check : 'border-2 border-stone-200'
-                          }`}
-                        >
-                          {habit.completed && (
-                            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        {/* Label */}
-                        {habitIcons[habit.name] ? (
-                          <Image src={habitIcons[habit.name]} alt="" width={20} height={20} className="opacity-50 flex-shrink-0" />
-                        ) : (
-                          <span className="text-lg mr-1">{habit.emoji}</span>
-                        )}
-                        <span className={`text-sm flex-1 ${habit.completed ? 'text-stone-400 line-through' : 'text-stone-700 font-medium'}`}>
-                          {habit.name}
-                        </span>
-                        {!editMode && (
-                          <span className="text-xs text-stone-300">
-                            {formatDays(parseDays(habit.days_of_week ?? null))}
-                          </span>
-                        )}
-                      </button>
-                      {editMode && (
-                        <div className="px-4 pb-3">
-                          <div className="flex gap-1.5">
-                            {DAY_LABELS.map((label, i) => {
-                              const selectedDays = parseDays(habit.days_of_week ?? null)
-                              const selected = selectedDays.includes(i)
-                              return (
-                                <button
-                                  key={i}
-                                  onClick={() => {
-                                    const newDays = selected
-                                      ? selectedDays.filter((d) => d !== i)
-                                      : [...selectedDays, i]
-                                    if (newDays.length > 0) updateDays(habit.id, newDays)
-                                  }}
-                                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                                    selected ? `${c.check} text-white` : 'bg-stone-100 text-stone-400'
-                                  }`}
-                                >
-                                  {label}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
+          <section className="bg-white rounded-2xl overflow-hidden shadow-sm">
+            <div className="divide-y divide-stone-50">
+              {habits.map((habit) => (
+                <div key={habit.id}>
+                  <button
+                    onClick={() => !editMode && toggle(habit)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-stone-50 transition-colors text-left"
+                  >
+                    <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${
+                      habit.completed ? 'bg-teal-600' : 'border-2 border-stone-200'
+                    }`}>
+                      {habit.completed && (
+                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
                       )}
                     </div>
-                  ))}
+                    {habitIcons[habit.name] ? (
+                      <Image src={habitIcons[habit.name]} alt="" width={20} height={20} className="opacity-50 flex-shrink-0" />
+                    ) : (
+                      <span className="text-lg mr-1">{habit.emoji}</span>
+                    )}
+                    <span className={`text-sm flex-1 ${habit.completed ? 'text-stone-400 line-through' : 'text-stone-700 font-medium'}`}>
+                      {habit.name}
+                    </span>
+                    {!editMode && (
+                      <span className="text-xs text-stone-300">
+                        {formatDays(parseDays(habit.days_of_week ?? null))}
+                      </span>
+                    )}
+                  </button>
+                  {editMode && (
+                    <div className="px-4 pb-3">
+                      <div className="flex gap-1.5">
+                        {DAY_LABELS.map((label, i) => {
+                          const selectedDays = parseDays(habit.days_of_week ?? null)
+                          const selected = selectedDays.includes(i)
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                const newDays = selected
+                                  ? selectedDays.filter((d) => d !== i)
+                                  : [...selectedDays, i]
+                                if (newDays.length > 0) updateDays(habit.id, newDays)
+                              }}
+                              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                                selected ? 'bg-teal-600 text-white' : 'bg-stone-100 text-stone-400'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </section>
-            )
-          })}
+              ))}
+            </div>
+          </section>
 
           {/* Progress bar */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">
