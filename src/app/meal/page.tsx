@@ -57,14 +57,14 @@ export default function MealPage() {
     const reader = new FileReader()
     reader.onload = (ev) => setPreview(ev.target?.result as string)
     reader.readAsDataURL(f)
+    analyzeFile(f)
   }
 
-  async function analyze() {
-    if (!file) return
+  async function analyzeFile(f: File) {
     setAnalyzing(true)
     try {
       const fd = new FormData()
-      fd.append('image', file)
+      fd.append('image', f)
       fd.append('date', today)
       fd.append('meal_type', mealType)
 
@@ -84,6 +84,11 @@ export default function MealPage() {
     } finally {
       setAnalyzing(false)
     }
+  }
+
+  async function analyze() {
+    if (!file) return
+    await analyzeFile(file)
   }
 
   return (
@@ -120,22 +125,23 @@ export default function MealPage() {
           {!preview ? (
             <button
               onClick={() => fileInputRef.current?.click()}
+              disabled={analyzing}
               className="w-full border-2 border-dashed border-stone-200 rounded-xl p-8 flex flex-col items-center gap-2 text-stone-400 active:bg-stone-50"
             >
               <span className="text-4xl">📷</span>
               <span className="text-sm">タップして写真を選択</span>
-              <span className="text-xs">カメラロールまたは撮影</span>
+              <span className="text-xs">選択すると自動で分析します</span>
             </button>
           ) : (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="食事写真" className="w-full rounded-xl object-cover max-h-64" />
-              <button
-                onClick={() => { setPreview(null); setFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
-                className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm"
-              >
-                ✕
-              </button>
+              {analyzing && (
+                <div className="absolute inset-0 bg-black/40 rounded-xl flex flex-col items-center justify-center gap-2">
+                  <span className="text-3xl animate-pulse">🌿</span>
+                  <span className="text-white text-sm font-semibold">分析中...</span>
+                </div>
+              )}
             </div>
           )}
           <input
@@ -146,18 +152,6 @@ export default function MealPage() {
             onChange={handleFileSelect}
             className="hidden"
           />
-
-          {file && (
-            <button
-              onClick={analyze}
-              disabled={analyzing}
-              className={`w-full mt-3 py-3.5 rounded-xl font-bold text-white text-sm transition-all active:scale-95 ${
-                analyzing ? 'bg-stone-300' : 'bg-orange-500 shadow-md'
-              }`}
-            >
-              {analyzing ? '🤔 分析中...' : '🌿 ドーシャ判定する'}
-            </button>
-          )}
         </section>
 
         {/* Result */}

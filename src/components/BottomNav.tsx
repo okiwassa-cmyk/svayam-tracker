@@ -8,6 +8,7 @@ const navItems = [
   { href: '/habits', label: '習慣', emoji: '✅' },
   { href: '/meal', label: '食事', emoji: '🍽' },
   { href: '/dashboard', label: 'グラフ', emoji: '📊' },
+  { href: '/guide', label: 'ガイド', emoji: '🌿' },
 ]
 
 export default function BottomNav() {
