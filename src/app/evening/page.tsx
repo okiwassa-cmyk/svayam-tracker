@@ -82,7 +82,7 @@ export default function EveningPage() {
       <header className="bg-slate-700 text-white px-4 pt-12 pb-6">
         <Link href="/" className="text-slate-300 text-sm mb-2 inline-block">← ホームへ</Link>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Image src="/icons/moon.png" alt="" width={24} height={24} className="invert opacity-90" />
+          <Image src="/icons/moon.svg" unoptimized alt="" width={24} height={24} className="invert opacity-90" />
           夜の記録
         </h1>
         <p className="text-slate-300 text-sm mt-0.5">{today}</p>

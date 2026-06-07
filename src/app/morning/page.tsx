@@ -113,7 +113,7 @@ export default function MorningPage() {
       <header className="bg-amber-800 text-white px-4 pt-12 pb-6">
         <Link href="/" className="text-amber-200 text-sm mb-2 inline-block">← ホームへ</Link>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Image src="/icons/sunrise.png" alt="" width={26} height={26} className="invert opacity-90" />
+          <Image src="/icons/sunrise.svg" unoptimized alt="" width={26} height={26} className="invert opacity-90" />
           朝の記録
         </h1>
         <p className="text-amber-200 text-sm mt-0.5">{today}</p>
@@ -211,11 +211,11 @@ export default function MorningPage() {
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-600 mb-3">バイオデータ（任意）</h2>
           <div className="grid grid-cols-2 gap-3">
-            <InputField label="体重 (kg)" icon="/icons/weight.png" value={weight} onChange={setWeight} placeholder="68.5" type="decimal" />
+            <InputField label="体重 (kg)" icon="/icons/weight.svg" value={weight} onChange={setWeight} placeholder="68.5" type="decimal" />
             <InputField label="体脂肪率 (%)" value={bodyFat} onChange={setBodyFat} placeholder="22.0" type="decimal" />
             <InputField label="腹囲 (cm)" value={waistCm} onChange={setWaistCm} placeholder="80.0" type="decimal" />
-            <InputField label="睡眠時間 (h)" icon="/icons/sleep.png" value={sleepHours} onChange={setSleepHours} placeholder="7.5" type="decimal" />
-            <InputField label="HRV (ms)" icon="/icons/hrv.png" value={hrv} onChange={setHrv} placeholder="45" type="number" />
+            <InputField label="睡眠時間 (h)" icon="/icons/sleep.svg" value={sleepHours} onChange={setSleepHours} placeholder="7.5" type="decimal" />
+            <InputField label="HRV (ms)" icon="/icons/hrv.svg" value={hrv} onChange={setHrv} placeholder="45" type="number" />
             <InputField label="歩数" value={steps} onChange={setSteps} placeholder="8000" type="number" />
             <InputField label="摂取カロリー (kcal)" value={calories} onChange={setCalories} placeholder="1800" type="number" />
           </div>

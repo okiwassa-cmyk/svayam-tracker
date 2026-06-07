@@ -6,16 +6,17 @@ import BottomNav from '@/components/BottomNav'
 import type { HabitWithLog } from '@/lib/types'
 
 const habitIcons: Record<string, string> = {
-  '白湯を飲む': '/icons/cup.png',
-  '昼食時にお腹が空いている': '/icons/eating.png',
-  '間食しない': '/icons/no-sign.png',
-  '18〜19時までに夕食': '/icons/clock.png',
-  '22〜23時までに就寝': '/icons/sleep.png',
-  '舌磨き': '/icons/tongue.png',
-  'オイルプリング': '/icons/drops.png',
-  '運動（30〜60分）': '/icons/swim.png',
-  'アビヤンガまたはガルシャナ': '/icons/hand.png',
-  'ヨガ・瞑想・呼吸法': '/icons/meditation.png',
+  '白湯を飲む': '/icons/cup.svg',
+  '昼食時にお腹が空いている': '/icons/eating.svg',
+  '間食しない': '/icons/no-sign.svg',
+  '18〜19時までに夕食': '/icons/clock.svg',
+  '22〜23時までに就寝': '/icons/sleep.svg',
+  '舌磨き': '/icons/tongue.svg',
+  'オイルプリング': '/icons/drops.svg',
+  '運動（30〜60分）': '/icons/swim.svg',
+  'アビヤンガまたはガルシャナ': '/icons/hand.svg',
+  'ヨガ・瞑想・呼吸法': '/icons/meditation.svg',
+  'ファスティング': '/icons/fire.svg',
 }
 
 function getTodayJST() {
@@ -89,7 +90,7 @@ export default function HabitsPage() {
       <header className="bg-teal-800 text-white px-4 pt-12 pb-6">
         <p className="text-teal-200 text-sm">{today}</p>
         <h1 className="text-2xl font-bold mt-1 flex items-center gap-2">
-          <Image src="/icons/habits.png" alt="" width={24} height={24} className="invert opacity-90" />
+          <Image src="/icons/habits.svg" unoptimized alt="" width={24} height={24} className="invert opacity-90" />
           習慣チェック
         </h1>
         <div className="flex items-center justify-between mt-0.5">
@@ -129,7 +130,7 @@ export default function HabitsPage() {
                       )}
                     </div>
                     {habitIcons[habit.name] ? (
-                      <Image src={habitIcons[habit.name]} alt="" width={20} height={20} className="opacity-50 flex-shrink-0" />
+                      <Image src={habitIcons[habit.name]} unoptimized alt="" width={20} height={20} className="opacity-50 flex-shrink-0" />
                     ) : (
                       <span className="text-lg mr-1">{habit.emoji}</span>
                     )}

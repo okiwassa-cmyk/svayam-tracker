@@ -130,9 +130,9 @@ export default async function HomePage() {
           <section className="bg-white rounded-2xl p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-stone-500 mb-3">今日のリズム目標</h2>
             <div className="grid grid-cols-3 gap-2">
-              <RhythmCard icon="🌅" label="起床" time={settings.wake_time ?? '06:00'} />
-              <RhythmCard icon="🌿" label="昼食" time={settings.lunch_time ?? '12:00'} />
-              <RhythmCard icon="🌙" label="就寝" time={settings.sleep_time ?? '22:00'} />
+              <RhythmCard icon="/icons/sunrise.svg" label="起床" time={settings.wake_time ?? '06:00'} />
+              <RhythmCard icon="/icons/meal.svg" label="昼食" time={settings.lunch_time ?? '12:00'} />
+              <RhythmCard icon="/icons/moon.svg" label="就寝" time={settings.sleep_time ?? '22:00'} />
             </div>
           </section>
         )}
@@ -225,7 +225,7 @@ export default async function HomePage() {
                   : 'bg-amber-800 text-white shadow-md active:scale-95'
               }`}
             >
-              <Image src="/icons/sunrise.png" alt="" width={28} height={28} className={morningDone ? 'opacity-60' : 'invert opacity-90'} />
+              <Image src="/icons/sunrise.svg" unoptimized alt="" width={28} height={28} className={morningDone ? 'opacity-60' : 'invert opacity-90'} />
               <span>{morningDone ? '朝の記録（編集）' : '朝の記録'}</span>
             </Link>
             <Link
@@ -236,7 +236,7 @@ export default async function HomePage() {
                   : 'bg-slate-700 text-white shadow-md active:scale-95'
               }`}
             >
-              <Image src="/icons/moon.png" alt="" width={24} height={24} className={eveningDone ? 'opacity-50' : 'invert opacity-90'} />
+              <Image src="/icons/moon.svg" unoptimized alt="" width={24} height={24} className={eveningDone ? 'opacity-50' : 'invert opacity-90'} />
               <span>{eveningDone ? '夜の記録（編集）' : '夜の記録'}</span>
             </Link>
           </div>
@@ -245,14 +245,14 @@ export default async function HomePage() {
               href="/habits"
               className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
             >
-              <Image src="/icons/habits.png" alt="" width={24} height={24} className="opacity-40" />
+              <Image src="/icons/habits.svg" unoptimized alt="" width={24} height={24} className="opacity-40" />
               <span>習慣チェック</span>
             </Link>
             <Link
               href="/meal"
               className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
             >
-              <Image src="/icons/meal.png" alt="" width={24} height={24} className="opacity-40" />
+              <Image src="/icons/meal.svg" unoptimized alt="" width={24} height={24} className="opacity-40" />
               <span>食事を記録</span>
             </Link>
           </div>
@@ -300,7 +300,7 @@ function StatusCard({ label, done, detail }: { label: string; done: boolean; det
 function RhythmCard({ icon, label, time }: { icon: string; label: string; time: string }) {
   return (
     <div className="bg-stone-50 rounded-xl p-3 text-center">
-      <p className="text-base mb-0.5">{icon}</p>
+      <img src={icon} alt="" width={20} height={20} className="opacity-40 mx-auto mb-0.5" />
       <p className="text-xs text-stone-400 mb-0.5">{label}</p>
       <p className="text-sm font-bold text-stone-700 font-mono">{time}</p>
     </div>

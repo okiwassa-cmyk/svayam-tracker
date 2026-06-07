@@ -5,11 +5,11 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 const navItems = [
-  { href: '/', label: 'ホーム', icon: '/icons/sun.png' },
-  { href: '/habits', label: '習慣', icon: '/icons/habits.png' },
-  { href: '/meal', label: '食事', icon: '/icons/meal.png' },
-  { href: '/journal', label: '相談', icon: '/icons/brain.png' },
-  { href: '/dashboard', label: 'グラフ', icon: '/icons/chart.png' },
+  { href: '/', label: 'ホーム', icon: '/icons/sun.svg' },
+  { href: '/habits', label: '習慣', icon: '/icons/habits.svg' },
+  { href: '/meal', label: '食事', icon: '/icons/meal.svg' },
+  { href: '/journal', label: '相談', icon: '/icons/brain.svg' },
+  { href: '/dashboard', label: 'グラフ', icon: '/icons/chart.svg' },
 ]
 
 export default function BottomNav() {
