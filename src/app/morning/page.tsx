@@ -30,8 +30,9 @@ export default function MorningPage() {
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [fastingAlert, setFastingAlert] = useState<'eve' | 'day' | null>(null)
 
-  // Load existing data
+  // Load existing data + check fasting schedule
   useEffect(() => {
     fetch(`/api/record?date=${today}`)
       .then((r) => r.json())
@@ -46,6 +47,17 @@ export default function MorningPage() {
         if (data.sleep_hours) setSleepHours(String(data.sleep_hours))
         if (data.hrv) setHrv(String(data.hrv))
         if (data.note) setNote(data.note)
+      })
+
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then(({ data }) => {
+        if (data?.fasting_day == null) return
+        const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
+        const todayDow = nowJST.getDay()
+        const tomorrowDow = (todayDow + 1) % 7
+        if (todayDow === data.fasting_day) setFastingAlert('day')
+        else if (tomorrowDow === data.fasting_day) setFastingAlert('eve')
       })
   }, [today])
 
@@ -89,6 +101,54 @@ export default function MorningPage() {
       </header>
 
       <div className="px-4 py-4 space-y-5">
+        {/* Fasting Alert */}
+        {fastingAlert === 'eve' && (
+          <section className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p className="text-sm font-bold text-amber-800 mb-1">🌿 明日はアーマパーチャナの日</p>
+            <p className="text-xs text-amber-700 leading-relaxed mb-3">
+              明日のファスティングに向けて、今日の食事で消化器を整えましょう。
+            </p>
+            <div className="space-y-2">
+              <div className="bg-white rounded-xl p-3">
+                <p className="text-xs font-semibold text-amber-800 mb-1">☀️ 昼食（今日一番の食事）</p>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  ムング豆のスープ・蒸し野菜・温かいお粥など消化しやすいものを。スパイスは生姜・クミン・コリアンダーで消化を助ける。
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-3">
+                <p className="text-xs font-semibold text-amber-800 mb-1">🌙 夕食（18時までに・軽め）</p>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  野菜スープかムング豆粥のみ。乳製品・揚げ物・生野菜・重い食べ物は避ける。白湯をたっぷり飲む。
+                </p>
+              </div>
+              <div className="bg-amber-100 rounded-xl p-3">
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  ✗ 避けるもの：乳製品、小麦、砂糖、肉、油っこいもの、冷たい飲み物
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+        {fastingAlert === 'day' && (
+          <section className="bg-teal-50 border border-teal-200 rounded-2xl p-4">
+            <p className="text-sm font-bold text-teal-800 mb-1">✨ 今日はアーマパーチャナ（ファスティング）</p>
+            <p className="text-xs text-teal-700 leading-relaxed mb-2">
+              体の毒素を燃やす浄化の日。瞑想・ヨーガ・呼吸法は通常通り行いましょう。激しい運動はお休みです。
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white rounded-xl p-2.5 text-center">
+                <p className="text-xs text-teal-700">○ 続ける</p>
+                <p className="text-xs font-semibold text-stone-700 mt-0.5">瞑想・ヨーガ・呼吸法</p>
+              </div>
+              <div className="bg-white rounded-xl p-2.5 text-center">
+                <p className="text-xs text-stone-400">× お休み</p>
+                <p className="text-xs font-semibold text-stone-400 mt-0.5">激しい運動</p>
+              </div>
+            </div>
+            <p className="text-xs text-teal-600 mt-2">白湯・生姜湯・ハーブティーを飲んで過ごしましょう。</p>
+          </section>
+        )}
+
         {/* Energy */}
         <SliderSection
           label="エネルギーレベル"
