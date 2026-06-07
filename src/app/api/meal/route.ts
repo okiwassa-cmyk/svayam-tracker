@@ -65,6 +65,24 @@ export async function POST(req: NextRequest) {
 
     const analysis = JSON.parse(jsonMatch[0])
 
+    // Upload image to Supabase Storage if provided
+    let imageUrl: string | null = null
+    if (image) {
+      const arrayBuffer2 = await image.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer2)
+      const ext = image.type.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
+      const filename = `${date}/${Date.now()}.${ext}`
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('meal-photos')
+        .upload(filename, buffer, { contentType: image.type, upsert: false })
+      if (!uploadError) {
+        const { data: urlData } = supabaseAdmin.storage
+          .from('meal-photos')
+          .getPublicUrl(filename)
+        imageUrl = urlData.publicUrl
+      }
+    }
+
     // Save to Supabase
     const { data, error } = await supabaseAdmin
       .from('meal_logs')
@@ -76,6 +94,7 @@ export async function POST(req: NextRequest) {
         kapha_score: analysis.kapha_score,
         pitta_score: analysis.pitta_score,
         advice: analysis.advice,
+        image_url: imageUrl,
       })
       .select()
       .single()

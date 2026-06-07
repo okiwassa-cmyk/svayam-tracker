@@ -257,33 +257,39 @@ export default function MealPage() {
           ) : (
             <div className="space-y-3">
               {meals.map((meal) => (
-                <div key={meal.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-xs text-stone-400 font-medium">
-                        {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
-                      </span>
-                      <p className="font-semibold text-stone-700 text-sm mt-0.5">{meal.description}</p>
-                      {meal.calories_estimate && (
-                        <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1 text-right">
-                      {meal.kapha_score && (
-                        <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
-                          カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                        </span>
-                      )}
-                      {meal.pitta_score && (
-                        <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
-                          ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {meal.advice && (
-                    <p className="text-xs text-stone-500 mt-2 bg-stone-50 rounded-lg p-2">{meal.advice}</p>
+                <div key={meal.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {meal.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover" />
                   )}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-xs text-stone-400 font-medium">
+                          {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
+                        </span>
+                        <p className="font-semibold text-stone-700 text-sm mt-0.5">{meal.description}</p>
+                        {meal.calories_estimate && (
+                          <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1 text-right">
+                        {meal.kapha_score && (
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
+                            カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                          </span>
+                        )}
+                        {meal.pitta_score && (
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
+                            ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {meal.advice && (
+                      <p className="text-xs text-stone-500 mt-2 bg-stone-50 rounded-lg p-2">{meal.advice}</p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -329,36 +335,43 @@ function HistoryView({
               <button
                 key={meal.id}
                 onClick={() => setExpandedId(expandedId === meal.id ? null : meal.id)}
-                className="w-full bg-white rounded-2xl p-4 shadow-sm text-left"
+                className="w-full bg-white rounded-2xl shadow-sm text-left overflow-hidden"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs text-stone-400 font-medium">
-                      {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
-                    </span>
-                    <p className="font-semibold text-stone-700 text-sm mt-0.5 truncate">{meal.description}</p>
-                    {meal.calories_estimate && (
-                      <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1 flex-shrink-0">
-                    {meal.kapha_score && (
-                      <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
-                        カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                      </span>
-                    )}
-                    {meal.pitta_score && (
-                      <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
-                        ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {expandedId === meal.id && meal.advice && (
-                  <p className="text-xs text-stone-500 mt-3 bg-stone-50 rounded-lg p-3 leading-relaxed text-left">
-                    {meal.advice}
-                  </p>
+                {/* Photo thumbnail */}
+                {meal.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover" />
                 )}
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-stone-400 font-medium">
+                        {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
+                      </span>
+                      <p className="font-semibold text-stone-700 text-sm mt-0.5 truncate">{meal.description}</p>
+                      {meal.calories_estimate && (
+                        <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      {meal.kapha_score && (
+                        <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
+                          カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                        </span>
+                      )}
+                      {meal.pitta_score && (
+                        <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
+                          ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {expandedId === meal.id && meal.advice && (
+                    <p className="text-xs text-stone-500 mt-3 bg-stone-50 rounded-lg p-3 leading-relaxed text-left">
+                      {meal.advice}
+                    </p>
+                  )}
+                </div>
               </button>
             ))}
           </div>
