@@ -114,6 +114,11 @@ export default function MealPage() {
     loadMeals()
   }
 
+  async function deleteMeal(id: string) {
+    await fetch(`/api/meal?id=${id}`, { method: 'DELETE' })
+    loadMeals()
+  }
+
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-stone-600 text-white px-4 pt-12 pb-4">
@@ -264,7 +269,7 @@ export default function MealPage() {
                   )}
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <span className="text-xs text-stone-400 font-medium">
                           {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
                         </span>
@@ -273,17 +278,27 @@ export default function MealPage() {
                           <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
                         )}
                       </div>
-                      <div className="flex flex-col gap-1 text-right">
-                        {meal.kapha_score && (
-                          <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
-                            カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                          </span>
-                        )}
-                        {meal.pitta_score && (
-                          <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
-                            ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                          </span>
-                        )}
+                      <div className="flex items-start gap-2">
+                        <div className="flex flex-col gap-1 text-right">
+                          {meal.kapha_score && (
+                            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
+                              カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                            </span>
+                          )}
+                          {meal.pitta_score && (
+                            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
+                              ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => deleteMeal(meal.id)}
+                          className="p-1.5 text-stone-300 active:text-red-500 flex-shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          </svg>
+                        </button>
                       </div>
                     </div>
                     {meal.advice && (
