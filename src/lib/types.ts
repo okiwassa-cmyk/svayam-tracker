@@ -9,12 +9,22 @@ export type DailyRecord = {
   hrv: number | null
   weight: number | null
   body_fat: number | null
+  waist_cm: number | null
   tier1_score: number | null
   tier2_score: number | null
   tier3_score: number | null
   calories: number | null
   note: string | null
   created_at: string
+}
+
+export type UserSettings = {
+  id: number
+  start_date: string | null
+  target_weight: number | null
+  target_waist: number | null
+  fasting_day: number | null
+  updated_at: string
 }
 
 export type Habit = {

@@ -24,6 +24,7 @@ export default function MorningPage() {
   const [bowel, setBowel] = useState<boolean | null>(null) // kept for DB compat
   const [weight, setWeight] = useState('')
   const [bodyFat, setBodyFat] = useState('')
+  const [waistCm, setWaistCm] = useState('')
   const [sleepHours, setSleepHours] = useState('')
   const [hrv, setHrv] = useState('')
   const [note, setNote] = useState('')
@@ -41,6 +42,7 @@ export default function MorningPage() {
         if (data.bowel_movement != null) setBowel(data.bowel_movement)
         if (data.weight) setWeight(String(data.weight))
         if (data.body_fat) setBodyFat(String(data.body_fat))
+        if (data.waist_cm) setWaistCm(String(data.waist_cm))
         if (data.sleep_hours) setSleepHours(String(data.sleep_hours))
         if (data.hrv) setHrv(String(data.hrv))
         if (data.note) setNote(data.note)
@@ -59,6 +61,7 @@ export default function MorningPage() {
           agni,
           weight: weight ? parseFloat(weight) : null,
           body_fat: bodyFat ? parseFloat(bodyFat) : null,
+          waist_cm: waistCm ? parseFloat(waistCm) : null,
           sleep_hours: sleepHours ? parseFloat(sleepHours) : null,
           hrv: hrv ? parseInt(hrv) : null,
           note: note || null,
@@ -117,6 +120,7 @@ export default function MorningPage() {
           <div className="grid grid-cols-2 gap-3">
             <InputField label="体重 (kg)" icon="/icons/weight.png" value={weight} onChange={setWeight} placeholder="68.5" type="decimal" />
             <InputField label="体脂肪率 (%)" value={bodyFat} onChange={setBodyFat} placeholder="22.0" type="decimal" />
+            <InputField label="腹囲 (cm)" value={waistCm} onChange={setWaistCm} placeholder="80.0" type="decimal" />
             <InputField label="睡眠時間 (h)" icon="/icons/sleep.png" value={sleepHours} onChange={setSleepHours} placeholder="7.5" type="decimal" />
             <InputField label="HRV (ms)" icon="/icons/hrv.png" value={hrv} onChange={setHrv} placeholder="45" type="number" />
           </div>

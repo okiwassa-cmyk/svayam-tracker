@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import BottomNav from '@/components/BottomNav'
 import { supabaseAdmin } from '@/lib/supabase'
-import type { DailyRecord, HabitLog, Habit } from '@/lib/types'
+import type { DailyRecord, HabitLog, Habit, UserSettings } from '@/lib/types'
 
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP', {
@@ -21,7 +21,7 @@ function formatDate(dateStr: string) {
 async function getTodayData() {
   const today = getTodayJST()
 
-  const [recordRes, habitLogsRes, habitsRes] = await Promise.all([
+  const [recordRes, habitLogsRes, habitsRes, settingsRes] = await Promise.all([
     supabaseAdmin
       .from('daily_records')
       .select('*')
@@ -35,6 +35,11 @@ async function getTodayData() {
       .from('habits')
       .select('*')
       .order('sort_order'),
+    supabaseAdmin
+      .from('user_settings')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle(),
   ])
 
   return {
@@ -42,11 +47,16 @@ async function getTodayData() {
     record: recordRes.data as DailyRecord | null,
     habitLogs: (habitLogsRes.data ?? []) as HabitLog[],
     habits: (habitsRes.data ?? []) as Habit[],
+    settings: settingsRes.data as UserSettings | null,
   }
 }
 
 export default async function HomePage() {
-  const { today, record, habitLogs, habits } = await getTodayData()
+  const { today, record, habitLogs, habits, settings } = await getTodayData()
+
+  const experimentDay = settings?.start_date
+    ? Math.floor((Date.now() - new Date(settings.start_date + 'T00:00:00+09:00').getTime()) / 86400000) + 1
+    : null
 
   const completedHabits = habitLogs.filter((l) => l.completed).length
   const totalHabits = habits.length
@@ -63,9 +73,23 @@ export default async function HomePage() {
     <div className="min-h-screen pb-20">
       {/* Header */}
       <header className="bg-stone-700 text-white px-4 pt-12 pb-6">
-        <p className="text-stone-300 text-sm">{formatDate(today)}</p>
-        <h1 className="text-2xl font-bold mt-1">Svayam</h1>
-        <p className="text-stone-300 text-sm mt-0.5">アーユルヴェーダ実験トラッカー</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-stone-300 text-sm">{formatDate(today)}</p>
+            <h1 className="text-2xl font-bold mt-1">Svayam</h1>
+            <p className="text-stone-300 text-sm mt-0.5">
+              {experimentDay != null && experimentDay > 0
+                ? `実験 ${experimentDay} 日目`
+                : 'アーユルヴェーダ実験トラッカー'}
+            </p>
+          </div>
+          <Link href="/settings" className="mt-1 p-2 rounded-xl text-stone-300 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </Link>
+        </div>
       </header>
 
       <div className="px-4 py-4 space-y-4">
@@ -116,12 +140,15 @@ export default async function HomePage() {
         </section>
 
         {/* Biometrics */}
-        {(record?.weight || record?.hrv || record?.sleep_hours) && (
+        {(record?.weight || record?.hrv || record?.sleep_hours || record?.waist_cm) && (
           <section className="bg-white rounded-2xl p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-stone-500 mb-3">バイオデータ</h2>
             <div className="grid grid-cols-3 gap-2">
               {record.weight && (
                 <MetricCard label="体重" value={`${record.weight}kg`} />
+              )}
+              {record.waist_cm && (
+                <MetricCard label="腹囲" value={`${record.waist_cm}cm`} />
               )}
               {record.hrv && (
                 <MetricCard label="HRV" value={`${record.hrv}ms`} />
