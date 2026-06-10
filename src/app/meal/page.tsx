@@ -45,9 +45,10 @@ export default function MealPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingNote, setEditingNote] = useState<{ id: string; note: string } | null>(null)
   const [editingTime, setEditingTime] = useState<{ id: string; time: string } | null>(null)
+  const [hungryBefore, setHungryBefore] = useState<boolean | null>(null)
 
   const loadMeals = useCallback(async () => {
-    const res = await fetch(`/api/meal?date=${today}`)
+    const res = await fetch(`/api/meal?date=${today}`, { cache: 'no-store' })
     const { data } = await res.json()
     setMeals(data ?? [])
     setLoadingMeals(false)
@@ -100,6 +101,7 @@ export default function MealPage() {
       fd.append('date', today)
       fd.append('meal_type', mealType)
       if (fileLoggedAt) fd.append('logged_at', fileLoggedAt)
+      if (hungryBefore !== null) fd.append('hungry_before', String(hungryBefore))
       const res = await fetch('/api/meal', { method: 'POST', body: fd })
       const { analysis, error } = await res.json()
       if (error) { alert('エラー: ' + error); return }
@@ -108,6 +110,7 @@ export default function MealPage() {
       setFileLoggedAt(null)
       setPreview(null)
       setTextInput('')
+      setHungryBefore(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
       loadMeals()
     } finally {
@@ -266,6 +269,25 @@ export default function MealPage() {
               ))}
             </div>
 
+            {/* Hungry before */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-stone-500 flex-shrink-0">食前お腹が空いていた？</span>
+              <div className="flex gap-1.5 ml-auto">
+                <button
+                  onClick={() => setHungryBefore(hungryBefore === true ? null : true)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${hungryBefore === true ? 'bg-green-600 text-white' : 'bg-stone-100 text-stone-500'}`}
+                >
+                  空腹
+                </button>
+                <button
+                  onClick={() => setHungryBefore(hungryBefore === false ? null : false)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${hungryBefore === false ? 'bg-stone-500 text-white' : 'bg-stone-100 text-stone-500'}`}
+                >
+                  空腹でない
+                </button>
+              </div>
+            </div>
+
             {/* Text input */}
             <textarea
               value={textInput}
@@ -370,6 +392,9 @@ export default function MealPage() {
                         <p className="text-sm text-stone-500 mt-0.5">{meal.description}</p>
                         {meal.calories_estimate && (
                           <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
+                        )}
+                        {meal.hungry_before !== null && meal.hungry_before !== undefined && (
+                          <p className="text-xs text-stone-400">食前: {meal.hungry_before ? '空腹あり' : '空腹なし'}</p>
                         )}
                       </div>
                       <div className="flex items-start gap-1">

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import BottomNav from '@/components/BottomNav'
@@ -64,12 +66,12 @@ export default async function HomePage() {
   const totalHabits = habits.length
 
   const morningDone = record?.energy_level != null
-  const eveningDone = record?.tier1_score != null
+  const eveningDone = record?.dinner_time != null
 
   // 6大習慣の達成判定
   const flags = record?.dinacharya_flags as Record<string, boolean> | null | undefined
   const dinacharyaDoneCount = flags ? Object.values(flags).filter(Boolean).length : 0
-  const dinacharyaTotal = 7
+  const dinacharyaTotal = 8
   const wakeOnTime = flags?.wake ?? false
   const sleepOnTime = flags?.sleep ?? false
 
@@ -174,9 +176,9 @@ export default async function HomePage() {
               detail={morningDone ? `E${record?.energy_level} A${record?.agni} 排${record?.bowel_movement ? '○' : '×'}` : '未記録'}
             />
             <StatusCard
-              label="夜の記録"
+              label="昨夜の夕食"
               done={eveningDone}
-              detail={eveningDone ? `T1:${record?.tier1_score} T2:${record?.tier2_score} T3:${record?.tier3_score}` : '未記録'}
+              detail={eveningDone ? `${['18時台','19時台','20時以降'][((record?.dinner_time ?? 1) as number) - 1]} / ${['軽め','普通','重め'][((record?.dinner_amount ?? 1) as number) - 1]}` : '未記録'}
             />
           </div>
         </section>
@@ -190,19 +192,28 @@ export default async function HomePage() {
             </span>
           </div>
           <div className="grid grid-cols-1 gap-1.5">
-            {keyHabits.map((h) => (
-              <Link key={h.label} href={h.link} className="flex items-center gap-3 px-3 py-2 rounded-xl active:bg-stone-50">
-                <span className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center ${h.done ? 'bg-teal-600' : 'border-2 border-stone-200'}`}>
-                  {h.done && (
-                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+            {keyHabits.map((h) => {
+              const isAma = h.label === 'アーマパーチャナ'
+              return (
+                <Link key={h.label} href={h.link} className={`flex items-center gap-3 px-3 py-2 rounded-xl active:bg-stone-50 ${isAma && h.done ? 'bg-amber-50' : ''}`}>
+                  {isAma ? (
+                    <span className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black leading-none ${h.done ? 'bg-amber-400 text-white' : 'border-2 border-stone-200 text-stone-300'}`}>
+                      {h.done ? '◎' : '○'}
+                    </span>
+                  ) : (
+                    <span className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center ${h.done ? 'bg-teal-600' : 'border-2 border-stone-200'}`}>
+                      {h.done && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
                   )}
-                </span>
-                <span className={`text-sm flex-1 ${h.done ? 'text-stone-500' : 'text-stone-700 font-medium'}`}>{h.label}</span>
-                <span className={`text-xs ${h.done ? 'text-teal-600' : 'text-stone-400'}`}>{h.detail}</span>
-              </Link>
-            ))}
+                  <span className={`text-sm flex-1 ${h.done ? (isAma ? 'text-amber-700 font-semibold' : 'text-stone-500') : 'text-stone-700 font-medium'}`}>{h.label}</span>
+                  <span className={`text-xs ${h.done ? (isAma ? 'text-amber-600 font-semibold' : 'text-teal-600') : 'text-stone-400'}`}>{h.detail}</span>
+                </Link>
+              )
+            })}
           </div>
         </section>
 
@@ -281,24 +292,20 @@ export default async function HomePage() {
               <span>{morningDone ? '朝の記録（編集）' : '朝の記録'}</span>
             </Link>
             <Link
-              href="/evening"
-              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl font-semibold text-sm transition-all ${
-                eveningDone
-                  ? 'bg-slate-100 text-slate-600 border-2 border-slate-200'
-                  : 'bg-slate-700 text-white shadow-md active:scale-95'
-              }`}
-            >
-              <Image src="/icons/moon.svg" unoptimized alt="" width={24} height={24} className={eveningDone ? 'opacity-50' : 'invert opacity-90'} />
-              <span>{eveningDone ? '夜の記録（編集）' : '夜の記録'}</span>
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <Link
               href="/habits"
               className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
             >
               <Image src="/icons/habits.svg" unoptimized alt="" width={24} height={24} className="opacity-40" />
-              <span>習慣チェック</span>
+              <span>習慣・運動</span>
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Link
+              href="/morning"
+              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
+            >
+              <Image src="/icons/moon.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
+              <span>トイレ記録</span>
             </Link>
             <Link
               href="/meal"

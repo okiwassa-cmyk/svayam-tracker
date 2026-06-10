@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
     const mealType = formData.get('meal_type') as string
     const loggedAt = formData.get('logged_at') as string | null
     const skipped = formData.get('skipped') === 'true'
+    const hungryBeforeRaw = formData.get('hungry_before') as string | null
+    const hungryBefore = hungryBeforeRaw === 'true' ? true : hungryBeforeRaw === 'false' ? false : null
 
     if (!date) {
       return NextResponse.json({ error: 'date is required' }, { status: 400 })
@@ -116,6 +118,7 @@ export async function POST(req: NextRequest) {
         image_url: imageUrl,
         user_input: textDescription?.trim() || null,
         logged_at: loggedAt || new Date().toISOString(),
+        hungry_before: hungryBefore,
       })
       .select()
       .single()

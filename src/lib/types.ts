@@ -19,6 +19,9 @@ export type DailyRecord = {
   tongue_coating: number | null
   tongue_color: number | null
   morning_hunger: number | null
+  dinner_time: number | null
+  dinner_amount: number | null
+  alcohol: number | null
   dinacharya_flags: Record<string, boolean> | null
   asukken_photo_url: string | null
   steps: number | null
@@ -69,6 +72,7 @@ export type MealLog = {
   user_input: string | null
   logged_at: string | null
   skipped: boolean
+  hungry_before: boolean | null
   created_at: string
 }
 

@@ -22,6 +22,7 @@ const DINACHARYA_ITEMS = [
   { key: 'tongue_check', label: '舌苔チェック' },
   { key: 'brush', label: '歯磨き' },
   { key: 'gandusha', label: 'ガヴァラ（オイルうがい）' },
+  { key: 'jala_neti', label: 'ジャラネティ（鼻洗浄）' },
   { key: 'hayu', label: '白湯を作る' },
 ] as const
 
@@ -33,7 +34,7 @@ export default function MorningPage() {
 
   // Dinacharya checklist (local only, not persisted)
   const [dinacharya, setDinacharya] = useState<Record<DinacharyaKey, boolean>>({
-    sleep: false, wake: false, water: false, tongue_check: false, brush: false, gandusha: false, hayu: false,
+    sleep: false, wake: false, water: false, tongue_check: false, brush: false, gandusha: false, jala_neti: false, hayu: false,
   })
 
   // 1=スッキリ/なし/ある, 2=普通/少し/少し, 3=だるい/多い/ない
@@ -41,6 +42,9 @@ export default function MorningPage() {
   const [tongue, setTongue] = useState<1|2|3>(1)
   const [tongueColor, setTongueColor] = useState<1|2|3>(1) // 1=白, 2=黄色, 3=褐色
   const [hunger, setHunger] = useState<1|2|3>(1)
+  const [dinnerTime, setDinnerTime] = useState<1|2|3>(1)
+  const [dinnerAmount, setDinnerAmount] = useState<1|2|3>(1)
+  const [alcohol, setAlcohol] = useState<1|2|3>(1)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -62,6 +66,9 @@ export default function MorningPage() {
         if (data.tongue_coating) setTongue(data.tongue_coating as 1|2|3)
         if (data.tongue_color) setTongueColor(data.tongue_color as 1|2|3)
         if (data.morning_hunger) setHunger(data.morning_hunger as 1|2|3)
+        if (data.dinner_time) setDinnerTime(data.dinner_time as 1|2|3)
+        if (data.dinner_amount) setDinnerAmount(data.dinner_amount as 1|2|3)
+        if (data.alcohol) setAlcohol(data.alcohol as 1|2|3)
         if (data.note) setNote(data.note)
         if (data.asukken_photo_url) setPhotoUrl(data.asukken_photo_url)
         if (data.dinacharya_flags) setDinacharya((prev) => ({ ...prev, ...data.dinacharya_flags }))
@@ -116,6 +123,9 @@ export default function MorningPage() {
           morning_hunger: hunger,
           energy_level: clarityToEnergy[clarity],
           agni: agniVal,
+          dinner_time: dinnerTime,
+          dinner_amount: dinnerAmount,
+          alcohol,
           note: note || null,
           asukken_photo_url: photoUrl || null,
           dinacharya_flags: dinacharya,
@@ -276,6 +286,46 @@ export default function MorningPage() {
           value={hunger}
           onChange={(v) => setHunger(v as 1|2|3)}
         />
+
+        {/* Previous night dinner */}
+        <section className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-stone-600 mb-3">昨夜の夕食</h2>
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs text-stone-400 mb-2">夕食の時間</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([{ value: 1, label: '18時台' }, { value: 2, label: '19時台' }, { value: 3, label: '20時以降' }] as const).map((opt) => (
+                  <button key={opt.value} onClick={() => setDinnerTime(opt.value)}
+                    className={`py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${dinnerTime === opt.value ? 'bg-amber-700 text-white' : 'bg-stone-50 text-stone-600'}`}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-stone-400 mb-2">夕食の量</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([{ value: 1, label: '軽め' }, { value: 2, label: '普通' }, { value: 3, label: '重め' }] as const).map((opt) => (
+                  <button key={opt.value} onClick={() => setDinnerAmount(opt.value)}
+                    className={`py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${dinnerAmount === opt.value ? 'bg-amber-700 text-white' : 'bg-stone-50 text-stone-600'}`}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-stone-400 mb-2">飲酒</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([{ value: 1, label: 'なし' }, { value: 2, label: '少し' }, { value: 3, label: '飲んだ' }] as const).map((opt) => (
+                  <button key={opt.value} onClick={() => setAlcohol(opt.value)}
+                    className={`py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${alcohol === opt.value ? 'bg-amber-700 text-white' : 'bg-stone-50 text-stone-600'}`}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Toilet Logger */}
         <ToiletLogger date={today} />

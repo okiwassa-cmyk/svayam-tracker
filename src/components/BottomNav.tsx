@@ -9,7 +9,7 @@ const navItems = [
   { href: '/habits', label: '習慣', icon: '/icons/habits.svg' },
   { href: '/meal', label: '食事', icon: '/icons/meal.svg' },
   { href: '/journal', label: '相談', icon: '/icons/brain.svg' },
-  { href: '/dashboard', label: 'グラフ', icon: '/icons/chart.svg' },
+  { href: '/review', label: 'レビュー', icon: '/icons/chart.svg' },
 ]
 
 export default function BottomNav() {
