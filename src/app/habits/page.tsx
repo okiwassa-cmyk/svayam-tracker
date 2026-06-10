@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import ExerciseLogger from '@/components/ExerciseLogger'
 import AbhyangaCheck from '@/components/AbhyangaCheck'
@@ -178,6 +179,25 @@ export default function HabitsPage() {
 
           <ExerciseLogger date={today} />
           <AbhyangaCheck date={today} />
+
+          {/* Quick Actions */}
+          <section>
+            <h2 className="text-sm font-semibold text-stone-500 mb-3">クイックアクション</h2>
+            <div className="grid grid-cols-3 gap-2">
+              <Link href="/morning" className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white shadow-sm border border-stone-100 active:scale-95 text-center">
+                <Image src="/icons/sunrise.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
+                <span className="text-xs font-semibold text-stone-600">朝の記録</span>
+              </Link>
+              <Link href="/meal" className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white shadow-sm border border-stone-100 active:scale-95 text-center">
+                <Image src="/icons/meal.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
+                <span className="text-xs font-semibold text-stone-600">食事記録</span>
+              </Link>
+              <Link href="/review" className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white shadow-sm border border-stone-100 active:scale-95 text-center">
+                <Image src="/icons/chart.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
+                <span className="text-xs font-semibold text-stone-600">レビュー</span>
+              </Link>
+            </div>
+          </section>
 
           {/* Progress bar */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">

@@ -278,7 +278,6 @@ export default async function HomePage() {
 
         {/* Quick Actions */}
         <section>
-          <h2 className="text-sm font-semibold text-stone-500 mb-3">クイックアクション</h2>
           <div className="grid grid-cols-2 gap-3">
             <Link
               href="/morning"
@@ -292,22 +291,6 @@ export default async function HomePage() {
               <span>{morningDone ? '朝の記録（編集）' : '朝の記録'}</span>
             </Link>
             <Link
-              href="/habits"
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
-            >
-              <Image src="/icons/habits.svg" unoptimized alt="" width={24} height={24} className="opacity-40" />
-              <span>習慣・運動</span>
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <Link
-              href="/morning"
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
-            >
-              <Image src="/icons/moon.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
-              <span>トイレ記録</span>
-            </Link>
-            <Link
               href="/meal"
               className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
             >
@@ -315,20 +298,6 @@ export default async function HomePage() {
               <span>食事を記録</span>
             </Link>
           </div>
-          <Link
-            href="/guide"
-            className="mt-3 flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-50 border border-amber-100 active:scale-95"
-          >
-            <span className="text-sm font-semibold text-amber-700">食事ガイド（カロリー目安・食材）</span>
-            <span className="text-amber-400 text-sm">→</span>
-          </Link>
-          <Link
-            href="/review"
-            className="mt-3 flex items-center justify-between px-4 py-3 rounded-2xl bg-teal-50 border border-teal-100 active:scale-95"
-          >
-            <span className="text-sm font-semibold text-teal-700">今週のレビューを見る</span>
-            <span className="text-teal-400 text-sm">→</span>
-          </Link>
         </section>
 
         {/* Encouragement */}
