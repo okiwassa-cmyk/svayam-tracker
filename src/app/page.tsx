@@ -22,25 +22,22 @@ function formatDate(dateStr: string) {
 async function getTodayData() {
   const today = getTodayJST()
 
-  const [recordRes, habitLogsRes, habitsRes, settingsRes] = await Promise.all([
-    supabaseAdmin
-      .from('daily_records')
-      .select('*')
-      .eq('date', today)
-      .maybeSingle(),
-    supabaseAdmin
-      .from('habit_logs')
-      .select('*')
-      .eq('date', today),
-    supabaseAdmin
-      .from('habits')
-      .select('*')
-      .order('sort_order'),
-    supabaseAdmin
-      .from('user_settings')
-      .select('*')
-      .eq('id', 1)
-      .maybeSingle(),
+  // Get start of this week (Monday JST)
+  const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
+  const dayOfWeek = nowJST.getDay()
+  const monday = new Date(nowJST)
+  monday.setDate(nowJST.getDate() - ((dayOfWeek + 6) % 7))
+  const weekStart = monday.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-')
+
+  const [recordRes, habitLogsRes, habitsRes, settingsRes, exerciseRes, abhyangaRes, mealRes, fastingThisWeekRes] = await Promise.all([
+    supabaseAdmin.from('daily_records').select('*').eq('date', today).maybeSingle(),
+    supabaseAdmin.from('habit_logs').select('*').eq('date', today),
+    supabaseAdmin.from('habits').select('*').order('sort_order'),
+    supabaseAdmin.from('user_settings').select('*').eq('id', 1).maybeSingle(),
+    supabaseAdmin.from('exercise_logs').select('id').eq('date', today).limit(1),
+    supabaseAdmin.from('abhyanga_logs').select('id').eq('date', today).limit(1),
+    supabaseAdmin.from('meal_logs').select('meal_type,logged_at,skipped').eq('date', today),
+    supabaseAdmin.from('habit_logs').select('habit_id,completed').gte('date', weekStart).eq('completed', true),
   ])
 
   return {
@@ -49,11 +46,15 @@ async function getTodayData() {
     habitLogs: (habitLogsRes.data ?? []) as HabitLog[],
     habits: (habitsRes.data ?? []) as Habit[],
     settings: settingsRes.data as UserSettings | null,
+    exerciseDone: (exerciseRes.data?.length ?? 0) > 0,
+    abhyangaDone: (abhyangaRes.data?.length ?? 0) > 0,
+    meals: (mealRes.data ?? []) as { meal_type: string; logged_at: string | null; skipped: boolean }[],
+    fastingLogIds: (fastingThisWeekRes.data ?? []).map((l: { habit_id: string }) => l.habit_id),
   }
 }
 
 export default async function HomePage() {
-  const { today, record, habitLogs, habits, settings } = await getTodayData()
+  const { today, record, habitLogs, habits, settings, exerciseDone, abhyangaDone, meals, fastingLogIds } = await getTodayData()
 
   const experimentDay = settings?.start_date
     ? Math.floor((Date.now() - new Date(settings.start_date + 'T00:00:00+09:00').getTime()) / 86400000) + 1
@@ -64,6 +65,32 @@ export default async function HomePage() {
 
   const morningDone = record?.energy_level != null
   const eveningDone = record?.tier1_score != null
+
+  // 6大習慣の達成判定
+  const flags = record?.dinacharya_flags as Record<string, boolean> | null | undefined
+  const dinacharyaDoneCount = flags ? Object.values(flags).filter(Boolean).length : 0
+  const dinacharyaTotal = 7
+  const wakeOnTime = flags?.wake ?? false
+  const sleepOnTime = flags?.sleep ?? false
+
+  const dinnerMeal = meals.find((m) => m.meal_type === 'dinner')
+  const dinnerSkipped = dinnerMeal?.skipped === true
+  const dinnerBefore19 = !dinnerSkipped && dinnerMeal?.logged_at
+    ? new Date(dinnerMeal.logged_at).toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }) < '19:00'
+    : null
+
+  const fastingHabit = habits.find((h) => h.name === 'ファスティング')
+  const fastingThisWeek = fastingHabit ? fastingLogIds.includes(fastingHabit.id) : false
+
+  const keyHabits = [
+    { label: 'ディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, link: '/morning' },
+    { label: '起床 5:00', detail: wakeOnTime ? '達成' : '未確認', done: wakeOnTime, link: '/morning' },
+    { label: '就寝 22-23時', detail: sleepOnTime ? '達成' : '未確認', done: sleepOnTime, link: '/morning' },
+    { label: '運動', detail: exerciseDone ? '記録あり' : '未記録', done: exerciseDone, link: '/habits' },
+    { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '未記録', done: abhyangaDone, link: '/habits' },
+    { label: '夕食時間', detail: dinnerSkipped ? 'スキップ' : dinnerBefore19 === null ? '未記録' : dinnerBefore19 ? '19時前' : '19時以降', done: dinnerSkipped || dinnerBefore19 === true, link: '/meal' },
+    { label: 'アーマパーチャナ', detail: fastingThisWeek ? '今週達成' : '今週まだ', done: fastingThisWeek, link: '/habits' },
+  ]
 
   const phase = experimentDay != null && experimentDay > 0
     ? experimentDay <= 30 ? 1 : experimentDay <= 60 ? 2 : experimentDay <= 90 ? 3 : null
@@ -151,6 +178,31 @@ export default async function HomePage() {
               done={eveningDone}
               detail={eveningDone ? `T1:${record?.tier1_score} T2:${record?.tier2_score} T3:${record?.tier3_score}` : '未記録'}
             />
+          </div>
+        </section>
+
+        {/* Key Habits Achievement */}
+        <section className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-stone-500">今日の達成</h2>
+            <span className="text-xs text-teal-700 font-semibold">
+              {keyHabits.filter((h) => h.done).length}/{keyHabits.length}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-1.5">
+            {keyHabits.map((h) => (
+              <Link key={h.label} href={h.link} className="flex items-center gap-3 px-3 py-2 rounded-xl active:bg-stone-50">
+                <span className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center ${h.done ? 'bg-teal-600' : 'border-2 border-stone-200'}`}>
+                  {h.done && (
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </span>
+                <span className={`text-sm flex-1 ${h.done ? 'text-stone-500' : 'text-stone-700 font-medium'}`}>{h.label}</span>
+                <span className={`text-xs ${h.done ? 'text-teal-600' : 'text-stone-400'}`}>{h.detail}</span>
+              </Link>
+            ))}
           </div>
         </section>
 

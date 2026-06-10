@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import BottomNav from '@/components/BottomNav'
+import ExerciseLogger from '@/components/ExerciseLogger'
+import AbhyangaCheck from '@/components/AbhyangaCheck'
 import type { HabitWithLog } from '@/lib/types'
 
 const habitIcons: Record<string, string> = {
@@ -143,7 +145,7 @@ export default function HabitsPage() {
                       </span>
                     )}
                   </button>
-                  {editMode && (
+                  {editMode && habit.name === 'ファスティング' && (
                     <div className="px-4 pb-3">
                       <div className="flex gap-1.5">
                         {DAY_LABELS.map((label, i) => {
@@ -173,6 +175,9 @@ export default function HabitsPage() {
               ))}
             </div>
           </section>
+
+          <ExerciseLogger date={today} />
+          <AbhyangaCheck date={today} />
 
           {/* Progress bar */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">

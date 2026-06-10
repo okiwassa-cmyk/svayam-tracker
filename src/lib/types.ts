@@ -15,6 +15,13 @@ export type DailyRecord = {
   tier3_score: number | null
   calories: number | null
   note: string | null
+  morning_clarity: number | null
+  tongue_coating: number | null
+  tongue_color: number | null
+  morning_hunger: number | null
+  dinacharya_flags: Record<string, boolean> | null
+  asukken_photo_url: string | null
+  steps: number | null
   created_at: string
 }
 
@@ -59,6 +66,9 @@ export type MealLog = {
   advice: string | null
   image_url: string | null
   user_note: string | null
+  user_input: string | null
+  logged_at: string | null
+  skipped: boolean
   created_at: string
 }
 

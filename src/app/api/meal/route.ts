@@ -13,9 +13,25 @@ export async function POST(req: NextRequest) {
     const textDescription = formData.get('text_description') as string | null
     const date = formData.get('date') as string
     const mealType = formData.get('meal_type') as string
+    const loggedAt = formData.get('logged_at') as string | null
+    const skipped = formData.get('skipped') === 'true'
 
-    if ((!image && !textDescription) || !date) {
-      return NextResponse.json({ error: 'image or text_description and date are required' }, { status: 400 })
+    if (!date) {
+      return NextResponse.json({ error: 'date is required' }, { status: 400 })
+    }
+
+    // Handle skip without AI analysis
+    if (skipped) {
+      const { data, error } = await supabaseAdmin
+        .from('meal_logs')
+        .insert({ date, meal_type: mealType || 'breakfast', skipped: true, logged_at: loggedAt || new Date().toISOString() })
+        .select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ data, analysis: null })
+    }
+
+    if (!image && !textDescription) {
+      return NextResponse.json({ error: 'image or text_description required' }, { status: 400 })
     }
 
     const systemPrompt = `あなたはアーユルヴェーダ専門家です。ユーザーの体質：カファ・ピッタ（インドのドクター診断済み）
@@ -41,9 +57,12 @@ export async function POST(req: NextRequest) {
       const arrayBuffer = await image.arrayBuffer()
       const base64 = Buffer.from(arrayBuffer).toString('base64')
       const mediaType = image.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+      const textHint = textDescription?.trim()
+        ? `\n\nユーザーが入力した料理名・食材メモ（こちらを優先してください）：「${textDescription.trim()}」\n写真と合わせて正確に分析してください。`
+        : '\n\nこの食事写真を分析してください。'
       messageContent = [
         { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-        { type: 'text', text: `${systemPrompt}\n\nこの食事写真を分析してください。` },
+        { type: 'text', text: `${systemPrompt}${textHint}` },
       ]
     } else {
       messageContent = `${systemPrompt}\n\n次の食事を分析してください：${textDescription}`
@@ -95,6 +114,8 @@ export async function POST(req: NextRequest) {
         pitta_score: analysis.pitta_score,
         advice: analysis.advice,
         image_url: imageUrl,
+        user_input: textDescription?.trim() || null,
+        logged_at: loggedAt || new Date().toISOString(),
       })
       .select()
       .single()
@@ -144,12 +165,18 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, user_note } = await req.json()
+  const body = await req.json()
+  const { id } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  // Build update object with only provided fields
+  const updates: Record<string, unknown> = {}
+  if ('user_note' in body) updates.user_note = body.user_note
+  if ('logged_at' in body) updates.logged_at = body.logged_at
 
   const { data, error } = await supabaseAdmin
     .from('meal_logs')
-    .update({ user_note })
+    .update(updates)
     .eq('id', id)
     .select()
     .single()

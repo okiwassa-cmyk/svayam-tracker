@@ -33,6 +33,7 @@ export default function MealPage() {
   const [tab, setTab] = useState<'record' | 'history'>('record')
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
+  const [fileLoggedAt, setFileLoggedAt] = useState<string | null>(null)
   const [textInput, setTextInput] = useState('')
   const [mealType, setMealType] = useState('lunch')
   const [analyzing, setAnalyzing] = useState(false)
@@ -43,6 +44,7 @@ export default function MealPage() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingNote, setEditingNote] = useState<{ id: string; note: string } | null>(null)
+  const [editingTime, setEditingTime] = useState<{ id: string; time: string } | null>(null)
 
   const loadMeals = useCallback(async () => {
     const res = await fetch(`/api/meal?date=${today}`)
@@ -66,10 +68,26 @@ export default function MealPage() {
     const f = e.target.files?.[0]
     if (!f) return
     setFile(f)
+    setFileLoggedAt(new Date().toISOString())
     setResult(null)
     const reader = new FileReader()
     reader.onload = (ev) => setPreview(ev.target?.result as string)
     reader.readAsDataURL(f)
+  }
+
+  async function skipMeal(type: string) {
+    await fetch('/api/meal', {
+      method: 'POST',
+      body: (() => {
+        const fd = new FormData()
+        fd.append('date', today)
+        fd.append('meal_type', type)
+        fd.append('skipped', 'true')
+        fd.append('logged_at', new Date().toISOString())
+        return fd
+      })(),
+    })
+    loadMeals()
   }
 
   async function analyze() {
@@ -81,17 +99,50 @@ export default function MealPage() {
       if (textInput.trim()) fd.append('text_description', textInput.trim())
       fd.append('date', today)
       fd.append('meal_type', mealType)
+      if (fileLoggedAt) fd.append('logged_at', fileLoggedAt)
       const res = await fetch('/api/meal', { method: 'POST', body: fd })
       const { analysis, error } = await res.json()
       if (error) { alert('エラー: ' + error); return }
       setResult(analysis)
       setFile(null)
+      setFileLoggedAt(null)
       setPreview(null)
       setTextInput('')
       if (fileInputRef.current) fileInputRef.current.value = ''
       loadMeals()
     } finally {
       setAnalyzing(false)
+    }
+  }
+
+  async function shareMeal(meal: MealLog) {
+    const typeLabel = mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type
+    const timeStr = meal.logged_at
+      ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
+      : ''
+    const lines = [
+      `【${typeLabel}${timeStr ? ' ' + timeStr : ''}】`,
+      meal.user_input ?? '',
+      meal.description ?? '',
+      meal.calories_estimate ? `約 ${meal.calories_estimate} kcal` : '',
+      meal.advice ?? '',
+    ].filter(Boolean).join('\n')
+
+    try {
+      if (meal.image_url && navigator.canShare) {
+        const res = await fetch(meal.image_url)
+        const blob = await res.blob()
+        const ext = blob.type.split('/')[1] ?? 'jpg'
+        const file = new File([blob], `meal.${ext}`, { type: blob.type })
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text: lines })
+          return
+        }
+      }
+      await navigator.share({ text: lines })
+    } catch {
+      // user cancelled or not supported — fall back to clipboard
+      await navigator.clipboard.writeText(lines)
     }
   }
 
@@ -102,6 +153,23 @@ export default function MealPage() {
       body: JSON.stringify({ id, user_note: note || null }),
     })
     setEditingNote(null)
+    loadMeals()
+  }
+
+  async function saveTime(id: string, timeStr: string) {
+    // timeStr is "HH:MM", convert to full ISO using today's date in JST
+    const [h, m] = timeStr.split(':').map(Number)
+    const jstDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
+    jstDate.setHours(h, m, 0, 0)
+    // Convert back to UTC ISO
+    const utcMs = jstDate.getTime() - (9 * 60 * 60 * 1000)
+    const logged_at = new Date(utcMs).toISOString()
+    await fetch('/api/meal', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, logged_at }),
+    })
+    setEditingTime(null)
     loadMeals()
   }
 
@@ -144,13 +212,23 @@ export default function MealPage() {
       <div className="px-4 py-4 space-y-4">
         {tab === 'history' && <HistoryView history={history} loading={loadingHistory} mealTypes={mealTypes} scoreLabels={scoreLabels} expandedId={expandedId} setExpandedId={setExpandedId} />}
         {tab === 'record' && <>
+        {/* Skip buttons */}
+        {!meals.some((m) => m.meal_type === 'breakfast') && (
+          <button
+            onClick={() => skipMeal('breakfast')}
+            className="w-full py-3 rounded-2xl bg-stone-50 text-stone-400 text-sm font-medium active:bg-stone-100"
+          >
+            朝食を食べなかった
+          </button>
+        )}
+
         {/* Input section */}
         <section className="bg-white rounded-2xl overflow-hidden shadow-sm">
           {/* Photo area */}
           {preview ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="食事写真" className="w-full object-cover max-h-64" />
+              <img src={preview} alt="食事写真" className="w-full object-cover object-top max-h-64" />
               <button
                 onClick={() => { setPreview(null); setFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
                 className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs"
@@ -192,7 +270,7 @@ export default function MealPage() {
             <textarea
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
-              placeholder="食べたもの・食材をメモ（写真だけでもOK）"
+              placeholder="料理名・食材を入力（写真と一緒に解析されます）"
               className="w-full text-sm bg-stone-50 rounded-xl p-3 resize-none outline-none focus:ring-2 focus:ring-stone-400/30"
               rows={2}
             />
@@ -238,23 +316,63 @@ export default function MealPage() {
           ) : (
             <div className="space-y-3">
               {meals.map((meal) => (
-                <div key={meal.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  {meal.image_url && (
+                <div key={meal.id} className={`rounded-2xl shadow-sm overflow-hidden ${meal.skipped ? 'bg-stone-50' : 'bg-white'}`}>
+                  {!meal.skipped && meal.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover" />
+                    <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover object-top" />
                   )}
+                  {meal.skipped ? (
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-stone-400 font-medium">{mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}</span>
+                        <span className="text-xs text-stone-400">食べなかった</span>
+                      </div>
+                      <button onClick={() => deleteMeal(meal.id)} className="text-stone-300 text-xs active:text-red-400">✕</button>
+                    </div>
+                  ) : (
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs text-stone-400 font-medium">
-                          {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
-                        </span>
-                        <p className="font-semibold text-stone-700 text-sm mt-0.5">{meal.description}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-stone-400 font-medium">
+                            {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
+                          </span>
+                          {editingTime?.id === meal.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="time"
+                                value={editingTime.time}
+                                onChange={(e) => setEditingTime({ id: meal.id, time: e.target.value })}
+                                className="text-xs bg-stone-100 rounded px-1 py-0.5 outline-none"
+                              />
+                              <button onClick={() => saveTime(meal.id, editingTime.time)} className="text-xs text-teal-600 font-semibold">保存</button>
+                              <button onClick={() => setEditingTime(null)} className="text-xs text-stone-400">取消</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                const t = meal.logged_at
+                                  ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false })
+                                  : new Date().toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false })
+                                setEditingTime({ id: meal.id, time: t })
+                              }}
+                              className="text-xs text-stone-300 underline-offset-2 hover:underline"
+                            >
+                              {meal.logged_at
+                                ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
+                                : '時刻を設定'}
+                            </button>
+                          )}
+                        </div>
+                        {meal.user_input && (
+                          <p className="text-xs text-amber-700 font-semibold mt-0.5">{meal.user_input}</p>
+                        )}
+                        <p className="text-sm text-stone-500 mt-0.5">{meal.description}</p>
                         {meal.calories_estimate && (
                           <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
                         )}
                       </div>
-                      <div className="flex items-start gap-2">
+                      <div className="flex items-start gap-1">
                         <div className="flex flex-col gap-1 text-right">
                           {meal.kapha_score && (
                             <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
@@ -267,6 +385,14 @@ export default function MealPage() {
                             </span>
                           )}
                         </div>
+                        <button
+                          onClick={() => shareMeal(meal)}
+                          className="p-1.5 text-stone-300 active:text-stone-500 flex-shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+                          </svg>
+                        </button>
                         <button
                           onClick={() => deleteMeal(meal.id)}
                           className="p-1.5 text-stone-300 active:text-red-500 flex-shrink-0"
@@ -308,11 +434,22 @@ export default function MealPage() {
                       </button>
                     )}
                   </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </section>
+
+        {/* Dinner skip button */}
+        {!meals.some((m) => m.meal_type === 'dinner') && (
+          <button
+            onClick={() => skipMeal('dinner')}
+            className="w-full py-3 rounded-2xl bg-stone-50 text-stone-400 text-sm font-medium active:bg-stone-100"
+          >
+            夕食を食べなかった
+          </button>
+        )}
         </>}
       </div>
 
@@ -358,15 +495,25 @@ function HistoryView({
                 {/* Photo thumbnail */}
                 {meal.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover" />
+                  <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover object-top" />
                 )}
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs text-stone-400 font-medium">
-                        {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
-                      </span>
-                      <p className="font-semibold text-stone-700 text-sm mt-0.5 truncate">{meal.description}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-stone-400 font-medium">
+                          {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
+                        </span>
+                        {meal.logged_at && (
+                          <span className="text-xs text-stone-300">
+                            {new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                      {meal.user_input && (
+                        <p className="text-xs text-amber-700 font-semibold mt-0.5">{meal.user_input}</p>
+                      )}
+                      <p className="text-sm text-stone-500 mt-0.5 truncate">{meal.description}</p>
                       {meal.calories_estimate && (
                         <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
                       )}
