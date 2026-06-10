@@ -57,7 +57,7 @@ export default function MorningPage() {
 
   // Load existing data + check fasting schedule
   useEffect(() => {
-    fetch(`/api/record?date=${today}`)
+    fetch(`/api/record?date=${today}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then(({ data }) => {
         if (!data) return
