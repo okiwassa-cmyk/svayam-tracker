@@ -79,7 +79,7 @@ export default function ReviewPage() {
       `【アーユルヴェーダ実験 週次レビュー】`,
       `期間：${fmtDate(data.from)} 〜 ${fmtDate(data.to)}`,
       ``,
-      `◆ 習慣達成率：${data.avgHabitRate != null ? `${data.avgHabitRate}%` : '--'}`,
+      `◆ 習慣化率：${data.avgHabitRate != null ? `${data.avgHabitRate}%` : '--'}`,
       data.bestDay ? `  ベストデー：${fmtDate(data.bestDay.date)}（${data.bestDay.rate}%達成）` : '',
       ``,
       `◆ バイオデータ`,
@@ -147,7 +147,7 @@ export default function ReviewPage() {
         <div className="px-4 py-4 space-y-4">
           {/* Habit rate */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">
-            <h2 className="text-xs font-semibold text-stone-400 uppercase mb-3">習慣達成率</h2>
+            <h2 className="text-xs font-semibold text-stone-400 uppercase mb-3">習慣化率</h2>
             <div className="flex items-end gap-1 mb-2">
               {data.habitRates.map((r) => (
                 <div key={r.date} className="flex-1 flex flex-col items-center gap-1">
@@ -236,7 +236,6 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
         const dateLabel = `${dt.getMonth() + 1}/${dt.getDate()}(${DAY[dt.getDay()]})`
         const flags = r.dinacharya_flags as Record<string, boolean> | null
         const dinaDone = flags ? Object.values(flags).filter(Boolean).length : 0
-        const dinaTotal = flags ? Object.values(flags).length : 0
 
         return (
           <section key={r.date} className="bg-white rounded-2xl p-4 shadow-sm">
@@ -252,7 +251,7 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
               {r.agni && <DataCell label="アグニ" value={`${r.agni}/10`} />}
               {r.steps && <DataCell label="歩数" value={`${r.steps.toLocaleString()}`} />}
               {r.calories && <DataCell label="カロリー" value={`${r.calories}kcal`} />}
-              {dinaTotal > 0 && <DataCell label="ディナチャリア" value={`${dinaDone}/${dinaTotal}`} />}
+              {flags && <DataCell label="ディナチャリア" value={`${dinaDone}/9`} />}
             </div>
           </section>
         )

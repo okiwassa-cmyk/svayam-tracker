@@ -50,18 +50,12 @@ export async function GET() {
     fastingDates = new Set((fastingLogsRes.data ?? []).map((r: { date: string }) => r.date))
   }
 
-  // Per-day achievement（通常日4項目／断食日5項目）
-  // 1. 朝のディナチャリア（8項目・部分点）
-  // 2. 運動
-  // 3. アビヤンガ
-  // 4. 夕食時間（19時前 or スキップ）
-  // (5) ファスティング（金曜のみ）
-  const DINACHARYA_TOTAL = 9
+  // Per-day achievement（個別項目カウント＝ホームの習慣化率と同じ定義）
+  // 朝のディナチャリア9項目 + 運動 + アビヤンガ + 夕食 = 12（断食日のみ+ファスティング=13）
 
   const habitRates = records.map((r) => {
     const flags = r.dinacharya_flags as Record<string, boolean> | null
     const dinacharyaDoneCount = flags ? Object.values(flags).filter(Boolean).length : 0
-    const dinacharyaFraction = dinacharyaDoneCount / DINACHARYA_TOTAL
 
     const exerciseDone = exerciseDates.has(r.date)
     const abhyangaDone = abhyangaDates.has(r.date)
@@ -73,11 +67,11 @@ export async function GET() {
     const isFastingDay = fastingDays.includes(String(weekday))
     const fastingDone = fastingDates.has(r.date)
 
-    const totalItems = isFastingDay ? 5 : 4
-    let score = dinacharyaFraction + (exerciseDone ? 1 : 0) + (abhyangaDone ? 1 : 0) + (dinnerDone ? 1 : 0)
-    if (isFastingDay) score += fastingDone ? 1 : 0
+    const totalItems = isFastingDay ? 13 : 12
+    let done = dinacharyaDoneCount + (exerciseDone ? 1 : 0) + (abhyangaDone ? 1 : 0) + (dinnerDone ? 1 : 0)
+    if (isFastingDay && fastingDone) done += 1
 
-    return { date: r.date, rate: Math.round((score / totalItems) * 100) }
+    return { date: r.date, rate: Math.round((done / totalItems) * 100) }
   })
 
   const avgHabitRate = habitRates.length
