@@ -20,31 +20,65 @@ function getJSTWeekRange() {
 export async function GET() {
   const { from, to } = getJSTWeekRange()
 
-  const [recordsRes, habitLogsRes, habitsRes, mealsRes] = await Promise.all([
+  const [recordsRes, exerciseRes, abhyangaRes, mealsRes, fastingHabitRes] = await Promise.all([
     supabaseAdmin.from('daily_records').select('*').gte('date', from).lte('date', to).order('date'),
-    supabaseAdmin.from('habit_logs').select('date,completed,habit_id').gte('date', from).lte('date', to),
-    supabaseAdmin.from('habits').select('id,name,tier'),
-    supabaseAdmin.from('meal_logs').select('date,kapha_score,pitta_score,description').gte('date', from).lte('date', to),
+    supabaseAdmin.from('exercise_logs').select('date').gte('date', from).lte('date', to),
+    supabaseAdmin.from('abhyanga_logs').select('date').gte('date', from).lte('date', to),
+    supabaseAdmin.from('meal_logs').select('date,meal_type,logged_at,skipped,kapha_score').gte('date', from).lte('date', to),
+    supabaseAdmin.from('habits').select('id').eq('name', 'ファスティング').maybeSingle(),
   ])
 
   const records = recordsRes.data ?? []
-  const habitLogs = habitLogsRes.data ?? []
-  const habits = habitsRes.data ?? []
+  const exerciseDates = new Set((exerciseRes.data ?? []).map((r: { date: string }) => r.date))
+  const abhyangaDates = new Set((abhyangaRes.data ?? []).map((r: { date: string }) => r.date))
   const meals = mealsRes.data ?? []
-  const totalHabits = habits.length
+  const fastingHabitId = fastingHabitRes.data?.id ?? null
 
-  // Per-day habit completion
-  const habitByDate: Record<string, number> = {}
-  for (const log of habitLogs) {
-    if (!habitByDate[log.date]) habitByDate[log.date] = 0
-    if (log.completed) habitByDate[log.date]++
+  // Fetch fasting logs for the week if habit exists
+  let fastingDates = new Set<string>()
+  if (fastingHabitId) {
+    const fastingLogsRes = await supabaseAdmin
+      .from('habit_logs')
+      .select('date')
+      .eq('habit_id', fastingHabitId)
+      .eq('completed', true)
+      .gte('date', from)
+      .lte('date', to)
+    fastingDates = new Set((fastingLogsRes.data ?? []).map((r: { date: string }) => r.date))
   }
 
-  // Habit completion rates
-  const habitRates = records.map((r) => ({
-    date: r.date,
-    rate: totalHabits > 0 ? Math.round((habitByDate[r.date] ?? 0) / totalHabits * 100) : 0,
-  }))
+  // Per-day 7-item achievement
+  // 1. ディナチャリア（全項目）
+  // 2. 起床 5:00
+  // 3. 就寝 22-23時
+  // 4. 運動
+  // 5. アビヤンガ
+  // 6. 夕食時間（19時前 or スキップ）
+  // 7. アーマパーチャナ（ファスティング）
+  const TOTAL_ITEMS = 7
+
+  const habitRates = records.map((r) => {
+    const flags = r.dinacharya_flags as Record<string, boolean> | null
+    const flagValues = flags ? Object.values(flags) : []
+    const dinacharyaDone = flagValues.length >= 6 && flagValues.filter(Boolean).length === flagValues.length
+
+    const wakeDone = flags?.wake === true
+    const sleepDone = flags?.sleep === true
+    const exerciseDone = exerciseDates.has(r.date)
+    const abhyangaDone = abhyangaDates.has(r.date)
+
+    const dinnerMeal = meals.find((m) => m.date === r.date && m.meal_type === 'dinner')
+    const dinnerDone = dinnerMeal?.skipped === true || (
+      dinnerMeal?.logged_at
+        ? new Date(dinnerMeal.logged_at).toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }) < '19:00'
+        : false
+    )
+
+    const fastingDone = fastingDates.has(r.date)
+
+    const achieved = [dinacharyaDone, wakeDone, sleepDone, exerciseDone, abhyangaDone, dinnerDone, fastingDone].filter(Boolean).length
+    return { date: r.date, rate: Math.round((achieved / TOTAL_ITEMS) * 100) }
+  })
 
   const avgHabitRate = habitRates.length
     ? Math.round(habitRates.reduce((s, r) => s + r.rate, 0) / habitRates.length)
@@ -71,12 +105,13 @@ export async function GET() {
     ? +(withAgni.reduce((s, r) => s + r.agni!, 0) / withAgni.length).toFixed(1)
     : null
 
-  // Meal quality
-  const excellentMeals = meals.filter((m) => m.kapha_score === 'excellent').length
-  const cautionMeals = meals.filter((m) => ['caution', 'avoid'].includes(m.kapha_score ?? '')).length
+  // Meal quality (exclude skipped)
+  const mealLogs = meals.filter((m) => !m.skipped)
+  const excellentMeals = mealLogs.filter((m) => m.kapha_score === 'excellent').length
+  const cautionMeals = mealLogs.filter((m) => ['caution', 'avoid'].includes(m.kapha_score ?? '')).length
 
   // Best habit day
-  const bestDay = habitRates.sort((a, b) => b.rate - a.rate)[0] ?? null
+  const bestDay = [...habitRates].sort((a, b) => b.rate - a.rate)[0] ?? null
 
   return NextResponse.json({
     from,
@@ -91,7 +126,7 @@ export async function GET() {
     avgAgni,
     excellentMeals,
     cautionMeals,
-    totalMeals: meals.length,
+    totalMeals: mealLogs.length,
     bestDay,
   })
 }
