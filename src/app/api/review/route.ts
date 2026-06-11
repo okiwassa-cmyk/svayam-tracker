@@ -25,7 +25,7 @@ export async function GET() {
     supabaseAdmin.from('exercise_logs').select('date').gte('date', from).lte('date', to),
     supabaseAdmin.from('abhyanga_logs').select('date').gte('date', from).lte('date', to),
     supabaseAdmin.from('meal_logs').select('date,meal_type,logged_at,skipped,kapha_score').gte('date', from).lte('date', to),
-    supabaseAdmin.from('habits').select('id').eq('name', 'ファスティング').maybeSingle(),
+    supabaseAdmin.from('habits').select('id,days_of_week').eq('name', 'ファスティング').maybeSingle(),
   ])
 
   const records = recordsRes.data ?? []
@@ -33,6 +33,9 @@ export async function GET() {
   const abhyangaDates = new Set((abhyangaRes.data ?? []).map((r: { date: string }) => r.date))
   const meals = mealsRes.data ?? []
   const fastingHabitId = fastingHabitRes.data?.id ?? null
+  const fastingDays = fastingHabitRes.data?.days_of_week
+    ? String(fastingHabitRes.data.days_of_week).split(',')
+    : ['5']
 
   // Fetch fasting logs for the week if habit exists
   let fastingDates = new Set<string>()
@@ -47,23 +50,19 @@ export async function GET() {
     fastingDates = new Set((fastingLogsRes.data ?? []).map((r: { date: string }) => r.date))
   }
 
-  // Per-day 7-item achievement
-  // 1. ディナチャリア（全項目）
-  // 2. 起床 5:00
-  // 3. 就寝 22-23時
-  // 4. 運動
-  // 5. アビヤンガ
-  // 6. 夕食時間（19時前 or スキップ）
-  // 7. アーマパーチャナ（ファスティング）
-  const TOTAL_ITEMS = 7
+  // Per-day achievement（通常日4項目／断食日5項目）
+  // 1. 朝のディナチャリア（8項目・部分点）
+  // 2. 運動
+  // 3. アビヤンガ
+  // 4. 夕食時間（19時前 or スキップ）
+  // (5) ファスティング（金曜のみ）
+  const DINACHARYA_TOTAL = 8
 
   const habitRates = records.map((r) => {
     const flags = r.dinacharya_flags as Record<string, boolean> | null
-    const flagValues = flags ? Object.values(flags) : []
-    const dinacharyaDone = flagValues.length >= 6 && flagValues.filter(Boolean).length === flagValues.length
+    const dinacharyaDoneCount = flags ? Object.values(flags).filter(Boolean).length : 0
+    const dinacharyaFraction = dinacharyaDoneCount / DINACHARYA_TOTAL
 
-    const wakeDone = flags?.wake === true
-    const sleepDone = flags?.sleep === true
     const exerciseDone = exerciseDates.has(r.date)
     const abhyangaDone = abhyangaDates.has(r.date)
 
@@ -74,10 +73,15 @@ export async function GET() {
         : false
     )
 
+    const weekday = new Date(r.date + 'T00:00:00+09:00').getDay()
+    const isFastingDay = fastingDays.includes(String(weekday))
     const fastingDone = fastingDates.has(r.date)
 
-    const achieved = [dinacharyaDone, wakeDone, sleepDone, exerciseDone, abhyangaDone, dinnerDone, fastingDone].filter(Boolean).length
-    return { date: r.date, rate: Math.round((achieved / TOTAL_ITEMS) * 100) }
+    const totalItems = isFastingDay ? 5 : 4
+    let score = dinacharyaFraction + (exerciseDone ? 1 : 0) + (abhyangaDone ? 1 : 0) + (dinnerDone ? 1 : 0)
+    if (isFastingDay) score += fastingDone ? 1 : 0
+
+    return { date: r.date, rate: Math.round((score / totalItems) * 100) }
   })
 
   const avgHabitRate = habitRates.length

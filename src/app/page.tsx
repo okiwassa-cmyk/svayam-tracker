@@ -68,34 +68,39 @@ export default async function HomePage() {
   const morningDone = record?.energy_level != null
   const eveningDone = record?.dinner_time != null
 
-  // 6大習慣の達成判定
+  // 今日の達成判定（朝のディナチャリアは部分点・断食は金曜のみ）
   const flags = record?.dinacharya_flags as Record<string, boolean> | null | undefined
   const dinacharyaDoneCount = flags ? Object.values(flags).filter(Boolean).length : 0
   const dinacharyaTotal = 8
-  const wakeOnTime = flags?.wake ?? false
-  const sleepOnTime = flags?.sleep ?? false
+  const dinacharyaFraction = dinacharyaTotal > 0 ? dinacharyaDoneCount / dinacharyaTotal : 0
 
   const dinnerMeal = meals.find((m) => m.meal_type === 'dinner')
   const dinnerSkipped = dinnerMeal?.skipped === true
   const dinnerBefore19 = !dinnerSkipped && dinnerMeal?.logged_at
     ? new Date(dinnerMeal.logged_at).toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }) < '19:00'
     : null
+  const dinnerDone = dinnerSkipped || dinnerBefore19 === true
 
+  const todayWeekday = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })).getDay()
   const fastingHabit = habits.find((h) => h.name === 'ファスティング')
   const fastingThisWeek = fastingHabit ? fastingLogIds.includes(fastingHabit.id) : false
+  const fastingDays = fastingHabit?.days_of_week ? String(fastingHabit.days_of_week).split(',') : ['5']
+  const isFastingDay = fastingDays.includes(String(todayWeekday))
 
   const mealLogs = meals.filter((m) => !m.skipped)
   const excellentMeals = mealLogs.filter((m) => m.kapha_score === 'excellent').length
 
   const keyHabits = [
-    { label: 'ディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, link: '/morning' },
-    { label: '起床 5:00', detail: wakeOnTime ? '達成' : '未確認', done: wakeOnTime, link: '/morning' },
-    { label: '就寝 22-23時', detail: sleepOnTime ? '達成' : '未確認', done: sleepOnTime, link: '/morning' },
-    { label: '運動', detail: exerciseDone ? '記録あり' : '未記録', done: exerciseDone, link: '/habits' },
-    { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '未記録', done: abhyangaDone, link: '/habits' },
-    { label: '夕食時間', detail: dinnerSkipped ? 'スキップ' : dinnerBefore19 === null ? '未記録' : dinnerBefore19 ? '19時前' : '19時以降', done: dinnerSkipped || dinnerBefore19 === true, link: '/meal' },
-    { label: 'アーマパーチャナ', detail: fastingThisWeek ? '今週達成' : '今週まだ', done: fastingThisWeek, link: '/habits' },
+    { label: '朝のディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, fraction: dinacharyaFraction, link: '/morning', ama: false },
+    { label: '運動', detail: exerciseDone ? '記録あり' : '未記録', done: exerciseDone, fraction: exerciseDone ? 1 : 0, link: '/habits', ama: false },
+    { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '未記録', done: abhyangaDone, fraction: abhyangaDone ? 1 : 0, link: '/habits', ama: false },
+    { label: '夕食時間', detail: dinnerSkipped ? 'スキップ' : dinnerBefore19 === null ? '未記録' : dinnerBefore19 ? '19時前' : '19時以降', done: dinnerDone, fraction: dinnerDone ? 1 : 0, link: '/meal', ama: false },
+    ...(isFastingDay ? [{ label: 'ファスティング', detail: fastingThisWeek ? '達成' : 'まだ', done: fastingThisWeek, fraction: fastingThisWeek ? 1 : 0, link: '/habits', ama: true }] : []),
   ]
+
+  const achievementScore = keyHabits.reduce((sum, h) => sum + h.fraction, 0)
+  const achievementTotal = keyHabits.length
+  const achievementLabel = Number.isInteger(achievementScore) ? String(achievementScore) : achievementScore.toFixed(1)
 
   const phase = experimentDay != null && experimentDay > 0
     ? experimentDay <= 30 ? 1 : experimentDay <= 60 ? 2 : experimentDay <= 90 ? 3 : null
@@ -191,12 +196,12 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-stone-500">今日の達成</h2>
             <span className="text-xs text-teal-700 font-semibold">
-              {keyHabits.filter((h) => h.done).length}/{keyHabits.length}
+              {achievementLabel}/{achievementTotal}
             </span>
           </div>
           <div className="grid grid-cols-1 gap-1.5">
             {keyHabits.map((h) => {
-              const isAma = h.label === 'アーマパーチャナ'
+              const isAma = h.ama
               return (
                 <Link key={h.label} href={h.link} className={`flex items-center gap-3 px-3 py-2 rounded-xl active:bg-stone-50 ${isAma && h.done ? 'bg-amber-50' : ''}`}>
                   {isAma ? (
@@ -281,7 +286,7 @@ export default async function HomePage() {
 
         {/* Encouragement */}
         <EncouragementCard
-          keyScore={{ done: keyHabits.filter((h) => h.done).length, total: keyHabits.length }}
+          keyScore={{ done: Math.round(achievementScore * 10) / 10, total: achievementTotal }}
           weight={record?.weight ?? null}
           calories={record?.calories ?? null}
           energy={record?.energy_level ?? null}
