@@ -56,7 +56,7 @@ export async function GET() {
   // 3. アビヤンガ
   // 4. 夕食時間（19時前 or スキップ）
   // (5) ファスティング（金曜のみ）
-  const DINACHARYA_TOTAL = 8
+  const DINACHARYA_TOTAL = 9
 
   const habitRates = records.map((r) => {
     const flags = r.dinacharya_flags as Record<string, boolean> | null
@@ -66,12 +66,8 @@ export async function GET() {
     const exerciseDone = exerciseDates.has(r.date)
     const abhyangaDone = abhyangaDates.has(r.date)
 
-    const dinnerMeal = meals.find((m) => m.date === r.date && m.meal_type === 'dinner')
-    const dinnerDone = dinnerMeal?.skipped === true || (
-      dinnerMeal?.logged_at
-        ? new Date(dinnerMeal.logged_at).toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }) < '19:00'
-        : false
-    )
+    // 夕食は朝の入力（昨夜の夕食 dinner_time）ベース。0=食べなかった/1=18時台/2=19時台で達成、3=20時以降は未達成
+    const dinnerDone = r.dinner_time === 0 || r.dinner_time === 1 || r.dinner_time === 2
 
     const weekday = new Date(r.date + 'T00:00:00+09:00').getDay()
     const isFastingDay = fastingDays.includes(String(weekday))

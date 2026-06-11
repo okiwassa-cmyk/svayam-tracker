@@ -68,15 +68,17 @@ export default async function HomePage() {
   // 今日の達成判定（朝のディナチャリアは部分点・断食は金曜のみ）
   const flags = record?.dinacharya_flags as Record<string, boolean> | null | undefined
   const dinacharyaDoneCount = flags ? Object.values(flags).filter(Boolean).length : 0
-  const dinacharyaTotal = 8
+  const dinacharyaTotal = 9
   const dinacharyaFraction = dinacharyaTotal > 0 ? dinacharyaDoneCount / dinacharyaTotal : 0
 
-  const dinnerMeal = meals.find((m) => m.meal_type === 'dinner')
-  const dinnerSkipped = dinnerMeal?.skipped === true
-  const dinnerBefore19 = !dinnerSkipped && dinnerMeal?.logged_at
-    ? new Date(dinnerMeal.logged_at).toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }) < '19:00'
-    : null
-  const dinnerDone = dinnerSkipped || dinnerBefore19 === true
+  // 夕食は朝の入力（昨夜の夕食 daily_records.dinner_time）ベース。0=食べなかった/1=18時台/2=19時台/3=20時以降
+  const dinnerTime = record?.dinner_time ?? null
+  const dinnerSkipped = dinnerTime === 0
+  const dinnerDone = dinnerTime === 0 || dinnerTime === 1 || dinnerTime === 2
+  const dinnerDetail = dinnerTime == null ? '未記録'
+    : dinnerTime === 0 ? '食べなかった'
+    : dinnerTime === 1 ? '18時台'
+    : dinnerTime === 2 ? '19時台' : '20時以降'
 
   const todayWeekday = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })).getDay()
   const fastingHabit = habits.find((h) => h.name === 'ファスティング')
@@ -91,7 +93,7 @@ export default async function HomePage() {
     { label: '朝のディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, fraction: dinacharyaFraction, link: '/morning', ama: false },
     { label: '運動', detail: exerciseDone ? '記録あり' : '未記録', done: exerciseDone, fraction: exerciseDone ? 1 : 0, link: '/habits', ama: false },
     { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '未記録', done: abhyangaDone, fraction: abhyangaDone ? 1 : 0, link: '/habits', ama: false },
-    { label: '夕食時間', detail: dinnerSkipped ? 'スキップ' : dinnerBefore19 === null ? '未記録' : dinnerBefore19 ? '19時前' : '19時以降', done: dinnerDone, fraction: dinnerDone ? 1 : 0, link: '/meal', ama: false },
+    { label: '夕食時間', detail: dinnerDetail, done: dinnerDone, fraction: dinnerDone ? 1 : 0, link: '/morning', ama: false },
     ...(isFastingDay ? [{ label: 'ファスティング', detail: fastingThisWeek ? '達成' : 'まだ', done: fastingThisWeek, fraction: fastingThisWeek ? 1 : 0, link: '/habits', ama: true }] : []),
   ]
 
@@ -99,13 +101,13 @@ export default async function HomePage() {
   const achievementTotal = keyHabits.length
   const achievementLabel = Number.isInteger(achievementScore) ? String(achievementScore) : achievementScore.toFixed(1)
 
-  // 習慣化率（個別項目カウント：朝のディナチャリア8 + 運動 + アビヤンガ + 夕食 = 11、金曜のみ+ファスティング=12）
+  // 習慣化率（個別項目カウント：朝のディナチャリア9 + 運動 + アビヤンガ + 夕食 = 12、金曜のみ+ファスティング=13）
   const habitFormationDone = dinacharyaDoneCount
     + (exerciseDone ? 1 : 0)
     + (abhyangaDone ? 1 : 0)
     + (dinnerDone ? 1 : 0)
     + (isFastingDay && fastingThisWeek ? 1 : 0)
-  const habitFormationTotal = isFastingDay ? 12 : 11
+  const habitFormationTotal = isFastingDay ? 13 : 12
   const habitFormationRate = Math.round((habitFormationDone / habitFormationTotal) * 100)
 
   const phase = experimentDay != null && experimentDay > 0
@@ -192,7 +194,7 @@ export default async function HomePage() {
             <StatusCard
               label="昨夜の夕食"
               done={eveningDone}
-              detail={eveningDone ? `${['18時台','19時台','20時以降'][((record?.dinner_time ?? 1) as number) - 1]} / ${['軽め','普通','重め'][((record?.dinner_amount ?? 1) as number) - 1]}` : '未記録'}
+              detail={!eveningDone ? '未記録' : dinnerSkipped ? '食べなかった' : `${dinnerDetail} / ${['軽め','普通','重め'][((record?.dinner_amount ?? 1) as number) - 1]}`}
             />
           </div>
         </section>
@@ -244,7 +246,7 @@ export default async function HomePage() {
             />
           </div>
           <p className="mt-2 text-xs text-stone-400">
-            朝のディナチャリア{dinacharyaDoneCount}/8・運動{exerciseDone ? '○' : '×'}・アビヤンガ{abhyangaDone ? '○' : '×'}・夕食{dinnerDone ? '○' : '×'}{isFastingDay ? `・断食${fastingThisWeek ? '○' : '×'}` : ''}
+            朝のディナチャリア{dinacharyaDoneCount}/9・運動{exerciseDone ? '○' : '×'}・アビヤンガ{abhyangaDone ? '○' : '×'}・夕食{dinnerDone ? '○' : '×'}{isFastingDay ? `・断食${fastingThisWeek ? '○' : '×'}` : ''}
           </p>
         </section>
 
