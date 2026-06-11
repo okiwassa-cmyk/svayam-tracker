@@ -14,18 +14,36 @@ function getTodayJST() {
 }
 
 const scoreLabels = {
-  excellent: { text: '◎ 優秀', class: 'bg-green-100 text-green-700' },
-  good: { text: '○ 良い', class: 'bg-blue-100 text-blue-700' },
-  caution: { text: '△ 注意', class: 'bg-amber-100 text-amber-700' },
-  avoid: { text: '✗ 避けて', class: 'bg-red-100 text-red-700' },
+  excellent: { text: '◎ 優秀', short: '◎', class: 'bg-green-100 text-green-700' },
+  good:      { text: '○ 良い', short: '○', class: 'bg-blue-100 text-blue-700' },
+  caution:   { text: '△ 注意', short: '△', class: 'bg-amber-100 text-amber-700' },
+  avoid:     { text: '✗ 避けて', short: '✗', class: 'bg-red-100 text-red-700' },
 }
 
 const mealTypes = [
   { value: 'breakfast', label: '朝食' },
-  { value: 'lunch', label: '昼食' },
-  { value: 'dinner', label: '夕食' },
-  { value: 'snack', label: '間食' },
+  { value: 'lunch',     label: '昼食' },
+  { value: 'dinner',    label: '夕食' },
+  { value: 'snack',     label: '間食' },
 ]
+
+function formatNoteForCopy(meal: MealLog) {
+  const typeLabel = mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type
+  const timeStr = meal.logged_at
+    ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
+    : ''
+  const kapha = scoreLabels[meal.kapha_score as keyof typeof scoreLabels]
+  const pitta = scoreLabels[meal.pitta_score as keyof typeof scoreLabels]
+
+  return [
+    `【${typeLabel}${timeStr ? ' ' + timeStr : ''}】`,
+    meal.user_input ?? '',
+    meal.calories_estimate ? `約 ${meal.calories_estimate} kcal` : '',
+    kapha || pitta ? `カファ：${kapha?.short ?? '--'} / ピッタ：${pitta?.short ?? '--'}` : '',
+    meal.advice ? `\nアドバイス：\n${meal.advice}` : '',
+    meal.user_note ? `\nメモ：${meal.user_note}` : '',
+  ].filter(Boolean).join('\n')
+}
 
 export default function MealPage() {
   const today = getTodayJST()
@@ -37,15 +55,14 @@ export default function MealPage() {
   const [textInput, setTextInput] = useState('')
   const [mealType, setMealType] = useState('lunch')
   const [analyzing, setAnalyzing] = useState(false)
-  const [result, setResult] = useState<{ description: string; calories_estimate: number; kapha_score: string; pitta_score: string; advice: string } | null>(null)
   const [meals, setMeals] = useState<MealLog[]>([])
   const [history, setHistory] = useState<MealLog[]>([])
   const [loadingMeals, setLoadingMeals] = useState(true)
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingNote, setEditingNote] = useState<{ id: string; note: string } | null>(null)
   const [editingTime, setEditingTime] = useState<{ id: string; time: string } | null>(null)
   const [hungryBefore, setHungryBefore] = useState<boolean | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const loadMeals = useCallback(async () => {
     const res = await fetch(`/api/meal?date=${today}`, { cache: 'no-store' })
@@ -70,7 +87,6 @@ export default function MealPage() {
     if (!f) return
     setFile(f)
     setFileLoggedAt(new Date().toISOString())
-    setResult(null)
     const reader = new FileReader()
     reader.onload = (ev) => setPreview(ev.target?.result as string)
     reader.readAsDataURL(f)
@@ -103,9 +119,8 @@ export default function MealPage() {
       if (fileLoggedAt) fd.append('logged_at', fileLoggedAt)
       if (hungryBefore !== null) fd.append('hungry_before', String(hungryBefore))
       const res = await fetch('/api/meal', { method: 'POST', body: fd })
-      const { analysis, error } = await res.json()
+      const { error } = await res.json()
       if (error) { alert('エラー: ' + error); return }
-      setResult(analysis)
       setFile(null)
       setFileLoggedAt(null)
       setPreview(null)
@@ -118,35 +133,27 @@ export default function MealPage() {
     }
   }
 
-  async function shareMeal(meal: MealLog) {
-    const typeLabel = mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type
-    const timeStr = meal.logged_at
-      ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
-      : ''
-    const lines = [
-      `【${typeLabel}${timeStr ? ' ' + timeStr : ''}】`,
-      meal.user_input ?? '',
-      meal.description ?? '',
-      meal.calories_estimate ? `約 ${meal.calories_estimate} kcal` : '',
-      meal.advice ?? '',
-    ].filter(Boolean).join('\n')
-
+  async function copyMeal(meal: MealLog) {
+    const text = formatNoteForCopy(meal)
     try {
       if (meal.image_url && navigator.canShare) {
         const res = await fetch(meal.image_url)
         const blob = await res.blob()
         const ext = blob.type.split('/')[1] ?? 'jpg'
-        const file = new File([blob], `meal.${ext}`, { type: blob.type })
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], text: lines })
+        const f = new File([blob], `meal.${ext}`, { type: blob.type })
+        if (navigator.canShare({ files: [f] })) {
+          await navigator.share({ files: [f], text })
           return
         }
       }
-      await navigator.share({ text: lines })
-    } catch {
-      // user cancelled or not supported — fall back to clipboard
-      await navigator.clipboard.writeText(lines)
-    }
+      if (navigator.share) {
+        await navigator.share({ text })
+        return
+      }
+    } catch { /* cancelled or not supported */ }
+    await navigator.clipboard.writeText(text)
+    setCopiedId(meal.id)
+    setTimeout(() => setCopiedId(null), 2000)
   }
 
   async function saveNote(id: string, note: string) {
@@ -160,11 +167,9 @@ export default function MealPage() {
   }
 
   async function saveTime(id: string, timeStr: string) {
-    // timeStr is "HH:MM", convert to full ISO using today's date in JST
     const [h, m] = timeStr.split(':').map(Number)
     const jstDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
     jstDate.setHours(h, m, 0, 0)
-    // Convert back to UTC ISO
     const utcMs = jstDate.getTime() - (9 * 60 * 60 * 1000)
     const logged_at = new Date(utcMs).toISOString()
     await fetch('/api/meal', {
@@ -186,10 +191,8 @@ export default function MealPage() {
       <header className="bg-stone-600 text-white px-4 pt-12 pb-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">食事記録</h1>
-          <a href="/guide" className="text-xs bg-stone-500/60 px-3 py-1.5 rounded-full text-stone-200 font-semibold">食事ガイド</a>
         </div>
         <p className="text-stone-300 text-sm mt-0.5">ドーシャ判定・過去の記録</p>
-        {/* Tab bar */}
         <div className="flex gap-1 mt-4 bg-stone-500/40 rounded-xl p-1">
           <button
             onClick={() => setTab('record')}
@@ -203,19 +206,21 @@ export default function MealPage() {
           >
             履歴
           </button>
-          <a
-            href="/guide"
-            className="flex-1 py-1.5 rounded-lg text-sm font-semibold text-center text-stone-200"
-          >
-            ガイド
-          </a>
         </div>
       </header>
 
       <div className="px-4 py-4 space-y-4">
-        {tab === 'history' && <HistoryView history={history} loading={loadingHistory} mealTypes={mealTypes} scoreLabels={scoreLabels} expandedId={expandedId} setExpandedId={setExpandedId} />}
+        {tab === 'history' && (
+          <HistoryView
+            history={history}
+            loading={loadingHistory}
+            mealTypes={mealTypes}
+            scoreLabels={scoreLabels}
+            copiedId={copiedId}
+            onCopy={copyMeal}
+          />
+        )}
         {tab === 'record' && <>
-        {/* Skip buttons */}
         {!meals.some((m) => m.meal_type === 'breakfast') && (
           <button
             onClick={() => skipMeal('breakfast')}
@@ -227,7 +232,6 @@ export default function MealPage() {
 
         {/* Input section */}
         <section className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          {/* Photo area */}
           {preview ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -254,7 +258,6 @@ export default function MealPage() {
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
 
           <div className="p-4 space-y-3">
-            {/* Meal type */}
             <div className="flex gap-2">
               {mealTypes.map((m) => (
                 <button
@@ -269,7 +272,6 @@ export default function MealPage() {
               ))}
             </div>
 
-            {/* Hungry before */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-stone-500 flex-shrink-0">食前お腹が空いていた？</span>
               <div className="flex gap-1.5 ml-auto">
@@ -288,7 +290,6 @@ export default function MealPage() {
               </div>
             </div>
 
-            {/* Text input */}
             <textarea
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
@@ -297,7 +298,6 @@ export default function MealPage() {
               rows={2}
             />
 
-            {/* Analyze button */}
             <button
               onClick={analyze}
               disabled={(!file && !textInput.trim()) || analyzing}
@@ -310,24 +310,6 @@ export default function MealPage() {
           </div>
         </section>
 
-        {/* Result */}
-        {result && (
-          <section className="bg-green-50 border border-green-200 rounded-2xl p-4">
-            <h3 className="font-bold text-green-800 mb-2">✅ 判定結果</h3>
-            <p className="text-stone-700 font-semibold mb-1">🍽 {result.description}</p>
-            <p className="text-stone-500 text-sm mb-3">約 {result.calories_estimate} kcal</p>
-            <div className="flex gap-2 mb-3">
-              <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${scoreLabels[result.kapha_score as keyof typeof scoreLabels]?.class ?? 'bg-stone-100 text-stone-500'}`}>
-                カファ {scoreLabels[result.kapha_score as keyof typeof scoreLabels]?.text}
-              </span>
-              <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${scoreLabels[result.pitta_score as keyof typeof scoreLabels]?.class ?? 'bg-stone-100 text-stone-500'}`}>
-                ピッタ {scoreLabels[result.pitta_score as keyof typeof scoreLabels]?.text}
-              </span>
-            </div>
-            <p className="text-sm text-stone-600 bg-white rounded-xl p-3">{result.advice}</p>
-          </section>
-        )}
-
         {/* Today's meals */}
         <section>
           <h2 className="text-sm font-semibold text-stone-500 mb-3">今日の食事記録</h2>
@@ -338,135 +320,28 @@ export default function MealPage() {
           ) : (
             <div className="space-y-3">
               {meals.map((meal) => (
-                <div key={meal.id} className={`rounded-2xl shadow-sm overflow-hidden ${meal.skipped ? 'bg-stone-50' : 'bg-white'}`}>
-                  {!meal.skipped && meal.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover object-top" />
-                  )}
-                  {meal.skipped ? (
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-stone-400 font-medium">{mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}</span>
-                        <span className="text-xs text-stone-400">食べなかった</span>
-                      </div>
-                      <button onClick={() => deleteMeal(meal.id)} className="text-stone-300 text-xs active:text-red-400">✕</button>
-                    </div>
-                  ) : (
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-stone-400 font-medium">
-                            {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
-                          </span>
-                          {editingTime?.id === meal.id ? (
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="time"
-                                value={editingTime.time}
-                                onChange={(e) => setEditingTime({ id: meal.id, time: e.target.value })}
-                                className="text-xs bg-stone-100 rounded px-1 py-0.5 outline-none"
-                              />
-                              <button onClick={() => saveTime(meal.id, editingTime.time)} className="text-xs text-teal-600 font-semibold">保存</button>
-                              <button onClick={() => setEditingTime(null)} className="text-xs text-stone-400">取消</button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                const t = meal.logged_at
-                                  ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false })
-                                  : new Date().toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false })
-                                setEditingTime({ id: meal.id, time: t })
-                              }}
-                              className="text-xs text-stone-300 underline-offset-2 hover:underline"
-                            >
-                              {meal.logged_at
-                                ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
-                                : '時刻を設定'}
-                            </button>
-                          )}
-                        </div>
-                        {meal.user_input && (
-                          <p className="text-xs text-amber-700 font-semibold mt-0.5">{meal.user_input}</p>
-                        )}
-                        <p className="text-sm text-stone-500 mt-0.5">{meal.description}</p>
-                        {meal.calories_estimate && (
-                          <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
-                        )}
-                        {meal.hungry_before !== null && meal.hungry_before !== undefined && (
-                          <p className="text-xs text-stone-400">食前: {meal.hungry_before ? '空腹あり' : '空腹なし'}</p>
-                        )}
-                      </div>
-                      <div className="flex items-start gap-1">
-                        <div className="flex flex-col gap-1 text-right">
-                          {meal.kapha_score && (
-                            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
-                              カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                            </span>
-                          )}
-                          {meal.pitta_score && (
-                            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
-                              ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => shareMeal(meal)}
-                          className="p-1.5 text-stone-300 active:text-stone-500 flex-shrink-0"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => deleteMeal(meal.id)}
-                          className="p-1.5 text-stone-300 active:text-red-500 flex-shrink-0"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    {meal.advice && (
-                      <p className="text-xs text-stone-500 mt-2 bg-stone-50 rounded-lg p-2">{meal.advice}</p>
-                    )}
-                    {/* User note */}
-                    {editingNote?.id === meal.id ? (
-                      <div className="mt-2 flex gap-2">
-                        <textarea
-                          value={editingNote.note}
-                          onChange={(e) => setEditingNote({ id: meal.id, note: e.target.value })}
-                          placeholder="メモを追加..."
-                          rows={2}
-                          className="flex-1 text-xs bg-stone-50 rounded-lg p-2 outline-none focus:ring-2 focus:ring-stone-400/30 resize-none"
-                          autoFocus
-                        />
-                        <div className="flex flex-col gap-1">
-                          <button onClick={() => saveNote(meal.id, editingNote.note)} className="text-xs bg-stone-700 text-white px-2 py-1 rounded-lg">保存</button>
-                          <button onClick={() => setEditingNote(null)} className="text-xs bg-stone-100 text-stone-500 px-2 py-1 rounded-lg">取消</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setEditingNote({ id: meal.id, note: meal.user_note ?? '' })}
-                        className="mt-2 w-full text-left"
-                      >
-                        {meal.user_note
-                          ? <p className="text-xs text-stone-600 bg-amber-50 rounded-lg p-2">{meal.user_note}</p>
-                          : <p className="text-xs text-stone-300 mt-1">+ メモを追加</p>
-                        }
-                      </button>
-                    )}
-                  </div>
-                  )}
-                </div>
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  mealTypes={mealTypes}
+                  scoreLabels={scoreLabels}
+                  copiedId={copiedId}
+                  editingTime={editingTime}
+                  editingNote={editingNote}
+                  onCopy={copyMeal}
+                  onDelete={deleteMeal}
+                  onEditTime={(id, time) => setEditingTime({ id, time })}
+                  onSaveTime={saveTime}
+                  onCancelTime={() => setEditingTime(null)}
+                  onEditNote={(id, note) => setEditingNote({ id, note })}
+                  onSaveNote={saveNote}
+                  onCancelNote={() => setEditingNote(null)}
+                />
               ))}
             </div>
           )}
         </section>
 
-        {/* Dinner skip button */}
         {!meals.some((m) => m.meal_type === 'dinner') && (
           <button
             onClick={() => skipMeal('dinner')}
@@ -483,20 +358,177 @@ export default function MealPage() {
   )
 }
 
+function MealCard({
+  meal, mealTypes, scoreLabels, copiedId, editingTime, editingNote,
+  onCopy, onDelete, onEditTime, onSaveTime, onCancelTime, onEditNote, onSaveNote, onCancelNote,
+}: {
+  meal: MealLog
+  mealTypes: { value: string; label: string }[]
+  scoreLabels: Record<string, { text: string; short: string; class: string }>
+  copiedId: string | null
+  editingTime: { id: string; time: string } | null
+  editingNote: { id: string; note: string } | null
+  onCopy: (meal: MealLog) => void
+  onDelete: (id: string) => void
+  onEditTime: (id: string, time: string) => void
+  onSaveTime: (id: string, time: string) => void
+  onCancelTime: () => void
+  onEditNote: (id: string, note: string) => void
+  onSaveNote: (id: string, note: string) => void
+  onCancelNote: () => void
+}) {
+  const typeLabel = mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type
+  const timeStr = meal.logged_at
+    ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
+    : null
+
+  if (meal.skipped) {
+    return (
+      <div className="flex items-center justify-between px-4 py-3 bg-stone-50 rounded-2xl">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-stone-400 font-medium">{typeLabel}</span>
+          <span className="text-xs text-stone-400">食べなかった</span>
+        </div>
+        <button onClick={() => onDelete(meal.id)} className="text-stone-300 text-xs active:text-red-400">✕</button>
+      </div>
+    )
+  }
+
+  const kapha = scoreLabels[meal.kapha_score as keyof typeof scoreLabels]
+  const pitta = scoreLabels[meal.pitta_score as keyof typeof scoreLabels]
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      {meal.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={meal.image_url} alt="" className="w-full max-h-56 object-cover object-top" />
+      )}
+      <div className="p-4">
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-stone-400 font-medium">{typeLabel}</span>
+            {editingTime?.id === meal.id ? (
+              <div className="flex items-center gap-1">
+                <input
+                  type="time"
+                  value={editingTime.time}
+                  onChange={(e) => onEditTime(meal.id, e.target.value)}
+                  className="text-xs bg-stone-100 rounded px-1 py-0.5 outline-none"
+                />
+                <button onClick={() => onSaveTime(meal.id, editingTime.time)} className="text-xs text-teal-600 font-semibold">保存</button>
+                <button onClick={onCancelTime} className="text-xs text-stone-400">取消</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  const t = meal.logged_at
+                    ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false })
+                    : new Date().toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false })
+                  onEditTime(meal.id, t)
+                }}
+                className="text-xs text-stone-400 underline-offset-2 hover:underline"
+              >
+                {timeStr ?? '時刻を設定'}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onCopy(meal)}
+              className={`text-xs px-2 py-1 rounded-lg font-semibold transition-all ${copiedId === meal.id ? 'bg-teal-100 text-teal-700' : 'bg-stone-100 text-stone-500 active:bg-stone-200'}`}
+            >
+              {copiedId === meal.id ? 'コピー済み' : 'コピー'}
+            </button>
+            <button onClick={() => onDelete(meal.id)} className="p-1.5 text-stone-300 active:text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Dish name */}
+        {meal.user_input && (
+          <p className="text-base font-semibold text-stone-800 mb-1">{meal.user_input}</p>
+        )}
+
+        {/* Calories */}
+        {meal.calories_estimate && (
+          <p className="text-sm text-stone-500 mb-2">約 {meal.calories_estimate} kcal</p>
+        )}
+
+        {/* Scores */}
+        {(kapha || pitta) && (
+          <div className="flex gap-2 mb-3">
+            {kapha && (
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${kapha.class}`}>
+                カファ {kapha.text}
+              </span>
+            )}
+            {pitta && (
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${pitta.class}`}>
+                ピッタ {pitta.text}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Advice */}
+        {meal.advice && (
+          <div className="bg-stone-50 rounded-xl p-3 mb-2">
+            <p className="text-xs text-stone-400 font-semibold mb-1">アドバイス</p>
+            <p className="text-sm text-stone-600 leading-relaxed">{meal.advice}</p>
+          </div>
+        )}
+
+        {/* Hungry before */}
+        {meal.hungry_before !== null && meal.hungry_before !== undefined && (
+          <p className="text-xs text-stone-400 mb-2">食前: {meal.hungry_before ? '空腹あり' : '空腹なし'}</p>
+        )}
+
+        {/* Note */}
+        {editingNote?.id === meal.id ? (
+          <div className="flex gap-2">
+            <textarea
+              value={editingNote.note}
+              onChange={(e) => onEditNote(meal.id, e.target.value)}
+              placeholder="メモを追加..."
+              rows={2}
+              className="flex-1 text-xs bg-stone-50 rounded-lg p-2 outline-none focus:ring-2 focus:ring-stone-400/30 resize-none"
+              autoFocus
+            />
+            <div className="flex flex-col gap-1">
+              <button onClick={() => onSaveNote(meal.id, editingNote.note)} className="text-xs bg-stone-700 text-white px-2 py-1 rounded-lg">保存</button>
+              <button onClick={onCancelNote} className="text-xs bg-stone-100 text-stone-500 px-2 py-1 rounded-lg">取消</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => onEditNote(meal.id, meal.user_note ?? '')} className="w-full text-left">
+            {meal.user_note
+              ? <p className="text-xs text-stone-600 bg-amber-50 rounded-lg p-2">{meal.user_note}</p>
+              : <p className="text-xs text-stone-300">+ メモを追加</p>
+            }
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function HistoryView({
-  history, loading, mealTypes, scoreLabels, expandedId, setExpandedId,
+  history, loading, mealTypes, scoreLabels, copiedId, onCopy,
 }: {
   history: MealLog[]
   loading: boolean
   mealTypes: { value: string; label: string }[]
-  scoreLabels: Record<string, { text: string; class: string }>
-  expandedId: string | null
-  setExpandedId: (id: string | null) => void
+  scoreLabels: Record<string, { text: string; short: string; class: string }>
+  copiedId: string | null
+  onCopy: (meal: MealLog) => void
 }) {
   if (loading) return <div className="text-center text-stone-400 text-sm py-8">読み込み中...</div>
   if (history.length === 0) return <div className="text-center text-stone-400 text-sm py-8">まだ記録がありません</div>
 
-  // Group by date
   const byDate: Record<string, MealLog[]> = {}
   for (const m of history) {
     if (!byDate[m.date]) byDate[m.date] = []
@@ -504,66 +536,66 @@ function HistoryView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {Object.entries(byDate).map(([date, meals]) => (
         <section key={date}>
           <p className="text-xs font-semibold text-stone-400 mb-2">
             {new Date(date + 'T00:00:00+09:00').toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
           </p>
-          <div className="space-y-2">
-            {meals.map((meal) => (
-              <button
-                key={meal.id}
-                onClick={() => setExpandedId(expandedId === meal.id ? null : meal.id)}
-                className="w-full bg-white rounded-2xl shadow-sm text-left overflow-hidden"
-              >
-                {/* Photo thumbnail */}
-                {meal.image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={meal.image_url} alt={meal.description ?? ''} className="w-full max-h-48 object-cover object-top" />
-                )}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-stone-400 font-medium">
-                          {mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type}
-                        </span>
-                        {meal.logged_at && (
-                          <span className="text-xs text-stone-300">
-                            {new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        )}
-                      </div>
-                      {meal.user_input && (
-                        <p className="text-xs text-amber-700 font-semibold mt-0.5">{meal.user_input}</p>
-                      )}
-                      <p className="text-sm text-stone-500 mt-0.5 truncate">{meal.description}</p>
-                      {meal.calories_estimate && (
-                        <p className="text-xs text-stone-400">約 {meal.calories_estimate} kcal</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1 flex-shrink-0">
-                      {meal.kapha_score && (
-                        <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.class}`}>
-                          カ{scoreLabels[meal.kapha_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                        </span>
-                      )}
-                      {meal.pitta_score && (
-                        <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.class}`}>
-                          ピ{scoreLabels[meal.pitta_score as keyof typeof scoreLabels]?.text.split(' ')[0]}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {expandedId === meal.id && meal.advice && (
-                    <p className="text-xs text-stone-500 mt-3 bg-stone-50 rounded-lg p-3 leading-relaxed text-left">
-                      {meal.advice}
-                    </p>
+          <div className="space-y-3">
+            {meals.filter((m) => !m.skipped).map((meal) => {
+              const typeLabel = mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type
+              const timeStr = meal.logged_at
+                ? new Date(meal.logged_at).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
+                : null
+              const kapha = scoreLabels[meal.kapha_score as keyof typeof scoreLabels]
+              const pitta = scoreLabels[meal.pitta_score as keyof typeof scoreLabels]
+
+              return (
+                <div key={meal.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {meal.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={meal.image_url} alt="" className="w-full max-h-56 object-cover object-top" />
                   )}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-stone-400 font-medium">{typeLabel}</span>
+                        {timeStr && <span className="text-xs text-stone-400">{timeStr}</span>}
+                      </div>
+                      <button
+                        onClick={() => onCopy(meal)}
+                        className={`text-xs px-2 py-1 rounded-lg font-semibold transition-all ${copiedId === meal.id ? 'bg-teal-100 text-teal-700' : 'bg-stone-100 text-stone-500 active:bg-stone-200'}`}
+                      >
+                        {copiedId === meal.id ? 'コピー済み' : 'コピー'}
+                      </button>
+                    </div>
+
+                    {meal.user_input && (
+                      <p className="text-base font-semibold text-stone-800 mb-1">{meal.user_input}</p>
+                    )}
+                    {meal.calories_estimate && (
+                      <p className="text-sm text-stone-500 mb-2">約 {meal.calories_estimate} kcal</p>
+                    )}
+                    {(kapha || pitta) && (
+                      <div className="flex gap-2 mb-3">
+                        {kapha && <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${kapha.class}`}>カファ {kapha.text}</span>}
+                        {pitta && <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${pitta.class}`}>ピッタ {pitta.text}</span>}
+                      </div>
+                    )}
+                    {meal.advice && (
+                      <div className="bg-stone-50 rounded-xl p-3">
+                        <p className="text-xs text-stone-400 font-semibold mb-1">アドバイス</p>
+                        <p className="text-sm text-stone-600 leading-relaxed">{meal.advice}</p>
+                      </div>
+                    )}
+                    {meal.user_note && (
+                      <p className="text-xs text-stone-600 bg-amber-50 rounded-lg p-2 mt-2">{meal.user_note}</p>
+                    )}
+                  </div>
                 </div>
-              </button>
-            ))}
+              )
+            })}
           </div>
         </section>
       ))}

@@ -21,6 +21,21 @@ type ReviewData = {
   bestDay: { date: string; rate: number } | null
 }
 
+type DailyRecord = {
+  date: string
+  weight: number | null
+  body_fat: number | null
+  waist_cm: number | null
+  hrv: number | null
+  sleep_hours: number | null
+  sleep_score: number | null
+  energy_level: number | null
+  agni: number | null
+  steps: number | null
+  calories: number | null
+  dinacharya_flags: Record<string, boolean> | null
+}
+
 const DAY_MAP = ['日', '月', '火', '水', '木', '金', '土']
 
 function fmtDate(d: string) {
@@ -35,8 +50,11 @@ function delta(v: number | null, unit: string, goodNegative = false) {
 }
 
 export default function ReviewPage() {
+  const [tab, setTab] = useState<'week' | 'data'>('week')
   const [data, setData] = useState<ReviewData | null>(null)
+  const [records, setRecords] = useState<DailyRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingRecords, setLoadingRecords] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -45,6 +63,15 @@ export default function ReviewPage() {
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false) })
   }, [])
+
+  async function loadRecords() {
+    if (loadingRecords || records.length > 0) return
+    setLoadingRecords(true)
+    const res = await fetch('/api/records')
+    const { data } = await res.json()
+    setRecords(data ?? [])
+    setLoadingRecords(false)
+  }
 
   useEffect(() => {
     if (!data) return
@@ -84,17 +111,39 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="bg-teal-800 text-white px-4 pt-12 pb-6">
+      <header className="bg-teal-800 text-white px-4 pt-12 pb-4">
         <Link href="/" className="text-teal-200 text-sm mb-2 inline-block">← ホームへ</Link>
-        <h1 className="text-2xl font-bold">週次レビュー</h1>
-        {data && <p className="text-teal-200 text-sm mt-0.5">{fmtDate(data.from)} 〜 {fmtDate(data.to)}</p>}
+        <h1 className="text-2xl font-bold">レビュー</h1>
+        <div className="flex gap-1 mt-4 bg-teal-700/50 rounded-xl p-1">
+          <button
+            onClick={() => setTab('week')}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === 'week' ? 'bg-white text-teal-800' : 'text-teal-200'}`}
+          >
+            今週
+          </button>
+          <button
+            onClick={() => { setTab('data'); loadRecords() }}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === 'data' ? 'bg-white text-teal-800' : 'text-teal-200'}`}
+          >
+            データ履歴
+          </button>
+        </div>
       </header>
 
-      {!data || data.recordCount === 0 ? (
+      {tab === 'data' && (
+        <DataHistory records={records} loading={loadingRecords} />
+      )}
+      {tab === 'week' && !data && (
         <div className="px-4 py-12 text-center">
           <p className="text-stone-500">今週はまだ記録がありません</p>
         </div>
-      ) : (
+      )}
+      {tab === 'week' && data && data.recordCount === 0 && (
+        <div className="px-4 py-12 text-center">
+          <p className="text-stone-500">今週はまだ記録がありません</p>
+        </div>
+      )}
+      {tab === 'week' && data && data.recordCount > 0 && (
         <div className="px-4 py-4 space-y-4">
           {/* Habit rate */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">
@@ -170,6 +219,53 @@ export default function ReviewPage() {
       )}
 
       <BottomNav />
+    </div>
+  )
+}
+
+function DataHistory({ records, loading }: { records: DailyRecord[]; loading: boolean }) {
+  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-teal-300 border-t-teal-700 rounded-full animate-spin" /></div>
+  if (records.length === 0) return <div className="px-4 py-12 text-center text-stone-500">まだ記録がありません</div>
+
+  const DAY = ['日', '月', '火', '水', '木', '金', '土']
+
+  return (
+    <div className="px-4 py-4 space-y-3">
+      {records.map((r) => {
+        const dt = new Date(r.date + 'T00:00:00+09:00')
+        const dateLabel = `${dt.getMonth() + 1}/${dt.getDate()}(${DAY[dt.getDay()]})`
+        const flags = r.dinacharya_flags as Record<string, boolean> | null
+        const dinaDone = flags ? Object.values(flags).filter(Boolean).length : 0
+        const dinaTotal = flags ? Object.values(flags).length : 0
+
+        return (
+          <section key={r.date} className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-xs font-bold text-teal-700 mb-3">{dateLabel}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {r.weight && <DataCell label="体重" value={`${r.weight}kg`} />}
+              {r.body_fat && <DataCell label="体脂肪" value={`${r.body_fat}%`} />}
+              {r.waist_cm && <DataCell label="腹囲" value={`${r.waist_cm}cm`} />}
+              {r.hrv && <DataCell label="HRV" value={`${r.hrv}ms`} />}
+              {r.sleep_hours && <DataCell label="睡眠" value={`${r.sleep_hours}h`} />}
+              {r.sleep_score && <DataCell label="睡眠S" value={`${r.sleep_score}`} />}
+              {r.energy_level && <DataCell label="エネルギー" value={`${r.energy_level}/10`} />}
+              {r.agni && <DataCell label="アグニ" value={`${r.agni}/10`} />}
+              {r.steps && <DataCell label="歩数" value={`${r.steps.toLocaleString()}`} />}
+              {r.calories && <DataCell label="カロリー" value={`${r.calories}kcal`} />}
+              {dinaTotal > 0 && <DataCell label="ディナチャリア" value={`${dinaDone}/${dinaTotal}`} />}
+            </div>
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+function DataCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-stone-50 rounded-xl p-2.5 text-center">
+      <p className="text-xs text-stone-400 mb-0.5">{label}</p>
+      <p className="text-sm font-bold text-stone-700">{value}</p>
     </div>
   )
 }

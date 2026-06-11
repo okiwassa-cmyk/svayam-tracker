@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
+import ToiletLogger from '@/components/ToiletLogger'
 import ExerciseLogger from '@/components/ExerciseLogger'
 import AbhyangaCheck from '@/components/AbhyangaCheck'
 import type { HabitWithLog } from '@/lib/types'
@@ -94,7 +95,7 @@ export default function HabitsPage() {
         <p className="text-teal-200 text-sm">{today}</p>
         <h1 className="text-2xl font-bold mt-1 flex items-center gap-2">
           <Image src="/icons/habits.svg" unoptimized alt="" width={24} height={24} className="invert opacity-90" />
-          習慣チェック
+          ディナチャリア
         </h1>
         <div className="flex items-center justify-between mt-0.5">
           <p className="text-teal-200 text-sm">
@@ -177,27 +178,14 @@ export default function HabitsPage() {
             </div>
           </section>
 
+          <ToiletLogger date={today} />
           <ExerciseLogger date={today} />
           <AbhyangaCheck date={today} />
 
-          {/* Quick Actions */}
-          <section>
-            <h2 className="text-sm font-semibold text-stone-500 mb-3">クイックアクション</h2>
-            <div className="grid grid-cols-3 gap-2">
-              <Link href="/morning" className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white shadow-sm border border-stone-100 active:scale-95 text-center">
-                <Image src="/icons/sunrise.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
-                <span className="text-xs font-semibold text-stone-600">朝の記録</span>
-              </Link>
-              <Link href="/meal" className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white shadow-sm border border-stone-100 active:scale-95 text-center">
-                <Image src="/icons/meal.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
-                <span className="text-xs font-semibold text-stone-600">食事記録</span>
-              </Link>
-              <Link href="/review" className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white shadow-sm border border-stone-100 active:scale-95 text-center">
-                <Image src="/icons/chart.svg" unoptimized alt="" width={22} height={22} className="opacity-40" />
-                <span className="text-xs font-semibold text-stone-600">レビュー</span>
-              </Link>
-            </div>
-          </section>
+          <Link href="/morning" className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white shadow-sm border border-stone-100 active:scale-95 text-stone-500 text-sm font-semibold">
+            <Image src="/icons/sunrise.svg" unoptimized alt="" width={18} height={18} className="opacity-40" />
+            朝の記録へ
+          </Link>
 
           {/* Progress bar */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">

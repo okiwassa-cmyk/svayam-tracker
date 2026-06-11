@@ -38,7 +38,7 @@ async function getTodayData() {
     supabaseAdmin.from('user_settings').select('*').eq('id', 1).maybeSingle(),
     supabaseAdmin.from('exercise_logs').select('id').eq('date', today).limit(1),
     supabaseAdmin.from('abhyanga_logs').select('id').eq('date', today).limit(1),
-    supabaseAdmin.from('meal_logs').select('meal_type,logged_at,skipped').eq('date', today),
+    supabaseAdmin.from('meal_logs').select('meal_type,logged_at,skipped,kapha_score').eq('date', today),
     supabaseAdmin.from('habit_logs').select('habit_id,completed').gte('date', weekStart).eq('completed', true),
   ])
 
@@ -50,7 +50,7 @@ async function getTodayData() {
     settings: settingsRes.data as UserSettings | null,
     exerciseDone: (exerciseRes.data?.length ?? 0) > 0,
     abhyangaDone: (abhyangaRes.data?.length ?? 0) > 0,
-    meals: (mealRes.data ?? []) as { meal_type: string; logged_at: string | null; skipped: boolean }[],
+    meals: (mealRes.data ?? []) as { meal_type: string; logged_at: string | null; skipped: boolean; kapha_score: string | null }[],
     fastingLogIds: (fastingThisWeekRes.data ?? []).map((l: { habit_id: string }) => l.habit_id),
   }
 }
@@ -83,6 +83,9 @@ export default async function HomePage() {
 
   const fastingHabit = habits.find((h) => h.name === 'ファスティング')
   const fastingThisWeek = fastingHabit ? fastingLogIds.includes(fastingHabit.id) : false
+
+  const mealLogs = meals.filter((m) => !m.skipped)
+  const excellentMeals = mealLogs.filter((m) => m.kapha_score === 'excellent').length
 
   const keyHabits = [
     { label: 'ディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, link: '/morning' },
@@ -276,34 +279,14 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* Quick Actions */}
-        <section>
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/morning"
-              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl font-semibold text-sm transition-all ${
-                morningDone
-                  ? 'bg-amber-50 text-amber-800 border-2 border-amber-200'
-                  : 'bg-amber-800 text-white shadow-md active:scale-95'
-              }`}
-            >
-              <Image src="/icons/sunrise.svg" unoptimized alt="" width={28} height={28} className={morningDone ? 'opacity-60' : 'invert opacity-90'} />
-              <span>{morningDone ? '朝の記録（編集）' : '朝の記録'}</span>
-            </Link>
-            <Link
-              href="/meal"
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white text-stone-700 font-semibold text-sm shadow-sm border border-stone-100 active:scale-95"
-            >
-              <Image src="/icons/meal.svg" unoptimized alt="" width={24} height={24} className="opacity-40" />
-              <span>食事を記録</span>
-            </Link>
-          </div>
-        </section>
-
         {/* Encouragement */}
         <EncouragementCard
-          habitRate={totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : null}
+          keyScore={{ done: keyHabits.filter((h) => h.done).length, total: keyHabits.length }}
+          weight={record?.weight ?? null}
+          calories={record?.calories ?? null}
           energy={record?.energy_level ?? null}
+          excellentMeals={excellentMeals}
+          totalMeals={mealLogs.length}
           experimentDay={experimentDay}
         />
       </div>
