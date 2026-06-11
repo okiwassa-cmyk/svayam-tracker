@@ -56,14 +56,11 @@ async function getTodayData() {
 }
 
 export default async function HomePage() {
-  const { today, record, habitLogs, habits, settings, exerciseDone, abhyangaDone, meals, fastingLogIds } = await getTodayData()
+  const { today, record, habits, settings, exerciseDone, abhyangaDone, meals, fastingLogIds } = await getTodayData()
 
   const experimentDay = settings?.start_date
     ? Math.floor((Date.now() - new Date(settings.start_date + 'T00:00:00+09:00').getTime()) / 86400000) + 1
     : null
-
-  const completedHabits = habitLogs.filter((l) => l.completed).length
-  const totalHabits = habits.length
 
   const morningDone = record?.energy_level != null
   const eveningDone = record?.dinner_time != null
@@ -101,6 +98,15 @@ export default async function HomePage() {
   const achievementScore = keyHabits.reduce((sum, h) => sum + h.fraction, 0)
   const achievementTotal = keyHabits.length
   const achievementLabel = Number.isInteger(achievementScore) ? String(achievementScore) : achievementScore.toFixed(1)
+
+  // 習慣化率（個別項目カウント：朝のディナチャリア8 + 運動 + アビヤンガ + 夕食 = 11、金曜のみ+ファスティング=12）
+  const habitFormationDone = dinacharyaDoneCount
+    + (exerciseDone ? 1 : 0)
+    + (abhyangaDone ? 1 : 0)
+    + (dinnerDone ? 1 : 0)
+    + (isFastingDay && fastingThisWeek ? 1 : 0)
+  const habitFormationTotal = isFastingDay ? 12 : 11
+  const habitFormationRate = Math.round((habitFormationDone / habitFormationTotal) * 100)
 
   const phase = experimentDay != null && experimentDay > 0
     ? experimentDay <= 30 ? 1 : experimentDay <= 60 ? 2 : experimentDay <= 90 ? 3 : null
@@ -225,33 +231,21 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Habit Progress */}
+        {/* Habit Formation Rate */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-stone-500">習慣達成率</h2>
-            <span className="text-teal-700 font-bold">{completedHabits}/{totalHabits}</span>
+            <h2 className="text-sm font-semibold text-stone-500">習慣化率</h2>
+            <span className="text-teal-700 font-bold">{habitFormationDone}/{habitFormationTotal}<span className="text-xs font-normal text-stone-400 ml-1">{habitFormationRate}%</span></span>
           </div>
           <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-teal-600 rounded-full transition-all"
-              style={{ width: `${totalHabits ? (completedHabits / totalHabits) * 100 : 0}%` }}
+              style={{ width: `${habitFormationRate}%` }}
             />
           </div>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {habits.slice(0, 5).map((h) => {
-              const done = habitLogs.some((l) => l.habit_id === h.id && l.completed)
-              return (
-                <span
-                  key={h.id}
-                  className={`text-xs px-2 py-0.5 rounded-full ${
-                    done ? 'bg-teal-50 text-teal-700' : 'bg-stone-100 text-stone-400'
-                  }`}
-                >
-                  {h.emoji} {done ? '✓' : '○'}
-                </span>
-              )
-            })}
-          </div>
+          <p className="mt-2 text-xs text-stone-400">
+            朝のディナチャリア{dinacharyaDoneCount}/8・運動{exerciseDone ? '○' : '×'}・アビヤンガ{abhyangaDone ? '○' : '×'}・夕食{dinnerDone ? '○' : '×'}{isFastingDay ? `・断食${fastingThisWeek ? '○' : '×'}` : ''}
+          </p>
         </section>
 
         {/* Biometrics */}
