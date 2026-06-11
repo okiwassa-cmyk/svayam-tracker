@@ -229,8 +229,30 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
 
   const DAY = ['日', '月', '火', '水', '木', '金', '土']
 
+  // records は日付降順。グラフ用に昇順へ
+  const asc = [...records].reverse()
+  const charts = [
+    { label: '体重', unit: 'kg', color: '#0d9488', key: 'weight' as const },
+    { label: '体脂肪', unit: '%', color: '#d97706', key: 'body_fat' as const },
+    { label: '歩数', unit: '', color: '#0284c7', key: 'steps' as const },
+    { label: 'カロリー', unit: 'kcal', color: '#ea580c', key: 'calories' as const },
+  ]
+  const series = charts.map((c) => ({
+    ...c,
+    points: asc.filter((r) => r[c.key] != null).map((r) => ({ date: r.date, value: r[c.key] as number })),
+  }))
+  const hasAnySeries = series.some((s) => s.points.length > 0)
+
   return (
     <div className="px-4 py-4 space-y-3">
+      {hasAnySeries && (
+        <section className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+          <h2 className="text-xs font-semibold text-stone-400 uppercase">ヘルスケア推移</h2>
+          {series.map((s) => (
+            <MetricChart key={s.key} label={s.label} unit={s.unit} color={s.color} points={s.points} />
+          ))}
+        </section>
+      )}
       {records.map((r) => {
         const dt = new Date(r.date + 'T00:00:00+09:00')
         const dateLabel = `${dt.getMonth() + 1}/${dt.getDate()}(${DAY[dt.getDay()]})`
@@ -256,6 +278,49 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
           </section>
         )
       })}
+    </div>
+  )
+}
+
+function MetricChart({ label, unit, color, points }: { label: string; unit: string; color: string; points: { date: string; value: number }[] }) {
+  if (points.length === 0) return null
+  const values = points.map((p) => p.value)
+  const latest = values[values.length - 1]
+  const diff = +(latest - values[0]).toFixed(1)
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+  const W = 320, H = 64, P = 6
+  const stepX = points.length > 1 ? (W - P * 2) / (points.length - 1) : 0
+  const coords = points.map((p, i) => ({
+    x: P + i * stepX,
+    y: P + (H - P * 2) * (1 - (p.value - min) / range),
+  }))
+  const line = coords.map((c) => `${c.x},${c.y}`).join(' ')
+  const last = coords[coords.length - 1]
+  const fmt = (v: number) => (unit === 'kcal' || unit === '') ? Math.round(v).toLocaleString() : v
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-xs text-stone-400">{label}</span>
+        <span className="text-sm font-bold text-stone-700">
+          {fmt(latest)}{unit && <span className="text-xs font-normal text-stone-400 ml-0.5">{unit}</span>}
+          {points.length > 1 && (
+            <span className={`text-xs font-semibold ml-2 ${diff < 0 ? 'text-teal-600' : diff > 0 ? 'text-amber-600' : 'text-stone-400'}`}>
+              {diff > 0 ? '+' : ''}{fmt(diff)}
+            </span>
+          )}
+        </span>
+      </div>
+      {points.length > 1 ? (
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} preserveAspectRatio="none">
+          <polyline points={line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+          <circle cx={last.x} cy={last.y} r={2.5} fill={color} vectorEffect="non-scaling-stroke" />
+        </svg>
+      ) : (
+        <p className="text-xs text-stone-300 py-3 text-center">推移には2日分以上の記録が必要</p>
+      )}
     </div>
   )
 }
