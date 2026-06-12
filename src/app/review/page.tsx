@@ -231,6 +231,9 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
 
   // records は日付降順。グラフ用に昇順へ
   const asc = [...records].reverse()
+  const startMs = new Date(asc[0].date + 'T00:00:00+09:00').getTime()
+  const endMs = new Date(asc[asc.length - 1].date + 'T00:00:00+09:00').getTime()
+  const spanDays = Math.max(1, Math.round((endMs - startMs) / 86400000))
   const charts = [
     { label: '体重', unit: 'kg', color: '#0d9488', key: 'weight' as const },
     { label: '体脂肪', unit: '%', color: '#d97706', key: 'body_fat' as const },
@@ -240,7 +243,11 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
   ]
   const series = charts.map((c) => ({
     ...c,
-    points: asc.filter((r) => r[c.key] != null).map((r) => ({ date: r.date, value: r[c.key] as number })),
+    points: asc.filter((r) => r[c.key] != null).map((r) => ({
+      date: r.date,
+      value: r[c.key] as number,
+      offset: Math.round((new Date(r.date + 'T00:00:00+09:00').getTime() - startMs) / 86400000),
+    })),
   }))
   const hasAnySeries = series.some((s) => s.points.length > 0)
 
@@ -250,7 +257,7 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
         <section className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
           <h2 className="text-xs font-semibold text-stone-400 uppercase">ヘルスケア推移</h2>
           {series.map((s) => (
-            <MetricChart key={s.key} label={s.label} unit={s.unit} color={s.color} points={s.points} />
+            <MetricChart key={s.key} label={s.label} unit={s.unit} color={s.color} points={s.points} spanDays={spanDays} />
           ))}
         </section>
       )}
@@ -282,7 +289,7 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
   )
 }
 
-function MetricChart({ label, unit, color, points }: { label: string; unit: string; color: string; points: { date: string; value: number }[] }) {
+function MetricChart({ label, unit, color, points, spanDays }: { label: string; unit: string; color: string; points: { date: string; value: number; offset: number }[]; spanDays: number }) {
   if (points.length === 0) return null
   const values = points.map((p) => p.value)
   const latest = values[values.length - 1]
@@ -291,13 +298,11 @@ function MetricChart({ label, unit, color, points }: { label: string; unit: stri
   const max = Math.max(...values)
   const range = max - min || 1
   const W = 320, H = 64, P = 6
-  const stepX = points.length > 1 ? (W - P * 2) / (points.length - 1) : 0
-  const coords = points.map((p, i) => ({
-    x: P + i * stepX,
+  const coords = points.map((p) => ({
+    x: P + (W - P * 2) * (spanDays > 0 ? p.offset / spanDays : 0.5),
     y: P + (H - P * 2) * (1 - (p.value - min) / range),
   }))
   const line = coords.map((c) => `${c.x},${c.y}`).join(' ')
-  const last = coords[coords.length - 1]
   const fmt = (v: number) => (unit === 'kcal' || unit === '') ? Math.round(v).toLocaleString() : v
 
   return (
@@ -316,7 +321,9 @@ function MetricChart({ label, unit, color, points }: { label: string; unit: stri
       {points.length > 1 ? (
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} preserveAspectRatio="none">
           <polyline points={line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-          <circle cx={last.x} cy={last.y} r={2.5} fill={color} vectorEffect="non-scaling-stroke" />
+          {coords.map((c, i) => (
+            <circle key={i} cx={c.x} cy={c.y} r={2.5} fill={color} vectorEffect="non-scaling-stroke" />
+          ))}
         </svg>
       ) : (
         <p className="text-xs text-stone-300 py-3 text-center">推移には2日分以上の記録が必要</p>
