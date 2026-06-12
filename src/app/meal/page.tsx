@@ -27,6 +27,42 @@ const mealTypes = [
   { value: 'snack',     label: '間食' },
 ]
 
+async function compressImage(file: File): Promise<Blob> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('read failed'))
+    reader.readAsDataURL(file)
+  })
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new window.Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('decode failed'))
+    image.src = dataUrl
+  })
+  const maxDim = 1280
+  let width = img.width
+  let height = img.height
+  if (width > maxDim || height > maxDim) {
+    const scale = maxDim / Math.max(width, height)
+    width = Math.round(width * scale)
+    height = Math.round(height * scale)
+  }
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('canvas unsupported')
+  ctx.drawImage(img, 0, 0, width, height)
+  return await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('compress failed'))),
+      'image/jpeg',
+      0.8
+    )
+  })
+}
+
 function formatNoteForCopy(meal: MealLog) {
   const typeLabel = mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type
   const timeStr = meal.logged_at
@@ -112,7 +148,15 @@ export default function MealPage() {
     setAnalyzing(true)
     try {
       const fd = new FormData()
-      if (file) fd.append('image', file)
+      if (file) {
+        let imageBlob: Blob = file
+        try {
+          imageBlob = await compressImage(file)
+        } catch {
+          // Fall back to the original file if compression fails
+        }
+        fd.append('image', new File([imageBlob], 'meal.jpg', { type: 'image/jpeg' }))
+      }
       if (textInput.trim()) fd.append('text_description', textInput.trim())
       fd.append('date', today)
       fd.append('meal_type', mealType)
@@ -128,6 +172,8 @@ export default function MealPage() {
       setHungryBefore(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
       loadMeals()
+    } catch (e) {
+      alert('判定に失敗しました。通信環境を確認して、もう一度お試しください。\n' + String(e))
     } finally {
       setAnalyzing(false)
     }
