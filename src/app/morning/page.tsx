@@ -46,6 +46,10 @@ export default function MorningPage() {
   const [dinnerTime, setDinnerTime] = useState<0|1|2|3>(1) // 0=食べなかった
   const [dinnerAmount, setDinnerAmount] = useState<1|2|3>(1)
   const [alcohol, setAlcohol] = useState<1|2|3>(1)
+  // SOXAI sleep data (manual input)
+  const [sleepScore, setSleepScore] = useState('')
+  const [hrv, setHrv] = useState('')
+  const [sleepHours, setSleepHours] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -70,6 +74,9 @@ export default function MorningPage() {
         if (data.dinner_time != null) setDinnerTime(data.dinner_time as 0|1|2|3)
         if (data.dinner_amount) setDinnerAmount(data.dinner_amount as 1|2|3)
         if (data.alcohol) setAlcohol(data.alcohol as 1|2|3)
+        if (data.sleep_score != null) setSleepScore(String(data.sleep_score))
+        if (data.hrv != null) setHrv(String(data.hrv))
+        if (data.sleep_hours != null) setSleepHours(String(data.sleep_hours))
         if (data.note) setNote(data.note)
         if (data.asukken_photo_url) setPhotoUrl(data.asukken_photo_url)
         if (data.dinacharya_flags) setDinacharya((prev) => ({ ...prev, ...data.dinacharya_flags }))
@@ -127,6 +134,9 @@ export default function MorningPage() {
           dinner_time: dinnerTime,
           dinner_amount: dinnerTime === 0 ? null : dinnerAmount,
           alcohol,
+          sleep_score: sleepScore,
+          hrv,
+          sleep_hours: sleepHours,
           note: note || null,
           asukken_photo_url: photoUrl || null,
           dinacharya_flags: dinacharya,
@@ -333,6 +343,35 @@ export default function MorningPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* SOXAI sleep data */}
+        <section className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-stone-600 mb-1">睡眠データ（SOXAI）</h2>
+          <p className="text-xs text-stone-400 mb-3">SOXAIアプリの昨夜の数値を入力</p>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { label: '睡眠スコア', value: sleepScore, set: setSleepScore, unit: '', step: '1' },
+              { label: 'HRV', value: hrv, set: setHrv, unit: 'ms', step: '1' },
+              { label: '睡眠時間', value: sleepHours, set: setSleepHours, unit: 'h', step: '0.1' },
+            ] as const).map((f) => (
+              <div key={f.label}>
+                <p className="text-xs text-stone-400 mb-1 text-center">{f.label}</p>
+                <div className="flex items-baseline bg-stone-50 rounded-xl px-2 py-2.5">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step={f.step}
+                    value={f.value}
+                    onChange={(e) => f.set(e.target.value)}
+                    placeholder="-"
+                    className="w-full text-center text-base font-semibold text-stone-700 bg-transparent outline-none"
+                  />
+                  {f.unit && <span className="text-xs text-stone-400 flex-shrink-0">{f.unit}</span>}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 

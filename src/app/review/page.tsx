@@ -234,8 +234,9 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
   const charts = [
     { label: '体重', unit: 'kg', color: '#0d9488', key: 'weight' as const },
     { label: '体脂肪', unit: '%', color: '#d97706', key: 'body_fat' as const },
-    { label: '歩数', unit: '', color: '#0284c7', key: 'steps' as const },
-    { label: 'カロリー', unit: 'kcal', color: '#ea580c', key: 'calories' as const },
+    { label: '摂取エネルギー', unit: 'kcal', color: '#ea580c', key: 'calories' as const },
+    { label: '睡眠スコア', unit: '', color: '#7c3aed', key: 'sleep_score' as const },
+    { label: 'HRV', unit: 'ms', color: '#0284c7', key: 'hrv' as const },
   ]
   const series = charts.map((c) => ({
     ...c,
@@ -271,8 +272,7 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
               {r.sleep_score && <DataCell label="睡眠S" value={`${r.sleep_score}`} />}
               {r.energy_level && <DataCell label="エネルギー" value={`${r.energy_level}/10`} />}
               {r.agni && <DataCell label="アグニ" value={`${r.agni}/10`} />}
-              {r.steps && <DataCell label="歩数" value={`${r.steps.toLocaleString()}`} />}
-              {r.calories && <DataCell label="カロリー" value={`${r.calories}kcal`} />}
+              {r.calories && <DataCell label="摂取エネルギー" value={`${r.calories}kcal`} />}
               {flags && <DataCell label="ディナチャリア" value={`${dinaDone}/9`} />}
             </div>
           </section>
