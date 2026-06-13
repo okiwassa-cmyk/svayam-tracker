@@ -601,7 +601,7 @@ function HistoryView({
                 <div key={meal.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
                   {meal.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={meal.image_url} alt="" className="w-full max-h-56 object-cover object-top" />
+                    <img src={meal.image_url} alt="" className="w-1/2 object-contain" />
                   )}
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
