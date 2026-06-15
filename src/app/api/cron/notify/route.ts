@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Called by Vercel Cron at specified times (JST = UTC+9)
-// 22:00 UTC = 7:00 JST (morning)
-// 03:00 UTC = 12:00 JST (noon)
-// 12:00 UTC = 21:00 JST (evening)
+// 21:00 UTC = 6:00 JST (breakfast)
+// 01:30 UTC = 10:30 JST (lunch prep)
 
 const NOTIFICATIONS: Record<string, { title: string; body: string; url: string }> = {
-  '21': { title: '🌅 朝のディナチャリア', body: '朝日を浴びる・舌磨き・歯磨き・ガヴァラ', url: '/habits' },
-  '22': { title: '☀️ おはようございます', body: '白湯を飲んで、朝の記録をつけましょう', url: '/morning' },
-  '3':  { title: '🌿 昼食の時間です', body: '今日一番大きい食事を。食後は記録を', url: '/meal' },
-  '12': { title: '🌙 夜の記録', body: '今日の習慣チェックと夜の記録を忘れずに', url: '/evening' },
+  '21': { title: '🍵 朝食の時間です', body: '白湯を飲んで、朝の記録もつけましょう', url: '/morning' },
+  '1':  { title: '🌿 昼ごはんの準備', body: '今日一番大きい食事を。食後は記録を', url: '/meal' },
 }
 
 export async function GET(req: NextRequest) {
