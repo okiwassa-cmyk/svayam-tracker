@@ -15,6 +15,27 @@ function getTodayJST() {
   }).replace(/\//g, '-')
 }
 
+// 睡眠時間：DBは小数（6.5）で保存、入力欄は H:MM（6:30）で表示
+function decimalToHHMM(dec: number) {
+  const h = Math.floor(dec)
+  const m = Math.round((dec - h) * 60)
+  if (m === 60) return `${h + 1}:00`
+  return `${h}:${String(m).padStart(2, '0')}`
+}
+
+function hhmmToDecimal(str: string): number | null {
+  const s = str.trim()
+  if (!s) return null
+  if (s.includes(':')) {
+    const [h, m] = s.split(':')
+    const hn = parseInt(h, 10) || 0
+    const mn = parseInt(m, 10) || 0
+    return Math.round((hn + mn / 60) * 100) / 100
+  }
+  const n = parseFloat(s)
+  return isNaN(n) ? null : n
+}
+
 const DINACHARYA_ITEMS = [
   { key: 'sleep', label: '昨日22〜23時に就寝した' },
   { key: 'wake', label: '5時に起きる' },
@@ -76,7 +97,7 @@ export default function MorningPage() {
         if (data.alcohol) setAlcohol(data.alcohol as 1|2|3)
         if (data.sleep_score != null) setSleepScore(String(data.sleep_score))
         if (data.hrv != null) setHrv(String(data.hrv))
-        if (data.sleep_hours != null) setSleepHours(String(data.sleep_hours))
+        if (data.sleep_hours != null) setSleepHours(decimalToHHMM(Number(data.sleep_hours)))
         if (data.note) setNote(data.note)
         if (data.asukken_photo_url) setPhotoUrl(data.asukken_photo_url)
         if (data.dinacharya_flags) setDinacharya((prev) => ({ ...prev, ...data.dinacharya_flags }))
@@ -136,7 +157,7 @@ export default function MorningPage() {
           alcohol,
           sleep_score: sleepScore,
           hrv,
-          sleep_hours: sleepHours,
+          sleep_hours: hhmmToDecimal(sleepHours),
           note: note || null,
           asukken_photo_url: photoUrl || null,
           dinacharya_flags: dinacharya,
@@ -354,7 +375,6 @@ export default function MorningPage() {
             {([
               { label: '睡眠スコア', value: sleepScore, set: setSleepScore, unit: '', step: '1' },
               { label: 'HRV', value: hrv, set: setHrv, unit: 'ms', step: '1' },
-              { label: '睡眠時間', value: sleepHours, set: setSleepHours, unit: 'h', step: '0.1' },
             ] as const).map((f) => (
               <div key={f.label}>
                 <p className="text-xs text-stone-400 mb-1 text-center">{f.label}</p>
@@ -372,6 +392,19 @@ export default function MorningPage() {
                 </div>
               </div>
             ))}
+            <div>
+              <p className="text-xs text-stone-400 mb-1 text-center">睡眠時間</p>
+              <div className="flex items-baseline bg-stone-50 rounded-xl px-2 py-2.5">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={sleepHours}
+                  onChange={(e) => setSleepHours(e.target.value)}
+                  placeholder="6:30"
+                  className="w-full text-center text-base font-semibold text-stone-700 bg-transparent outline-none"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
