@@ -70,7 +70,8 @@ export default function MorningPage() {
   // SOXAI sleep data (manual input)
   const [sleepScore, setSleepScore] = useState('')
   const [hrv, setHrv] = useState('')
-  const [sleepHours, setSleepHours] = useState('')
+  const [sleepH, setSleepH] = useState('')
+  const [sleepM, setSleepM] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -97,7 +98,10 @@ export default function MorningPage() {
         if (data.alcohol) setAlcohol(data.alcohol as 1|2|3)
         if (data.sleep_score != null) setSleepScore(String(data.sleep_score))
         if (data.hrv != null) setHrv(String(data.hrv))
-        if (data.sleep_hours != null) setSleepHours(decimalToHHMM(Number(data.sleep_hours)))
+        if (data.sleep_hours != null) {
+          const [h, m] = decimalToHHMM(Number(data.sleep_hours)).split(':')
+          setSleepH(h); setSleepM(m)
+        }
         if (data.note) setNote(data.note)
         if (data.asukken_photo_url) setPhotoUrl(data.asukken_photo_url)
         if (data.dinacharya_flags) setDinacharya((prev) => ({ ...prev, ...data.dinacharya_flags }))
@@ -157,7 +161,7 @@ export default function MorningPage() {
           alcohol,
           sleep_score: sleepScore,
           hrv,
-          sleep_hours: hhmmToDecimal(sleepHours),
+          sleep_hours: (sleepH || sleepM) ? hhmmToDecimal(`${sleepH || '0'}:${sleepM || '0'}`) : null,
           note: note || null,
           asukken_photo_url: photoUrl || null,
           dinacharya_flags: dinacharya,
@@ -394,14 +398,25 @@ export default function MorningPage() {
             ))}
             <div>
               <p className="text-xs text-stone-400 mb-1 text-center">睡眠時間</p>
-              <div className="flex items-baseline bg-stone-50 rounded-xl px-2 py-2.5">
+              <div className="flex items-baseline justify-center bg-stone-50 rounded-xl px-2 py-2.5 gap-1">
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={sleepHours}
-                  onChange={(e) => setSleepHours(e.target.value)}
-                  placeholder="6:30"
-                  className="w-full text-center text-base font-semibold text-stone-700 bg-transparent outline-none"
+                  value={sleepH}
+                  onChange={(e) => setSleepH(e.target.value.replace(/\D/g, ''))}
+                  onFocus={(e) => e.target.select()}
+                  placeholder="6"
+                  className="w-8 text-center text-base font-semibold text-stone-700 bg-transparent outline-none"
+                />
+                <span className="text-base font-semibold text-stone-400">:</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={sleepM}
+                  onChange={(e) => setSleepM(e.target.value.replace(/\D/g, ''))}
+                  onFocus={(e) => e.target.select()}
+                  placeholder="30"
+                  className="w-8 text-center text-base font-semibold text-stone-700 bg-transparent outline-none"
                 />
               </div>
             </div>
