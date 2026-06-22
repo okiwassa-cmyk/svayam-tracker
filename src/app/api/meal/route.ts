@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { supabaseAdmin } from '@/lib/supabase'
+import { AYURVEDA_FOOD_REFERENCE } from '@/lib/ayurveda-foods'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -51,7 +52,9 @@ export async function POST(req: NextRequest) {
 - excellent（◎）：温かい・軽め・スパイス使用・豆類・野菜中心・ギー少量
 - good（○）：調理済み・普通量・白米少量
 - caution（△）：乳製品・甘いもの・冷たいもの・量が多い
-- avoid（✗）：揚げ物・精製糖・冷たい飲み物・加工食品`
+- avoid（✗）：揚げ物・精製糖・冷たい飲み物・加工食品
+
+${AYURVEDA_FOOD_REFERENCE}`
 
     let messageContent: Anthropic.MessageParam['content']
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { supabaseAdmin } from '@/lib/supabase'
+import { AYURVEDA_FOOD_REFERENCE } from '@/lib/ayurveda-foods'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -30,6 +31,10 @@ const SYSTEM_PROMPT = `あなたはアーユルヴェーダ専門の食事アド
 - 食材名や料理名は日本語で
 - 長すぎず、要点を絞って回答
 - 量の目安も伝える
+
+食材のドーシャ作用を答えるときは、下記リファレンスを優先する。
+
+${AYURVEDA_FOOD_REFERENCE}
 
 今日食べた食事のコンテキストがあれば、それを踏まえてアドバイスする。`
 
