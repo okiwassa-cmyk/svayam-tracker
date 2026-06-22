@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import ToiletLogger from '@/components/ToiletLogger'
+import CaffeineLogger from '@/components/CaffeineLogger'
 
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP', {
@@ -425,6 +426,9 @@ export default function MorningPage() {
 
         {/* Toilet Logger */}
         <ToiletLogger date={today} />
+
+        {/* Caffeine Logger */}
+        <CaffeineLogger date={today} />
 
         {/* Asukken Photo Upload */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">

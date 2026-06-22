@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import ToiletLogger from '@/components/ToiletLogger'
+import CaffeineLogger from '@/components/CaffeineLogger'
 import ExerciseLogger from '@/components/ExerciseLogger'
 import AbhyangaCheck from '@/components/AbhyangaCheck'
 import type { HabitWithLog } from '@/lib/types'
@@ -179,6 +180,7 @@ export default function HabitsPage() {
           </section>
 
           <ToiletLogger date={today} />
+          <CaffeineLogger date={today} />
           <ExerciseLogger date={today} />
           <AbhyangaCheck date={today} />
 
