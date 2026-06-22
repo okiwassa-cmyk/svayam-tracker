@@ -31,7 +31,6 @@ type DailyRecord = {
   sleep_score: number | null
   energy_level: number | null
   agni: number | null
-  steps: number | null
   calories: number | null
   dinacharya_flags: Record<string, boolean> | null
 }

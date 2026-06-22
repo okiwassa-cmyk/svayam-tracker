@@ -24,7 +24,6 @@ export type DailyRecord = {
   alcohol: number | null
   dinacharya_flags: Record<string, boolean> | null
   asukken_photo_url: string | null
-  steps: number | null
   created_at: string
 }
 

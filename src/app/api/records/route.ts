@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('daily_records')
-    .select('date,weight,body_fat,waist_cm,hrv,sleep_hours,sleep_score,energy_level,agni,steps,calories,dinacharya_flags')
+    .select('date,weight,body_fat,waist_cm,hrv,sleep_hours,sleep_score,energy_level,agni,calories,dinacharya_flags')
     .order('date', { ascending: false })
     .limit(90)
 
