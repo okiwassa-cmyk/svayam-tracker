@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { supabaseAdmin } from '@/lib/supabase'
-import { AYURVEDA_FOOD_REFERENCE } from '@/lib/ayurveda-foods'
+import { AYURVEDA_FOOD_REFERENCE, AYURVEDA_EATING_METHOD } from '@/lib/ayurveda-foods'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -54,7 +54,11 @@ export async function POST(req: NextRequest) {
 - caution（△）：乳製品・甘いもの・冷たいもの・量が多い
 - avoid（✗）：揚げ物・精製糖・冷たい飲み物・加工食品
 
-${AYURVEDA_FOOD_REFERENCE}`
+adviceを書くときは、毎回「生姜・ターメリックを足す」に頼らない。下記の食べ方の知識（六味・食べ合わせ・季節・ピッタ安全なスパイス）から、その料理に合った具体的で幅のある一言を選ぶ。
+
+${AYURVEDA_FOOD_REFERENCE}
+
+${AYURVEDA_EATING_METHOD}`
 
     let messageContent: Anthropic.MessageParam['content']
 
