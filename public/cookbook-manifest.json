@@ -1,0 +1,24 @@
+{
+  "name": "Svayam レシピブック",
+  "short_name": "レシピブック",
+  "description": "アーユルヴェーダの食材事典とレシピ",
+  "start_url": "/cookbook",
+  "scope": "/cookbook",
+  "display": "standalone",
+  "background_color": "#f4efe6",
+  "theme_color": "#a99878",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/cookbook-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/cookbook-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

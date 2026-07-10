@@ -77,3 +77,87 @@ export type MealLog = {
 }
 
 export type HabitWithLog = Habit & { completed: boolean; log_id?: string }
+
+// ドーシャ作用: -1=鎮める / 0=中庸 / 1=増やす
+export type DoshaEffect = -1 | 0 | 1
+
+// 六味
+export type Rasa = '甘' | '酸' | '塩' | '辛' | '苦' | '渋'
+
+// ヴィーリヤ（温冷）
+export type Virya = '温性' | '熱性' | '冷性' | '中性'
+
+export type IngredientSource = '一次ソース' | '推定' | '推定(AI)'
+
+// 食材事典
+export type Ingredient = {
+  id: string
+  name: string
+  aliases: string | null
+  category: string | null
+  photo_url: string | null
+  rasa: string[]
+  virya: string | null
+  vata_effect: DoshaEffect
+  pitta_effect: DoshaEffect
+  kapha_effect: DoshaEffect
+  guna: string | null
+  karma: string | null
+  tcm_nature: string | null
+  tcm_taste: string | null
+  tcm_meridian: string | null
+  tcm_effect: string | null
+  folklore: string | null
+  folklore_region: string[]
+  nutrition: string | null
+  caution: string | null
+  source: string
+  note: string | null
+  favorite: boolean
+  created_at: string
+  updated_at: string
+}
+
+// レシピの材料1行
+export type RecipeIngredient = {
+  ingredient_id: string | null
+  name: string
+  amount: string | null
+  unit: string | null
+  section: string | null
+}
+
+// レシピの手順1行
+export type RecipeStep = {
+  text: string
+  image_url?: string | null
+}
+
+// レシピ
+export type Recipe = {
+  id: string
+  name: string
+  category: string | null
+  subcategory: string | null
+  servings: number | null
+  cook_time: number | null
+  difficulty: string | null
+  description: string | null
+  photo_url: string | null
+  ingredients: RecipeIngredient[]
+  steps: RecipeStep[]
+  tags: string[]
+  season: string[]
+  favorite: boolean
+  is_paid: boolean
+  published: boolean
+  vata_effect: DoshaEffect | null
+  pitta_effect: DoshaEffect | null
+  kapha_effect: DoshaEffect | null
+  rasa: string[]
+  virya: string | null
+  advice: string | null
+  note: string | null
+  created_at: string
+  updated_at: string
+}

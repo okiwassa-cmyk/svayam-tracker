@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Shippori_Mincho } from "next/font/google";
 import "./globals.css";
 
 const geist = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const shippori = Shippori_Mincho({
+  variable: "--font-mincho",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 
@@ -20,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${geist.variable} h-full`}>
+    <html lang="ja" className={`${geist.variable} ${shippori.variable} h-full`}>
       <body className="min-h-full bg-stone-50 text-stone-900 font-sans">
         {children}
       </body>
