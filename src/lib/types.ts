@@ -93,6 +93,7 @@ export type IngredientSource = '一次ソース' | '推定' | '推定(AI)'
 export type Ingredient = {
   id: string
   name: string
+  sanskrit: string | null
   aliases: string | null
   category: string | null
   photo_url: string | null

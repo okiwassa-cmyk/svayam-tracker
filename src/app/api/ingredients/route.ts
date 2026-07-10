@@ -72,7 +72,7 @@ export async function DELETE(req: NextRequest) {
 
 // 許可カラムだけ通す（idやcreated_atを弾く）
 const FIELDS = [
-  'name', 'aliases', 'category', 'photo_url', 'rasa', 'virya',
+  'name', 'sanskrit', 'aliases', 'category', 'photo_url', 'rasa', 'virya',
   'vata_effect', 'pitta_effect', 'kapha_effect', 'guna', 'karma',
   'tcm_nature', 'tcm_taste', 'tcm_meridian', 'tcm_effect',
   'folklore', 'folklore_region', 'nutrition', 'caution',

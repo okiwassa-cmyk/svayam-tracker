@@ -164,6 +164,9 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
         </div>
       </div>
 
+      <Field label="サンスクリット名">
+        <input value={f.sanskrit ?? ''} onChange={(e) => set('sanskrit', e.target.value)} placeholder="例：カーラヴェッラ / Kāravella" className={inputCls} />
+      </Field>
       <Field label="別名（沖縄名など）">
         <input value={f.aliases ?? ''} onChange={(e) => set('aliases', e.target.value)} className={inputCls} />
       </Field>

@@ -51,6 +51,7 @@ export default function IngredientDetail() {
           <h1 className="text-2xl text-[#4a4234]">{item.name}</h1>
           {item.category && <span className="text-xs text-[#7d6d4c]">{item.category}</span>}
         </div>
+        {item.sanskrit && <p className="mt-0.5 text-sm italic text-[#7d6d4c]">{item.sanskrit}</p>}
         {item.aliases && <p className="mt-0.5 text-sm text-[#61543c]">{item.aliases}</p>}
         <div className="mt-1 flex items-center gap-2">
           <SourceBadge source={item.source} />

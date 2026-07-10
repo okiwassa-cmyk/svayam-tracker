@@ -41,6 +41,7 @@ export default function IngredientCardPage() {
             <img src="/branch.png" alt="" className="mx-auto h-10 w-auto" crossOrigin="anonymous" />
             <div className="mt-3 text-center">
               <div className="text-3xl tracking-wide">{item.name}</div>
+              {item.sanskrit && <div className="mt-1 text-sm italic text-[#7d6d4c]">{item.sanskrit}</div>}
               {item.aliases && <div className="mt-1 text-sm text-[#61543c]">{item.aliases}</div>}
             </div>
 
