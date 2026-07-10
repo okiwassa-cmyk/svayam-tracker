@@ -52,15 +52,25 @@ ${AYURVEDA_EATING_METHOD}`
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 800,
+      max_tokens: 2000,
       system: systemPrompt,
       messages: [{ role: 'user', content: `次の食材の効能を下書きしてください：${String(name).trim()}` }],
     })
 
-    const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+    const rawText = response.content
+      .filter((b) => b.type === 'text')
+      .map((b) => (b.type === 'text' ? b.text : ''))
+      .join('')
+      .trim()
+    // ```json フェンスを除去
+    const cleaned = rawText.replace(/```json\s*/gi, '').replace(/```/g, '').trim()
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
+      console.error('no json in AI response', { stop: response.stop_reason, rawText })
+      return NextResponse.json(
+        { error: `AIの回答を解析できませんでした（${response.stop_reason ?? 'unknown'}）` },
+        { status: 500 }
+      )
     }
     const draft = JSON.parse(jsonMatch[0])
 

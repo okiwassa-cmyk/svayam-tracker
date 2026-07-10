@@ -112,15 +112,24 @@ ${aggregate ? `V${aggregate.vata} P${aggregate.pitta} K${aggregate.kapha} / ヴ�
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 500,
+      max_tokens: 900,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMsg }],
     })
 
-    const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+    const rawText = response.content
+      .filter((b) => b.type === 'text')
+      .map((b) => (b.type === 'text' ? b.text : ''))
+      .join('')
+      .trim()
+    const cleaned = rawText.replace(/```json\s*/gi, '').replace(/```/g, '').trim()
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
+      console.error('no json in AI response', { stop: response.stop_reason, rawText })
+      return NextResponse.json(
+        { error: `AIの回答を解析できませんでした（${response.stop_reason ?? 'unknown'}）` },
+        { status: 500 }
+      )
     }
     const analysis = JSON.parse(jsonMatch[0])
     if (!Array.isArray(analysis.rasa)) analysis.rasa = analysis.rasa ? [analysis.rasa] : []
