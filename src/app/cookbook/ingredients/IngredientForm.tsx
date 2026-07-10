@@ -123,7 +123,7 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
 
       {/* 名前 + AI */}
       <div>
-        <label className="mb-1 block text-xs text-[#8a7d64]">食材名 *</label>
+        <label className="mb-1 block text-xs text-[#61543c]">食材名 *</label>
         <div className="flex gap-2">
           <input
             value={f.name ?? ''}
@@ -149,7 +149,7 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
 
       {/* 写真 */}
       <div>
-        <label className="mb-1 block text-xs text-[#8a7d64]">写真</label>
+        <label className="mb-1 block text-xs text-[#61543c]">写真</label>
         <div className="flex items-center gap-3">
           {f.photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -264,7 +264,7 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
       <div className="flex gap-3 pt-2">
         <button
           onClick={() => router.back()}
-          className="flex-1 rounded-full border border-[#d8cdb8] py-3 text-sm text-[#8a7d64]"
+          className="flex-1 rounded-full border border-[#d8cdb8] py-3 text-sm text-[#61543c]"
         >
           キャンセル
         </button>
@@ -286,14 +286,14 @@ const textCls = 'w-full rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-xs text-[#8a7d64]">{label}</label>
+      <label className="mb-1 block text-xs text-[#61543c]">{label}</label>
       {children}
     </div>
   )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="border-b border-[#e4ddd0] pb-1 pt-3 text-sm text-[#a99878]">{children}</h2>
+  return <h2 className="border-b border-[#e4ddd0] pb-1 pt-3 text-sm text-[#7d6d4c]">{children}</h2>
 }
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -302,7 +302,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
-        active ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'
+        active ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'
       }`}
     >
       {children}

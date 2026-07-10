@@ -20,12 +20,12 @@ export default function RecipeCardPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <p className="py-10 text-center text-sm text-[#a99878]">読み込み中…</p>
-  if (!r) return <p className="py-10 text-center text-sm text-[#a99878]">見つかりませんでした</p>
+  if (loading) return <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
+  if (!r) return <p className="py-10 text-center text-sm text-[#7d6d4c]">見つかりませんでした</p>
 
   return (
     <div className="space-y-5 pb-4">
-      <Link href={`/cookbook/recipes/${id}`} className="text-xs text-[#a99878]">← {r.name}</Link>
+      <Link href={`/cookbook/recipes/${id}`} className="text-xs text-[#7d6d4c]">← {r.name}</Link>
       <h1 className="text-lg text-[#4a4234]">noteカード</h1>
 
       <CardExport filename={`recipe-${r.name}`}>
@@ -40,7 +40,7 @@ export default function RecipeCardPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/branch.png" alt="" className="mx-auto h-9 w-auto" crossOrigin="anonymous" />
               <div className="mt-2 text-center text-3xl tracking-wide">{r.name}</div>
-              <div className="mt-2 flex items-center justify-center gap-2 text-xs text-[#8a7d64]">
+              <div className="mt-2 flex items-center justify-center gap-2 text-xs text-[#61543c]">
                 {r.category && <span>{r.category}</span>}
                 {r.servings && <span>· {r.servings}人前</span>}
                 {r.cook_time && <span>· {r.cook_time}分</span>}
@@ -56,7 +56,7 @@ export default function RecipeCardPage() {
                   const e = r[`${d}_effect` as const]
                   return (
                     <span key={d} className="rounded-lg border border-[#e4ddd0] bg-[#faf7f1] px-3 py-1.5 text-xs">
-                      <span className="text-[#a99878]">{label}</span>
+                      <span className="text-[#7d6d4c]">{label}</span>
                       <span className={`ml-1 ${effectColor(e)}`}>{effectArrow(e)}</span>
                     </span>
                   )
@@ -65,13 +65,13 @@ export default function RecipeCardPage() {
 
               {r.season?.length > 0 && (
                 <div className="mt-3 flex justify-center gap-2">
-                  {r.season.map((s) => <span key={s} className="rounded-full bg-[#efe8da] px-3 py-1 text-xs text-[#8a7d64]">{s}</span>)}
+                  {r.season.map((s) => <span key={s} className="rounded-full bg-[#efe8da] px-3 py-1 text-xs text-[#61543c]">{s}</span>)}
                 </div>
               )}
 
               {r.ingredients?.length > 0 && (
                 <div className="mt-5">
-                  <div className="text-center text-xs text-[#a99878]">材料</div>
+                  <div className="text-center text-xs text-[#7d6d4c]">材料</div>
                   <div className="mt-1.5 text-center text-sm leading-relaxed text-[#6b5d45]">
                     {r.ingredients.map((i) => i.name).join('・')}
                   </div>

@@ -46,17 +46,17 @@ export default function RecipesPage() {
 
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => setCat('')} className={`rounded-full px-3 py-1 text-xs ${cat === '' ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}>すべて</button>
+          <button onClick={() => setCat('')} className={`rounded-full px-3 py-1 text-xs ${cat === '' ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}>すべて</button>
           {categories.map((c) => (
-            <button key={c} onClick={() => setCat(c)} className={`rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}>{c}</button>
+            <button key={c} onClick={() => setCat(c)} className={`rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}>{c}</button>
           ))}
         </div>
       )}
 
       {loading ? (
-        <p className="py-10 text-center text-sm text-[#a99878]">読み込み中…</p>
+        <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
       ) : filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#a99878]">レシピがありません</p>
+        <p className="py-10 text-center text-sm text-[#7d6d4c]">レシピがありません</p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {filtered.map((r) => (
@@ -73,7 +73,7 @@ export default function RecipesPage() {
               )}
               <div className="p-3">
                 <div className="truncate text-sm text-[#4a4234]">{r.name}</div>
-                <div className="mt-1 flex items-center gap-1 text-[11px] text-[#a99878]">
+                <div className="mt-1 flex items-center gap-1 text-[11px] text-[#7d6d4c]">
                   {r.virya && <span>{r.virya}</span>}
                   {r.season?.length > 0 && <span>· {r.season.join('')}</span>}
                 </div>

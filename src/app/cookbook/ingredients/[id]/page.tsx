@@ -34,12 +34,12 @@ export default function IngredientDetail() {
     router.push('/cookbook/ingredients')
   }
 
-  if (loading) return <p className="py-10 text-center text-sm text-[#a99878]">読み込み中…</p>
-  if (!item) return <p className="py-10 text-center text-sm text-[#a99878]">見つかりませんでした</p>
+  if (loading) return <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
+  if (!item) return <p className="py-10 text-center text-sm text-[#7d6d4c]">見つかりませんでした</p>
 
   return (
     <div className="space-y-5 pb-4">
-      <Link href="/cookbook/ingredients" className="text-xs text-[#a99878]">← 食材事典</Link>
+      <Link href="/cookbook/ingredients" className="text-xs text-[#7d6d4c]">← 食材事典</Link>
 
       {item.photo_url && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -49,9 +49,9 @@ export default function IngredientDetail() {
       <div>
         <div className="flex items-baseline gap-2">
           <h1 className="text-2xl text-[#4a4234]">{item.name}</h1>
-          {item.category && <span className="text-xs text-[#a99878]">{item.category}</span>}
+          {item.category && <span className="text-xs text-[#7d6d4c]">{item.category}</span>}
         </div>
-        {item.aliases && <p className="mt-0.5 text-sm text-[#8a7d64]">{item.aliases}</p>}
+        {item.aliases && <p className="mt-0.5 text-sm text-[#61543c]">{item.aliases}</p>}
         <div className="mt-1 flex items-center gap-2">
           <SourceBadge source={item.source} />
         </div>
@@ -105,7 +105,7 @@ export default function IngredientDetail() {
         </div>
       )}
 
-      {item.note && <p className="text-sm text-[#8a7d64]">{item.note}</p>}
+      {item.note && <p className="text-sm text-[#61543c]">{item.note}</p>}
 
       {recipes.length > 0 && (
         <Section title="この食材を使うレシピ">
@@ -149,14 +149,14 @@ export default function IngredientDetail() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="mb-1.5 text-sm text-[#a99878]">{title}</h2>
+      <h2 className="mb-1.5 text-sm text-[#7d6d4c]">{title}</h2>
       {children}
     </div>
   )
 }
 
 function Tag({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-full bg-[#efe8da] px-2.5 py-0.5 text-xs text-[#8a7d64]">{children}</span>
+  return <span className="rounded-full bg-[#efe8da] px-2.5 py-0.5 text-xs text-[#61543c]">{children}</span>
 }
 
 function SourceBadge({ source }: { source: string }) {

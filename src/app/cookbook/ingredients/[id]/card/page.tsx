@@ -21,12 +21,12 @@ export default function IngredientCardPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <p className="py-10 text-center text-sm text-[#a99878]">読み込み中…</p>
-  if (!item) return <p className="py-10 text-center text-sm text-[#a99878]">見つかりませんでした</p>
+  if (loading) return <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
+  if (!item) return <p className="py-10 text-center text-sm text-[#7d6d4c]">見つかりませんでした</p>
 
   return (
     <div className="space-y-5 pb-4">
-      <Link href={`/cookbook/ingredients/${id}`} className="text-xs text-[#a99878]">← {item.name}</Link>
+      <Link href={`/cookbook/ingredients/${id}`} className="text-xs text-[#7d6d4c]">← {item.name}</Link>
       <h1 className="text-lg text-[#4a4234]">noteカード</h1>
 
       <CardExport filename={`ingredient-${item.name}`}>
@@ -41,7 +41,7 @@ export default function IngredientCardPage() {
             <img src="/branch.png" alt="" className="mx-auto h-10 w-auto" crossOrigin="anonymous" />
             <div className="mt-3 text-center">
               <div className="text-3xl tracking-wide">{item.name}</div>
-              {item.aliases && <div className="mt-1 text-sm text-[#8a7d64]">{item.aliases}</div>}
+              {item.aliases && <div className="mt-1 text-sm text-[#61543c]">{item.aliases}</div>}
             </div>
 
             {item.photo_url && (
@@ -60,7 +60,7 @@ export default function IngredientCardPage() {
                 const e = item[`${d}_effect` as const]
                 return (
                   <span key={d} className="rounded-lg border border-[#e4ddd0] bg-[#faf7f1] px-3 py-1.5 text-center text-xs">
-                    <span className="text-[#a99878]">{label}</span>
+                    <span className="text-[#7d6d4c]">{label}</span>
                     <span className={`ml-1 ${effectColor(e)}`}>{effectArrow(e)}</span>
                   </span>
                 )
@@ -102,7 +102,7 @@ export default function IngredientCardPage() {
 function Row({ label, text }: { label: string; text: string }) {
   return (
     <div>
-      <div className="text-xs text-[#a99878]">{label}</div>
+      <div className="text-xs text-[#7d6d4c]">{label}</div>
       <div className="text-[#4a4234]">{text}</div>
     </div>
   )

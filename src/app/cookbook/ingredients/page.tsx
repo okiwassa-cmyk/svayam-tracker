@@ -58,7 +58,7 @@ export default function IngredientsPage() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setCat('')}
-            className={`rounded-full px-3 py-1 text-xs ${cat === '' ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}
+            className={`rounded-full px-3 py-1 text-xs ${cat === '' ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}
           >
             すべて
           </button>
@@ -66,7 +66,7 @@ export default function IngredientsPage() {
             <button
               key={c}
               onClick={() => setCat(c)}
-              className={`rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}
+              className={`rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}
             >
               {c}
             </button>
@@ -75,9 +75,9 @@ export default function IngredientsPage() {
       )}
 
       {loading ? (
-        <p className="py-10 text-center text-sm text-[#a99878]">読み込み中…</p>
+        <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
       ) : filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#a99878]">食材がありません</p>
+        <p className="py-10 text-center text-sm text-[#7d6d4c]">食材がありません</p>
       ) : (
         <ul className="space-y-2.5">
           {filtered.map((i) => (
@@ -95,11 +95,11 @@ export default function IngredientsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
                     <span className="truncate text-base text-[#4a4234]">{i.name}</span>
-                    {i.virya && <span className="shrink-0 text-xs text-[#a99878]">{i.virya}</span>}
+                    {i.virya && <span className="shrink-0 text-xs text-[#7d6d4c]">{i.virya}</span>}
                   </div>
                   <div className="mt-0.5 flex items-center gap-2">
                     {i.rasa?.length > 0 && (
-                      <span className="truncate text-xs text-[#8a7d64]">{i.rasa.join('・')}</span>
+                      <span className="truncate text-xs text-[#61543c]">{i.rasa.join('・')}</span>
                     )}
                   </div>
                   <div className="mt-1.5">

@@ -25,7 +25,7 @@ export default function CookbookHome() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/branch.png" alt="" className="mx-auto mb-3 h-16 w-auto" />
         <h1 className="text-2xl tracking-wide text-[#4a4234]">Svayam レシピブック</h1>
-        <p className="mt-2 text-sm text-[#8a7d64]">アーユルヴェーダの食材と、毎日のごはん</p>
+        <p className="mt-2 text-sm text-[#61543c]">アーユルヴェーダの食材と、毎日のごはん</p>
       </header>
 
       <div className="grid grid-cols-2 gap-4">
@@ -33,17 +33,17 @@ export default function CookbookHome() {
           href="/cookbook/ingredients"
           className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-5 shadow-sm transition-transform active:scale-[0.98]"
         >
-          <BookOpen strokeWidth={1.4} className="h-7 w-7 text-[#a99878]" />
+          <BookOpen strokeWidth={1.4} className="h-7 w-7 text-[#7d6d4c]" />
           <div className="mt-3 text-base text-[#4a4234]">食材事典</div>
-          <div className="mt-1 text-xs text-[#a99878]">{counts.ingredients} 品</div>
+          <div className="mt-1 text-xs text-[#7d6d4c]">{counts.ingredients} 品</div>
         </Link>
         <Link
           href="/cookbook/recipes"
           className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-5 shadow-sm transition-transform active:scale-[0.98]"
         >
-          <CookingPot strokeWidth={1.4} className="h-7 w-7 text-[#a99878]" />
+          <CookingPot strokeWidth={1.4} className="h-7 w-7 text-[#7d6d4c]" />
           <div className="mt-3 text-base text-[#4a4234]">レシピ</div>
-          <div className="mt-1 text-xs text-[#a99878]">{counts.recipes} 品</div>
+          <div className="mt-1 text-xs text-[#7d6d4c]">{counts.recipes} 品</div>
         </Link>
       </div>
 
@@ -52,10 +52,10 @@ export default function CookbookHome() {
         className="block rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-5 shadow-sm transition-transform active:scale-[0.98]"
       >
         <div className="flex items-center gap-4">
-          <Scale strokeWidth={1.4} className="h-7 w-7 shrink-0 text-[#a99878]" />
+          <Scale strokeWidth={1.4} className="h-7 w-7 shrink-0 text-[#7d6d4c]" />
           <div>
             <div className="text-base text-[#4a4234]">体質で探す</div>
-            <div className="mt-1 text-xs text-[#8a7d64]">ドーシャ・季節・体調から逆引き</div>
+            <div className="mt-1 text-xs text-[#61543c]">ドーシャ・季節・体調から逆引き</div>
           </div>
         </div>
       </Link>

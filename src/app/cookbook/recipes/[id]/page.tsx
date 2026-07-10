@@ -26,12 +26,12 @@ export default function RecipeDetail() {
     router.push('/cookbook/recipes')
   }
 
-  if (loading) return <p className="py-10 text-center text-sm text-[#a99878]">読み込み中…</p>
-  if (!r) return <p className="py-10 text-center text-sm text-[#a99878]">見つかりませんでした</p>
+  if (loading) return <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
+  if (!r) return <p className="py-10 text-center text-sm text-[#7d6d4c]">見つかりませんでした</p>
 
   return (
     <div className="space-y-5 pb-4">
-      <Link href="/cookbook/recipes" className="text-xs text-[#a99878]">← レシピ</Link>
+      <Link href="/cookbook/recipes" className="text-xs text-[#7d6d4c]">← レシピ</Link>
 
       {r.photo_url && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -40,7 +40,7 @@ export default function RecipeDetail() {
 
       <div>
         <h1 className="text-2xl text-[#4a4234]">{r.name}</h1>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#a99878]">
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#7d6d4c]">
           {r.category && <span>{r.category}</span>}
           {r.servings && <span>· {r.servings}人前</span>}
           {r.cook_time && <span>· {r.cook_time}分</span>}
@@ -60,7 +60,7 @@ export default function RecipeDetail() {
         </div>
         {r.season?.length > 0 && (
           <div className="mt-2 flex gap-1.5">
-            {r.season.map((s) => <span key={s} className="rounded-full bg-[#efe8da] px-2.5 py-0.5 text-xs text-[#8a7d64]">{s}</span>)}
+            {r.season.map((s) => <span key={s} className="rounded-full bg-[#efe8da] px-2.5 py-0.5 text-xs text-[#61543c]">{s}</span>)}
           </div>
         )}
         {r.advice && <p className="mt-2 text-sm leading-relaxed text-[#6b5d45]">{r.advice}</p>}
@@ -69,7 +69,7 @@ export default function RecipeDetail() {
       {/* 材料 */}
       {r.ingredients?.length > 0 && (
         <div>
-          <h2 className="mb-2 text-sm text-[#a99878]">材料{r.servings ? `（${r.servings}人前）` : ''}</h2>
+          <h2 className="mb-2 text-sm text-[#7d6d4c]">材料{r.servings ? `（${r.servings}人前）` : ''}</h2>
           <ul className="divide-y divide-[#eee6d8] rounded-2xl border border-[#e4ddd0] bg-[#faf7f1]">
             {r.ingredients.map((ing, i) => (
               <li key={i} className="flex items-center justify-between px-4 py-2.5 text-sm">
@@ -80,7 +80,7 @@ export default function RecipeDetail() {
                 ) : (
                   <span className="text-[#6b5d45]">{ing.name}</span>
                 )}
-                <span className="text-[#a99878]">{ing.amount}{ing.unit}</span>
+                <span className="text-[#7d6d4c]">{ing.amount}{ing.unit}</span>
               </li>
             ))}
           </ul>
@@ -90,7 +90,7 @@ export default function RecipeDetail() {
       {/* 手順 */}
       {r.steps?.length > 0 && (
         <div>
-          <h2 className="mb-2 text-sm text-[#a99878]">作り方</h2>
+          <h2 className="mb-2 text-sm text-[#7d6d4c]">作り方</h2>
           <ol className="space-y-3">
             {r.steps.map((s, i) => (
               <li key={i} className="flex gap-3">

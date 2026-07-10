@@ -18,7 +18,7 @@ export default function EditIngredientPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <p className="py-10 text-center text-sm text-[#a99878]">読み込み中…</p>
-  if (!item) return <p className="py-10 text-center text-sm text-[#a99878]">見つかりませんでした</p>
+  if (loading) return <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
+  if (!item) return <p className="py-10 text-center text-sm text-[#7d6d4c]">見つかりませんでした</p>
   return <IngredientForm initial={item} />
 }

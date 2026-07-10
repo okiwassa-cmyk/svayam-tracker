@@ -228,7 +228,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
             <button onClick={() => removeIng(idx)} className="text-rose-300">×</button>
           </div>
         ))}
-        <button onClick={addIng} className="w-full rounded-xl border border-dashed border-[#d8cdb8] py-2 text-sm text-[#a99878]">＋ 材料を追加</button>
+        <button onClick={addIng} className="w-full rounded-xl border border-dashed border-[#d8cdb8] py-2 text-sm text-[#7d6d4c]">＋ 材料を追加</button>
       </div>
 
       {/* 手順 */}
@@ -236,12 +236,12 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
       <div className="space-y-2">
         {steps.map((s, idx) => (
           <div key={idx} className="flex items-start gap-2">
-            <span className="mt-2 text-sm text-[#a99878]">{idx + 1}</span>
+            <span className="mt-2 text-sm text-[#7d6d4c]">{idx + 1}</span>
             <textarea value={s.text} onChange={(e) => updateStep(idx, e.target.value)} className={textCls} rows={2} />
             <button onClick={() => removeStep(idx)} className="mt-2 text-rose-300">×</button>
           </div>
         ))}
-        <button onClick={addStep} className="w-full rounded-xl border border-dashed border-[#d8cdb8] py-2 text-sm text-[#a99878]">＋ 手順を追加</button>
+        <button onClick={addStep} className="w-full rounded-xl border border-dashed border-[#d8cdb8] py-2 text-sm text-[#7d6d4c]">＋ 手順を追加</button>
       </div>
 
       {/* AI判定 */}
@@ -257,7 +257,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
 
       <div className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-[#8a7d64]">ドーシャ作用</span>
+          <span className="text-xs text-[#61543c]">ドーシャ作用</span>
           <DoshaBadges vata={f.vata_effect ?? 0} pitta={f.pitta_effect ?? 0} kapha={f.kapha_effect ?? 0} />
         </div>
         {(['vata', 'pitta', 'kapha'] as const).map((d) => {
@@ -265,7 +265,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
           const key = `${d}_effect` as const
           return (
             <div key={d} className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-[#8a7d64]">{label}</span>
+              <span className="text-xs text-[#61543c]">{label}</span>
               <div className="flex gap-1.5">
                 {EFFECT_OPTIONS.map((o) => (
                   <Chip key={o.v} active={f[key] === o.v} onClick={() => set(key, o.v as -1 | 0 | 1)}>{o.label}</Chip>
@@ -280,7 +280,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
           ))}
         </div>
         {(f.rasa ?? []).length > 0 && (
-          <p className="mt-2 text-xs text-[#8a7d64]">六味：{(f.rasa as string[]).join('・')}</p>
+          <p className="mt-2 text-xs text-[#61543c]">六味：{(f.rasa as string[]).join('・')}</p>
         )}
       </div>
 
@@ -314,7 +314,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
       {error && <p className="text-sm text-rose-600">{error}</p>}
 
       <div className="flex gap-3 pt-2">
-        <button onClick={() => router.back()} className="flex-1 rounded-full border border-[#d8cdb8] py-3 text-sm text-[#8a7d64]">キャンセル</button>
+        <button onClick={() => router.back()} className="flex-1 rounded-full border border-[#d8cdb8] py-3 text-sm text-[#61543c]">キャンセル</button>
         <button onClick={save} disabled={saving} className="flex-1 rounded-full bg-[#a99878] py-3 text-sm text-white disabled:opacity-50">
           {saving ? '保存中…' : '保存'}
         </button>
@@ -329,17 +329,17 @@ const textCls = 'w-full rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-xs text-[#8a7d64]">{label}</label>
+      <label className="mb-1 block text-xs text-[#61543c]">{label}</label>
       {children}
     </div>
   )
 }
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="border-b border-[#e4ddd0] pb-1 pt-3 text-sm text-[#a99878]">{children}</h2>
+  return <h2 className="border-b border-[#e4ddd0] pb-1 pt-3 text-sm text-[#7d6d4c]">{children}</h2>
 }
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className={`rounded-full px-3 py-1.5 text-xs transition-colors ${active ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}>
+    <button type="button" onClick={onClick} className={`rounded-full px-3 py-1.5 text-xs transition-colors ${active ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}>
       {children}
     </button>
   )

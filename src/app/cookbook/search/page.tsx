@@ -72,13 +72,13 @@ export default function SearchPage() {
       {/* 体質選択 */}
       <div className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-4 space-y-3">
         <div>
-          <p className="mb-1.5 text-xs text-[#8a7d64]">鎮めたい体質（複数可）</p>
+          <p className="mb-1.5 text-xs text-[#61543c]">鎮めたい体質（複数可）</p>
           <div className="flex gap-2">
             {DOSHAS.map((d) => (
               <button
                 key={d}
                 onClick={() => toggleDosha(d)}
-                className={`flex-1 rounded-full py-2 text-sm ${doshas.includes(d) ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}
+                className={`flex-1 rounded-full py-2 text-sm ${doshas.includes(d) ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}
               >
                 {DOSHA_LABEL[d]}
               </button>
@@ -87,23 +87,23 @@ export default function SearchPage() {
         </div>
 
         <div>
-          <p className="mb-1.5 text-xs text-[#8a7d64]">季節（任意・リトチャリア）</p>
+          <p className="mb-1.5 text-xs text-[#61543c]">季節（任意・リトチャリア）</p>
           <div className="flex gap-2">
-            <button onClick={() => setSeason(null)} className={`rounded-full px-3 py-1.5 text-xs ${season === null ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}>指定なし</button>
+            <button onClick={() => setSeason(null)} className={`rounded-full px-3 py-1.5 text-xs ${season === null ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}>指定なし</button>
             {SEASONS.map((s) => (
-              <button key={s} onClick={() => setSeason(s)} className={`rounded-full px-3 py-1.5 text-xs ${season === s ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}>{s}</button>
+              <button key={s} onClick={() => setSeason(s)} className={`rounded-full px-3 py-1.5 text-xs ${season === s ? 'bg-[#a99878] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}>{s}</button>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="mb-1.5 text-xs text-[#8a7d64]">今の乱れ（任意・特に増えているドーシャ）</p>
+          <p className="mb-1.5 text-xs text-[#61543c]">今の乱れ（任意・特に増えているドーシャ）</p>
           <div className="flex gap-2">
             {DOSHAS.map((d) => (
               <button
                 key={d}
                 onClick={() => toggleImbalance(d)}
-                className={`rounded-full px-3 py-1.5 text-xs ${imbalance.includes(d) ? 'bg-[#c98b6b] text-white' : 'bg-[#efe8da] text-[#8a7d64]'}`}
+                className={`rounded-full px-3 py-1.5 text-xs ${imbalance.includes(d) ? 'bg-[#c98b6b] text-white' : 'bg-[#efe8da] text-[#61543c]'}`}
               >
                 {DOSHA_LABEL[d]}過剰
               </button>
@@ -111,7 +111,7 @@ export default function SearchPage() {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-[#8a7d64]">
+        <label className="flex items-center gap-2 text-xs text-[#61543c]">
           <input type="checkbox" checked={hideAvoid} onChange={(e) => setHideAvoid(e.target.checked)} />
           「避けたい」を隠す
         </label>
@@ -119,8 +119,8 @@ export default function SearchPage() {
 
       {/* タブ */}
       <div className="flex rounded-full border border-[#e4ddd0] bg-[#faf7f1] p-1">
-        <button onClick={() => setTab('ingredients')} className={`flex-1 rounded-full py-2 text-sm ${tab === 'ingredients' ? 'bg-[#a99878] text-white' : 'text-[#8a7d64]'}`}>食材</button>
-        <button onClick={() => setTab('recipes')} className={`flex-1 rounded-full py-2 text-sm ${tab === 'recipes' ? 'bg-[#a99878] text-white' : 'text-[#8a7d64]'}`}>レシピ</button>
+        <button onClick={() => setTab('ingredients')} className={`flex-1 rounded-full py-2 text-sm ${tab === 'ingredients' ? 'bg-[#a99878] text-white' : 'text-[#61543c]'}`}>食材</button>
+        <button onClick={() => setTab('recipes')} className={`flex-1 rounded-full py-2 text-sm ${tab === 'recipes' ? 'bg-[#a99878] text-white' : 'text-[#61543c]'}`}>レシピ</button>
       </div>
 
       {tab === 'ingredients' ? (
@@ -136,7 +136,7 @@ export default function SearchPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
                     <span className="truncate text-sm text-[#4a4234]">{item.name}</span>
-                    <span className="shrink-0 text-[11px] text-[#a99878]">{COMPAT_LABEL[compat]}</span>
+                    <span className="shrink-0 text-[11px] text-[#7d6d4c]">{COMPAT_LABEL[compat]}</span>
                   </div>
                   <div className="mt-1"><DoshaBadges vata={item.vata_effect} pitta={item.pitta_effect} kapha={item.kapha_effect} size="sm" /></div>
                 </div>
@@ -159,7 +159,7 @@ export default function SearchPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
                     <span className="truncate text-sm text-[#4a4234]">{item.name}</span>
-                    <span className="shrink-0 text-[11px] text-[#a99878]">{COMPAT_LABEL[compat]}</span>
+                    <span className="shrink-0 text-[11px] text-[#7d6d4c]">{COMPAT_LABEL[compat]}</span>
                   </div>
                   <div className="mt-1"><DoshaBadges vata={item.vata_effect} pitta={item.pitta_effect} kapha={item.kapha_effect} size="sm" /></div>
                 </div>

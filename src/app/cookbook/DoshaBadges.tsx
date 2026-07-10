@@ -28,7 +28,7 @@ export default function DoshaBadges({ vata, pitta, kapha, size = 'md' }: Props) 
             key={key}
             className={`inline-flex items-center gap-0.5 rounded-full border border-[#e4ddd0] bg-[#faf7f1] px-2 py-0.5 ${text}`}
           >
-            <span className="text-[#a99878]">{label}</span>
+            <span className="text-[#7d6d4c]">{label}</span>
             <span className={effectColor(e)}>{effectArrow(e)}</span>
           </span>
         )
