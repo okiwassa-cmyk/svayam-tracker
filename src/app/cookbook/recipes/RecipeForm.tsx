@@ -28,6 +28,8 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
   const [photoUploading, setPhotoUploading] = useState(false)
   const [error, setError] = useState('')
   const [cautions, setCautions] = useState<string[]>([])
+  const [pasteText, setPasteText] = useState('')
+  const [parsing, setParsing] = useState(false)
 
   useEffect(() => {
     fetch('/api/ingredients').then((r) => r.json()).then((j) => setDict(j.data ?? []))
@@ -91,6 +93,45 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
     }
   }
 
+  async function importFromText() {
+    if (!pasteText.trim()) return
+    setError('')
+    setParsing(true)
+    try {
+      const res = await fetch('/api/recipe-parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: pasteText }),
+      })
+      const j = await res.json()
+      if (!j.parsed) {
+        setError(j.error || 'テキストの取り込みに失敗しました')
+        return
+      }
+      const p = j.parsed
+      const parsedIngs: RecipeIngredient[] = (p.ingredients ?? []).map((i: { name?: string; amount?: string; unit?: string }) => {
+        const name = i.name ?? ''
+        const matched = dict.find((d) => d.name === name)
+        return { ingredient_id: matched?.id ?? null, name, amount: i.amount ?? '', unit: i.unit ?? '', section: null }
+      })
+      const parsedSteps: RecipeStep[] = (p.steps ?? []).map((s: { text?: string }) => ({ text: s.text ?? '' }))
+      setF((prev) => ({
+        ...prev,
+        name: p.name || prev.name,
+        description: p.description || prev.description,
+        category: p.category || prev.category,
+        servings: p.servings ?? prev.servings,
+        cook_time: p.cook_time ?? prev.cook_time,
+        difficulty: p.difficulty || prev.difficulty,
+        ingredients: parsedIngs.length ? parsedIngs : prev.ingredients,
+        steps: parsedSteps.length ? parsedSteps : prev.steps,
+      }))
+      setPasteText('')
+    } finally {
+      setParsing(false)
+    }
+  }
+
   async function analyze() {
     const validIngs = ings.filter((i) => i.name.trim())
     if (validIngs.length === 0) {
@@ -151,6 +192,28 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
   return (
     <div className="space-y-5 pb-4">
       <h1 className="text-xl text-[#4a4234]">{isEdit ? 'レシピを編集' : 'レシピを登録'}</h1>
+
+      {/* テキストから取り込む */}
+      <div className="rounded-2xl border border-[#c9b98f] bg-[#faf7f1] p-3">
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs text-[#61543c]">
+          <Sparkles strokeWidth={1.4} className="h-3.5 w-3.5" />
+          レシピ文をそのまま貼り付けて取り込む
+        </label>
+        <textarea
+          value={pasteText}
+          onChange={(e) => setPasteText(e.target.value)}
+          placeholder="AIが出したレシピや手書きメモを丸ごと貼り付け → 材料・手順が自動で入ります"
+          className={textCls}
+          rows={4}
+        />
+        <button
+          onClick={importFromText}
+          disabled={parsing || !pasteText.trim()}
+          className="mt-2 w-full rounded-xl border border-[#c9b98f] bg-[#efe3c4] py-2.5 text-sm text-[#6b5d45] disabled:opacity-50"
+        >
+          {parsing ? '取り込み中…' : 'テキストから取り込む'}
+        </button>
+      </div>
 
       <Field label="レシピ名 *">
         <input value={f.name ?? ''} onChange={(e) => set('name', e.target.value)} placeholder="例：大麦キチディ" className={inputCls} />
