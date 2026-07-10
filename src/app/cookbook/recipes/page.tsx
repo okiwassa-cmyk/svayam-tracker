@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { CookingPot } from 'lucide-react'
 import type { Recipe } from '@/lib/types'
 import DoshaBadges from '../DoshaBadges'
 
@@ -68,7 +69,7 @@ export default function RecipesPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={r.photo_url} alt={r.name} className="h-28 w-full object-cover" />
               ) : (
-                <div className="flex h-28 w-full items-center justify-center bg-[#efe8da] text-2xl text-[#c0b59f]">🍲</div>
+                <div className="flex h-28 w-full items-center justify-center bg-[#efe8da]"><CookingPot strokeWidth={1.3} className="h-8 w-8 text-[#c0b59f]" /></div>
               )}
               <div className="p-3">
                 <div className="truncate text-sm text-[#4a4234]">{r.name}</div>

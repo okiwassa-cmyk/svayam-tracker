@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { Leaf, Sparkles } from 'lucide-react'
 import type { Ingredient } from '@/lib/types'
 
 const RASA_OPTIONS = ['甘', '酸', '塩', '辛', '苦', '渋']
@@ -133,9 +134,10 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
           <button
             onClick={runAI}
             disabled={aiLoading}
-            className="shrink-0 rounded-xl border border-[#c9b98f] bg-[#efe3c4] px-4 text-sm text-[#6b5d45] disabled:opacity-50"
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[#c9b98f] bg-[#efe3c4] px-4 text-sm text-[#6b5d45] disabled:opacity-50"
           >
-            {aiLoading ? '調査中…' : '✨ AIで調べる'}
+            <Sparkles strokeWidth={1.4} className="h-4 w-4" />
+            {aiLoading ? '調査中…' : 'AIで調べる'}
           </button>
         </div>
         {isAI && (
@@ -153,7 +155,7 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={f.photo_url} alt="" className="h-16 w-16 rounded-xl object-cover" />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#efe8da] text-xl text-[#c0b59f]">🌿</div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#efe8da]"><Leaf strokeWidth={1.4} className="h-6 w-6 text-[#c0b59f]" /></div>
           )}
           <label className="cursor-pointer rounded-full border border-[#d8cdb8] bg-[#efe8da] px-4 py-2 text-sm text-[#6b5d45]">
             {photoUploading ? 'アップ中…' : '写真を選ぶ'}

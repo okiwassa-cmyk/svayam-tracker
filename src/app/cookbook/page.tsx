@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { BookOpen, CookingPot, Scale } from 'lucide-react'
 
 export default function CookbookHome() {
   const [counts, setCounts] = useState<{ ingredients: number; recipes: number }>({ ingredients: 0, recipes: 0 })
@@ -21,7 +22,8 @@ export default function CookbookHome() {
   return (
     <div className="space-y-8">
       <header className="pt-4 text-center">
-        <div className="mb-3 text-2xl text-[#a99878]">🌿</div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/branch.png" alt="" className="mx-auto mb-3 h-16 w-auto" />
         <h1 className="text-2xl tracking-wide text-[#4a4234]">Svayam レシピブック</h1>
         <p className="mt-2 text-sm text-[#8a7d64]">アーユルヴェーダの食材と、毎日のごはん</p>
       </header>
@@ -31,7 +33,7 @@ export default function CookbookHome() {
           href="/cookbook/ingredients"
           className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-5 shadow-sm transition-transform active:scale-[0.98]"
         >
-          <div className="text-3xl">📖</div>
+          <BookOpen strokeWidth={1.4} className="h-7 w-7 text-[#a99878]" />
           <div className="mt-3 text-base text-[#4a4234]">食材事典</div>
           <div className="mt-1 text-xs text-[#a99878]">{counts.ingredients} 品</div>
         </Link>
@@ -39,7 +41,7 @@ export default function CookbookHome() {
           href="/cookbook/recipes"
           className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-5 shadow-sm transition-transform active:scale-[0.98]"
         >
-          <div className="text-3xl">🍲</div>
+          <CookingPot strokeWidth={1.4} className="h-7 w-7 text-[#a99878]" />
           <div className="mt-3 text-base text-[#4a4234]">レシピ</div>
           <div className="mt-1 text-xs text-[#a99878]">{counts.recipes} 品</div>
         </Link>
@@ -50,7 +52,7 @@ export default function CookbookHome() {
         className="block rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-5 shadow-sm transition-transform active:scale-[0.98]"
       >
         <div className="flex items-center gap-4">
-          <div className="text-3xl">☯️</div>
+          <Scale strokeWidth={1.4} className="h-7 w-7 shrink-0 text-[#a99878]" />
           <div>
             <div className="text-base text-[#4a4234]">体質で探す</div>
             <div className="mt-1 text-xs text-[#8a7d64]">ドーシャ・季節・体調から逆引き</div>

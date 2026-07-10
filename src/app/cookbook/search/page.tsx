@@ -7,6 +7,7 @@ import {
   DoshaKey, DOSHA_LABEL, compatibility, compatScore, seasonBonus, imbalanceBonus,
   COMPAT_MARK, COMPAT_LABEL, Compatibility,
 } from '@/lib/dosha'
+import { CookingPot } from 'lucide-react'
 import DoshaBadges from '../DoshaBadges'
 
 const DOSHAS: DoshaKey[] = ['vata', 'pitta', 'kapha']
@@ -153,7 +154,7 @@ export default function SearchPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={item.photo_url} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
                 ) : (
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#efe8da]">🍲</span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#efe8da]"><CookingPot strokeWidth={1.4} className="h-4 w-4 text-[#c0b59f]" /></span>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">

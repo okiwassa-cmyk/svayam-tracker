@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { CookingPot, Sparkles, AlertTriangle } from 'lucide-react'
 import type { Recipe, RecipeIngredient, RecipeStep, Ingredient } from '@/lib/types'
 import DoshaBadges from '../DoshaBadges'
 
@@ -162,7 +163,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={f.photo_url} alt="" className="h-20 w-20 rounded-xl object-cover" />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-[#efe8da] text-2xl text-[#c0b59f]">🍲</div>
+            <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-[#efe8da]"><CookingPot strokeWidth={1.3} className="h-7 w-7 text-[#c0b59f]" /></div>
           )}
           <label className="cursor-pointer rounded-full border border-[#d8cdb8] bg-[#efe8da] px-4 py-2 text-sm text-[#6b5d45]">
             {photoUploading ? 'アップ中…' : '写真を選ぶ'}
@@ -248,9 +249,10 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
       <button
         onClick={analyze}
         disabled={analyzing}
-        className="w-full rounded-xl border border-[#c9b98f] bg-[#efe3c4] py-3 text-sm text-[#6b5d45] disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#c9b98f] bg-[#efe3c4] py-3 text-sm text-[#6b5d45] disabled:opacity-50"
       >
-        {analyzing ? '判定中…' : '✨ 材料からAIで判定'}
+        <Sparkles strokeWidth={1.4} className="h-4 w-4" />
+        {analyzing ? '判定中…' : '材料からAIで判定'}
       </button>
 
       <div className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-4">
@@ -296,7 +298,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
 
       {cautions.length > 0 && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-600">
-          {cautions.map((c, i) => <p key={i}>⚠️ {c}</p>)}
+          {cautions.map((c, i) => <p key={i} className="flex items-start gap-1.5"><AlertTriangle strokeWidth={1.5} className="mt-0.5 h-3.5 w-3.5 shrink-0" />{c}</p>)}
         </div>
       )}
 

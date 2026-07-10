@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { Leaf } from 'lucide-react'
 import type { Ingredient } from '@/lib/types'
 import DoshaBadges from '../DoshaBadges'
 
@@ -89,7 +90,7 @@ export default function IngredientsPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={i.photo_url} alt={i.name} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
                 ) : (
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#efe8da] text-xl text-[#c0b59f]">🌿</div>
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#efe8da]"><Leaf strokeWidth={1.4} className="h-5 w-5 text-[#c0b59f]" /></div>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">

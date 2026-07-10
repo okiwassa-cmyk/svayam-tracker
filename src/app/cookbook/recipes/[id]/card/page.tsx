@@ -37,7 +37,8 @@ export default function RecipeCardPage() {
           <div className="relative p-8">
             <div className="absolute inset-3 border border-[#d8cdb8]" style={{ top: r.photo_url ? '-0.75rem' : '0.75rem' }} />
             <div className="relative">
-              <div className="text-center text-xl text-[#a99878]">🌿</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/branch.png" alt="" className="mx-auto h-9 w-auto" crossOrigin="anonymous" />
               <div className="mt-2 text-center text-3xl tracking-wide">{r.name}</div>
               <div className="mt-2 flex items-center justify-center gap-2 text-xs text-[#8a7d64]">
                 {r.category && <span>{r.category}</span>}

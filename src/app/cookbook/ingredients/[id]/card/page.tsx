@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { Ingredient } from '@/lib/types'
+import { AlertTriangle } from 'lucide-react'
 import { effectArrow, effectColor } from '@/lib/dosha'
 import CardExport from '../../../CardExport'
 
@@ -36,7 +37,8 @@ export default function IngredientCardPage() {
           {/* ヘアライン枠 */}
           <div className="absolute inset-3 border border-[#d8cdb8]" />
           <div className="relative">
-            <div className="text-center text-2xl text-[#a99878]">🌿</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/branch.png" alt="" className="mx-auto h-10 w-auto" crossOrigin="anonymous" />
             <div className="mt-3 text-center">
               <div className="text-3xl tracking-wide">{item.name}</div>
               {item.aliases && <div className="mt-1 text-sm text-[#8a7d64]">{item.aliases}</div>}
@@ -84,7 +86,7 @@ export default function IngredientCardPage() {
             </div>
 
             {item.caution && (
-              <p className="mt-4 text-center text-xs text-rose-500">⚠️ {item.caution}</p>
+              <p className="mt-4 flex items-center justify-center gap-1 text-center text-xs text-rose-500"><AlertTriangle strokeWidth={1.5} className="h-3.5 w-3.5" /> {item.caution}</p>
             )}
 
             <div className="mt-6 text-center text-[11px] tracking-widest text-[#b3a892]">

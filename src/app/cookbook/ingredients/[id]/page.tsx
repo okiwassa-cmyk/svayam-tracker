@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { CookingPot } from 'lucide-react'
 import type { Ingredient, Recipe } from '@/lib/types'
 import DoshaBadges from '../../DoshaBadges'
 
@@ -116,7 +117,7 @@ export default function IngredientDetail() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={r.photo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
                   ) : (
-                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#efe8da]">🍲</span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#efe8da]"><CookingPot strokeWidth={1.4} className="h-4 w-4 text-[#c0b59f]" /></span>
                   )}
                   {r.name}
                 </Link>
