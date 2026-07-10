@@ -19,7 +19,7 @@ export default function CookbookLayout({ children }: { children: React.ReactNode
       className="min-h-full bg-[#f4efe6] text-[#4a4234]"
       style={{ fontFamily: 'var(--font-mincho), serif' }}
     >
-      <div className="mx-auto max-w-lg px-5 pb-24 pt-6">{children}</div>
+      <div className="mx-auto max-w-lg overflow-x-hidden px-5 pb-24 pt-6">{children}</div>
       <CookbookNav />
     </div>
   )

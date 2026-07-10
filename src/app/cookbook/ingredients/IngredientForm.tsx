@@ -129,7 +129,7 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
             value={f.name ?? ''}
             onChange={(e) => set('name', e.target.value)}
             placeholder="例：ゴーヤ"
-            className="flex-1 rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2.5 text-sm outline-none"
+            className="min-w-0 flex-1 rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2.5 text-sm outline-none"
           />
           <button
             onClick={runAI}

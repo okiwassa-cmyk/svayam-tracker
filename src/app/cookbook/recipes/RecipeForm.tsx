@@ -206,7 +206,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
               value={ing.name}
               onChange={(e) => onIngNameChange(idx, e.target.value)}
               placeholder="食材名"
-              className="flex-1 rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2 text-sm outline-none"
+              className="min-w-0 flex-1 rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2 text-sm outline-none"
             />
             <input
               value={ing.amount ?? ''}

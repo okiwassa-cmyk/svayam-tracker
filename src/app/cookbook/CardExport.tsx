@@ -1,9 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 
-// カードのDOMを受け取り、PNGとしてダウンロードするラッパー
+const CARD_W = 540
+
+// カードを540px固定で描画しつつ、プレビューは画面幅に合わせて縮小表示する。
+// 書き出し(toPng)は縮小前の540pxノードを対象にするので解像度は保たれる。
 export default function CardExport({
   filename,
   children,
@@ -11,8 +14,29 @@ export default function CardExport({
   filename: string
   children: React.ReactNode
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>(null) // 実カード(540px・書き出し対象)
+  const holderRef = useRef<HTMLDivElement>(null) // 利用可能幅を測る
+  const [scale, setScale] = useState(1)
+  const [boxH, setBoxH] = useState<number>()
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    function update() {
+      const avail = holderRef.current?.clientWidth ?? CARD_W
+      const s = Math.min(1, avail / CARD_W)
+      setScale(s)
+      const natH = ref.current?.offsetHeight ?? 0
+      setBoxH(natH * s)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    if (ref.current) ro.observe(ref.current)
+    window.addEventListener('resize', update)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [])
 
   async function download() {
     if (!ref.current) return
@@ -21,7 +45,6 @@ export default function CardExport({
       const dataUrl = await toPng(ref.current, {
         pixelRatio: 2,
         cacheBust: true,
-        // 画像crossOrigin対策（Supabaseの公開URLはCORS可）
         fetchRequestInit: { mode: 'cors' },
       })
       const a = document.createElement('a')
@@ -37,9 +60,11 @@ export default function CardExport({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto">
-        <div ref={ref} className="mx-auto w-[540px]">
-          {children}
+      <div ref={holderRef} className="w-full overflow-hidden" style={{ height: boxH }}>
+        <div className="origin-top-left" style={{ transform: `scale(${scale})` }}>
+          <div ref={ref} className="w-[540px]">
+            {children}
+          </div>
         </div>
       </div>
       <button
