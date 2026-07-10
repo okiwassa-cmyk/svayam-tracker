@@ -76,6 +76,7 @@ function formatNoteForCopy(meal: MealLog) {
     meal.user_input ?? '',
     meal.calories_estimate ? `約 ${meal.calories_estimate} kcal` : '',
     kapha || pitta ? `カファ：${kapha?.short ?? '--'} / ピッタ：${pitta?.short ?? '--'}` : '',
+    meal.rasa ? `六味：${meal.rasa}` : '',
     meal.advice ? `\nアドバイス：\n${meal.advice}` : '',
     meal.user_note ? `\nメモ：${meal.user_note}` : '',
   ].filter(Boolean).join('\n')
@@ -97,6 +98,7 @@ export default function MealPage() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [editingNote, setEditingNote] = useState<{ id: string; note: string } | null>(null)
   const [editingTime, setEditingTime] = useState<{ id: string; time: string } | null>(null)
+  const [editingInput, setEditingInput] = useState<{ id: string; text: string } | null>(null)
   const [hungryBefore, setHungryBefore] = useState<boolean | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
@@ -224,6 +226,25 @@ export default function MealPage() {
       body: JSON.stringify({ id, logged_at }),
     })
     setEditingTime(null)
+    loadMeals()
+  }
+
+  async function saveHungry(id: string, value: boolean | null) {
+    await fetch('/api/meal', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, hungry_before: value }),
+    })
+    loadMeals()
+  }
+
+  async function saveInput(id: string, text: string) {
+    await fetch('/api/meal', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, user_input: text.trim() || null }),
+    })
+    setEditingInput(null)
     loadMeals()
   }
 
@@ -374,6 +395,7 @@ export default function MealPage() {
                   copiedId={copiedId}
                   editingTime={editingTime}
                   editingNote={editingNote}
+                  editingInput={editingInput}
                   onCopy={copyMeal}
                   onDelete={deleteMeal}
                   onEditTime={(id, time) => setEditingTime({ id, time })}
@@ -382,6 +404,10 @@ export default function MealPage() {
                   onEditNote={(id, note) => setEditingNote({ id, note })}
                   onSaveNote={saveNote}
                   onCancelNote={() => setEditingNote(null)}
+                  onSaveHungry={saveHungry}
+                  onEditInput={(id, text) => setEditingInput({ id, text })}
+                  onSaveInput={saveInput}
+                  onCancelInput={() => setEditingInput(null)}
                 />
               ))}
             </div>
@@ -405,8 +431,9 @@ export default function MealPage() {
 }
 
 function MealCard({
-  meal, mealTypes, scoreLabels, copiedId, editingTime, editingNote,
+  meal, mealTypes, scoreLabels, copiedId, editingTime, editingNote, editingInput,
   onCopy, onDelete, onEditTime, onSaveTime, onCancelTime, onEditNote, onSaveNote, onCancelNote,
+  onSaveHungry, onEditInput, onSaveInput, onCancelInput,
 }: {
   meal: MealLog
   mealTypes: { value: string; label: string }[]
@@ -414,6 +441,7 @@ function MealCard({
   copiedId: string | null
   editingTime: { id: string; time: string } | null
   editingNote: { id: string; note: string } | null
+  editingInput: { id: string; text: string } | null
   onCopy: (meal: MealLog) => void
   onDelete: (id: string) => void
   onEditTime: (id: string, time: string) => void
@@ -422,6 +450,10 @@ function MealCard({
   onEditNote: (id: string, note: string) => void
   onSaveNote: (id: string, note: string) => void
   onCancelNote: () => void
+  onSaveHungry: (id: string, value: boolean | null) => void
+  onEditInput: (id: string, text: string) => void
+  onSaveInput: (id: string, text: string) => void
+  onCancelInput: () => void
 }) {
   const typeLabel = mealTypes.find((m) => m.value === meal.meal_type)?.label ?? meal.meal_type
   const timeStr = meal.logged_at
@@ -494,9 +526,29 @@ function MealCard({
           </div>
         </div>
 
-        {/* Dish name */}
-        {meal.user_input && (
-          <p className="text-base font-semibold text-stone-800 mb-1">{meal.user_input}</p>
+        {/* Dish name (editable) */}
+        {editingInput?.id === meal.id ? (
+          <div className="flex gap-2 mb-1">
+            <input
+              type="text"
+              value={editingInput.text}
+              onChange={(e) => onEditInput(meal.id, e.target.value)}
+              placeholder="料理名・食材"
+              className="flex-1 text-base font-semibold text-stone-800 bg-stone-50 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-stone-400/30"
+              autoFocus
+            />
+            <button onClick={() => onSaveInput(meal.id, editingInput.text)} className="text-xs text-teal-600 font-semibold px-1">保存</button>
+            <button onClick={onCancelInput} className="text-xs text-stone-400 px-1">取消</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => onEditInput(meal.id, meal.user_input ?? '')}
+            className="text-left mb-1 w-full"
+          >
+            {meal.user_input
+              ? <span className="text-base font-semibold text-stone-800 hover:underline underline-offset-2">{meal.user_input}</span>
+              : <span className="text-sm text-stone-300">+ 料理名を追加</span>}
+          </button>
         )}
 
         {/* Calories */}
@@ -520,6 +572,18 @@ function MealCard({
           </div>
         )}
 
+        {/* Rasa (six tastes) */}
+        {meal.rasa && (
+          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+            <span className="text-xs text-stone-400">六味</span>
+            {meal.rasa.split('・').map((r, i) => (
+              <span key={i} className="px-2 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600">
+                {r}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Advice */}
         {meal.advice && (
           <div className="bg-stone-50 rounded-xl p-3 mb-2">
@@ -528,10 +592,24 @@ function MealCard({
           </div>
         )}
 
-        {/* Hungry before */}
-        {meal.hungry_before !== null && meal.hungry_before !== undefined && (
-          <p className="text-xs text-stone-400 mb-2">食前: {meal.hungry_before ? '空腹あり' : '空腹なし'}</p>
-        )}
+        {/* Hungry before (editable, so it can be set even if forgotten at logging) */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs text-stone-400 flex-shrink-0">食前お腹が空いていた？</span>
+          <div className="flex gap-1.5 ml-auto">
+            <button
+              onClick={() => onSaveHungry(meal.id, meal.hungry_before === true ? null : true)}
+              className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all ${meal.hungry_before === true ? 'bg-green-600 text-white' : 'bg-stone-100 text-stone-500'}`}
+            >
+              空腹
+            </button>
+            <button
+              onClick={() => onSaveHungry(meal.id, meal.hungry_before === false ? null : false)}
+              className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all ${meal.hungry_before === false ? 'bg-stone-500 text-white' : 'bg-stone-100 text-stone-500'}`}
+            >
+              空腹でない
+            </button>
+          </div>
+        </div>
 
         {/* Note */}
         {editingNote?.id === meal.id ? (
@@ -627,6 +705,14 @@ function HistoryView({
                       <div className="flex gap-2 mb-3">
                         {kapha && <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${kapha.class}`}>カファ {kapha.text}</span>}
                         {pitta && <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${pitta.class}`}>ピッタ {pitta.text}</span>}
+                      </div>
+                    )}
+                    {meal.rasa && (
+                      <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                        <span className="text-xs text-stone-400">六味</span>
+                        {meal.rasa.split('・').map((r, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600">{r}</span>
+                        ))}
                       </div>
                     )}
                     {meal.advice && (

@@ -4,7 +4,7 @@
     {
       "name": "svayam-tracker",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "source ~/.nvm/nvm.sh && npm run dev"],
+      "runtimeArgs": ["-c", "cd \"/Users/mizo/Desktop/Svayam　Ayurveda　APP/svayam-tracker\" && source ~/.nvm/nvm.sh && npm run dev"],
       "port": 3000
     }
   ]

@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
   "calories_estimate": 数字のみ（kcal概算）,
   "kapha_score": "excellent" | "good" | "caution" | "avoid",
   "pitta_score": "excellent" | "good" | "caution" | "avoid",
+  "rasa": ["甘", "苦"]（この料理に含まれる六味を、強く感じられる順に配列で。使う語は「甘」「酸」「塩」「辛」「苦」「渋」の6つのみ。該当するものを1〜複数）,
   "advice": "一言アドバイス（良ければ褒める、改善点があれば簡潔に）"
 }
 
@@ -53,6 +54,8 @@ export async function POST(req: NextRequest) {
 - good（○）：調理済み・普通量・白米少量
 - caution（△）：乳製品・甘いもの・冷たいもの・量が多い
 - avoid（✗）：揚げ物・精製糖・冷たい飲み物・加工食品
+
+六味（rasa）の判定：料理に含まれる味を六味リファレンス（甘・酸・塩・辛・苦・渋）から選ぶ。カファ・ピッタ体質は苦味・渋味が理想、甘味・酸味・塩味の摂りすぎに注意。判定した味はこの体質観点で見る。
 
 adviceを書くときは、毎回「生姜・ターメリックを足す」に頼らない。下記の食べ方の知識（六味・食べ合わせ・季節・ピッタ安全なスパイス）から、その料理に合った具体的で幅のある一言を選ぶ。
 
@@ -92,6 +95,11 @@ ${AYURVEDA_EATING_METHOD}`
     }
 
     const analysis = JSON.parse(jsonMatch[0])
+    const rasaText = Array.isArray(analysis.rasa)
+      ? analysis.rasa.join('・')
+      : typeof analysis.rasa === 'string'
+        ? analysis.rasa
+        : null
 
     // Upload image to Supabase Storage if provided
     let imageUrl: string | null = null
@@ -121,6 +129,7 @@ ${AYURVEDA_EATING_METHOD}`
         calories_estimate: analysis.calories_estimate,
         kapha_score: analysis.kapha_score,
         pitta_score: analysis.pitta_score,
+        rasa: rasaText,
         advice: analysis.advice,
         image_url: imageUrl,
         user_input: textDescription?.trim() || null,
@@ -183,6 +192,8 @@ export async function PATCH(req: NextRequest) {
   const updates: Record<string, unknown> = {}
   if ('user_note' in body) updates.user_note = body.user_note
   if ('logged_at' in body) updates.logged_at = body.logged_at
+  if ('hungry_before' in body) updates.hungry_before = body.hungry_before
+  if ('user_input' in body) updates.user_input = body.user_input
 
   const { data, error } = await supabaseAdmin
     .from('meal_logs')

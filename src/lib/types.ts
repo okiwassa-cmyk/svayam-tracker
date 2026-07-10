@@ -65,6 +65,7 @@ export type MealLog = {
   calories_estimate: number | null
   kapha_score: 'excellent' | 'good' | 'caution' | 'avoid' | null
   pitta_score: 'excellent' | 'good' | 'caution' | 'avoid' | null
+  rasa: string | null
   advice: string | null
   image_url: string | null
   user_note: string | null

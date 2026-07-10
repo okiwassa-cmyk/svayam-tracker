@@ -19,21 +19,13 @@ const bowelOptions = [
   { value: 4, label: '水状',    color: 'bg-orange-500 text-white' },
 ]
 
-const urineOptions = [
-  { value: 1, label: '透明',   color: 'bg-sky-400 text-white' },
-  { value: 2, label: '薄い黄', color: 'bg-yellow-400 text-white' },
-  { value: 3, label: '濃い黄', color: 'bg-amber-400 text-white' },
-  { value: 4, label: 'オレンジ', color: 'bg-orange-500 text-white' },
-]
-
-function optionFor(type: 'bowel' | 'urine', condition: number) {
-  const opts = type === 'bowel' ? bowelOptions : urineOptions
-  return opts.find((o) => o.value === condition)
+function optionFor(condition: number) {
+  return bowelOptions.find((o) => o.value === condition)
 }
 
 export default function ToiletLogger({ date }: { date: string }) {
   const [logs, setLogs] = useState<ToiletLog[]>([])
-  const [activeType, setActiveType] = useState<'bowel' | 'urine' | null>(null)
+  const [activeType, setActiveType] = useState<'bowel' | null>(null)
   const [selectedCondition, setSelectedCondition] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
@@ -46,8 +38,8 @@ export default function ToiletLogger({ date }: { date: string }) {
 
   useEffect(() => { load() }, [load])
 
-  function openForm(type: 'bowel' | 'urine') {
-    setActiveType(type)
+  function openForm() {
+    setActiveType('bowel')
     setSelectedCondition(null)
     setNote('')
   }
@@ -64,7 +56,7 @@ export default function ToiletLogger({ date }: { date: string }) {
     await fetch('/api/toilet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, type: activeType, condition: selectedCondition, note: note || null }),
+      body: JSON.stringify({ date, type: 'bowel', condition: selectedCondition, note: note || null }),
     })
     setActiveType(null)
     setSelectedCondition(null)
@@ -87,36 +79,28 @@ export default function ToiletLogger({ date }: { date: string }) {
   }
 
   const bowelLogs = logs.filter((l) => l.type === 'bowel')
-  const urineLogs = logs.filter((l) => l.type === 'urine')
 
-  const currentOptions = activeType === 'bowel' ? bowelOptions : urineOptions
-  const activeLabel = activeType === 'bowel' ? '排便' : '排尿'
+  const currentOptions = bowelOptions
 
   return (
     <section className="bg-white rounded-2xl p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-stone-600 mb-3">トイレ記録</h2>
+      <h2 className="text-sm font-semibold text-stone-600 mb-3">排便記録</h2>
 
-      {/* Log buttons */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      {/* Log button */}
+      <div className="mb-3">
         <button
-          onClick={() => openForm('bowel')}
-          className="py-2.5 rounded-xl bg-amber-50 text-amber-800 text-sm font-semibold active:scale-95 active:bg-amber-100"
+          onClick={openForm}
+          className="w-full py-2.5 rounded-xl bg-amber-50 text-amber-800 text-sm font-semibold active:scale-95 active:bg-amber-100"
         >
           + 排便を記録
-        </button>
-        <button
-          onClick={() => openForm('urine')}
-          className="py-2.5 rounded-xl bg-sky-50 text-sky-700 text-sm font-semibold active:scale-95 active:bg-sky-100"
-        >
-          + 排尿を記録
         </button>
       </div>
 
       {/* Existing logs */}
-      {logs.length > 0 && (
+      {bowelLogs.length > 0 && (
         <div className="space-y-1.5 mb-3">
           {bowelLogs.map((log) => {
-            const opt = optionFor('bowel', log.condition)
+            const opt = optionFor(log.condition)
             return (
               <div key={log.id} className="flex items-center justify-between bg-stone-50 rounded-xl px-3 py-2">
                 <div className="flex items-center gap-2">
@@ -133,35 +117,17 @@ export default function ToiletLogger({ date }: { date: string }) {
               </div>
             )
           })}
-          {urineLogs.map((log) => {
-            const opt = optionFor('urine', log.condition)
-            return (
-              <div key={log.id} className="flex items-center justify-between bg-stone-50 rounded-xl px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-400">排尿</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${opt?.color ?? 'bg-stone-200'}`}>
-                    {opt?.label ?? log.condition}
-                  </span>
-                  {log.note && <span className="text-xs text-stone-500">{log.note}</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-400">{formatTime(log.created_at)}</span>
-                  <button onClick={() => remove(log.id)} className="text-stone-300 text-xs active:text-red-400">✕</button>
-                </div>
-              </div>
-            )
-          })}
         </div>
       )}
 
-      {logs.length === 0 && !activeType && (
+      {bowelLogs.length === 0 && !activeType && (
         <p className="text-xs text-stone-400 mb-3">まだ記録がありません</p>
       )}
 
       {/* Input form */}
       {activeType && (
         <div className="space-y-3 pt-3 border-t border-stone-100">
-          <p className="text-xs text-stone-500 font-medium">{activeLabel}の様子：</p>
+          <p className="text-xs text-stone-500 font-medium">排便の様子：</p>
           <div className="grid grid-cols-4 gap-2">
             {currentOptions.map((opt) => (
               <button
