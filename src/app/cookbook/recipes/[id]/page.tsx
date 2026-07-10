@@ -20,10 +20,47 @@ export default function RecipeDetail() {
       .finally(() => setLoading(false))
   }, [id])
 
+  const [copying, setCopying] = useState(false)
+
   async function del() {
     if (!confirm(`「${r?.name}」を削除しますか？`)) return
     await fetch(`/api/recipes?id=${id}`, { method: 'DELETE' })
     router.push('/cookbook/recipes')
+  }
+
+  async function copy() {
+    if (!r || copying) return
+    setCopying(true)
+    const res = await fetch('/api/recipes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `${r.name}（コピー）`,
+        category: r.category,
+        subcategory: r.subcategory,
+        servings: r.servings,
+        cook_time: r.cook_time,
+        difficulty: r.difficulty,
+        description: r.description,
+        ingredients: r.ingredients,
+        steps: r.steps,
+        tags: r.tags,
+        season: r.season,
+        vata_effect: r.vata_effect,
+        pitta_effect: r.pitta_effect,
+        kapha_effect: r.kapha_effect,
+        rasa: r.rasa,
+        virya: r.virya,
+        advice: r.advice,
+        note: r.note,
+        favorite: false,
+        is_paid: false,
+        published: false,
+      }),
+    })
+    const j = await res.json()
+    if (j.data?.id) router.push(`/cookbook/recipes/${j.data.id}/edit`)
+    else setCopying(false)
   }
 
   if (loading) return <p className="py-10 text-center text-sm text-[#7d6d4c]">読み込み中…</p>
@@ -106,6 +143,13 @@ export default function RecipeDetail() {
         <Link href={`/cookbook/recipes/${id}/edit`} className="flex-1 rounded-full border border-[#d8cdb8] bg-[#efe8da] py-3 text-center text-sm text-[#6b5d45]">編集</Link>
         <Link href={`/cookbook/recipes/${id}/card`} className="flex-1 rounded-full border border-[#c9b98f] bg-[#efe3c4] py-3 text-center text-sm text-[#6b5d45]">noteカード</Link>
       </div>
+      <button
+        onClick={copy}
+        disabled={copying}
+        className="w-full rounded-full border border-[#d8cdb8] bg-[#faf7f1] py-3 text-center text-sm text-[#6b5d45] disabled:opacity-50"
+      >
+        {copying ? '複製中…' : 'このレシピを複製'}
+      </button>
       <button onClick={del} className="w-full py-2 text-center text-xs text-rose-400">削除</button>
     </div>
   )
