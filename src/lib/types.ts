@@ -5,7 +5,6 @@ export type DailyRecord = {
   agni: number | null
   bowel_movement: boolean
   sleep_hours: number | null
-  soxai_score: number | null
   hrv: number | null
   weight: number | null
   body_fat: number | null
