@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CookingPot, Sparkles, AlertTriangle } from 'lucide-react'
 import type { Recipe, RecipeIngredient, RecipeStep, Ingredient } from '@/lib/types'
 import DoshaBadges from '../DoshaBadges'
@@ -199,7 +199,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
           <Sparkles strokeWidth={1.4} className="h-3.5 w-3.5" />
           レシピ文をそのまま貼り付けて取り込む
         </label>
-        <textarea
+        <AutoTextarea
           value={pasteText}
           onChange={(e) => setPasteText(e.target.value)}
           placeholder="AIが出したレシピや手書きメモを丸ごと貼り付け → 材料・手順が自動で入ります"
@@ -253,7 +253,11 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
       </div>
 
       <Field label="紹介文">
-        <textarea value={f.description ?? ''} onChange={(e) => set('description', e.target.value)} className={textCls} rows={2} />
+        <AutoTextarea value={f.description ?? ''} onChange={(e) => set('description', e.target.value)} className={textCls} rows={2} />
+      </Field>
+
+      <Field label="出典元（オリジナルなら「オリジナル」、本や講座なら書名など）">
+        <input value={f.source ?? ''} onChange={(e) => set('source', e.target.value)} placeholder="例：オリジナル ／ ○○先生の講座テキスト" className={inputCls} />
       </Field>
 
       {/* 材料 */}
@@ -300,7 +304,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
         {steps.map((s, idx) => (
           <div key={idx} className="flex items-start gap-2">
             <span className="mt-2 text-sm text-[#7d6d4c]">{idx + 1}</span>
-            <textarea value={s.text} onChange={(e) => updateStep(idx, e.target.value)} className={textCls} rows={2} />
+            <AutoTextarea value={s.text} onChange={(e) => updateStep(idx, e.target.value)} className={textCls} rows={2} />
             <button onClick={() => removeStep(idx)} className="mt-2 text-rose-300">×</button>
           </div>
         ))}
@@ -356,7 +360,7 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
       </Field>
 
       <Field label="アドバイス">
-        <textarea value={f.advice ?? ''} onChange={(e) => set('advice', e.target.value)} className={textCls} rows={2} />
+        <AutoTextarea value={f.advice ?? ''} onChange={(e) => set('advice', e.target.value)} className={textCls} rows={2} />
       </Field>
 
       {cautions.length > 0 && (
@@ -388,6 +392,19 @@ export default function RecipeForm({ initial }: { initial?: Recipe }) {
 
 const inputCls = 'w-full rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2.5 text-sm outline-none'
 const textCls = 'w-full rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2 text-sm outline-none resize-none'
+
+// 入力に合わせて高さが伸びるtextarea（文章が途中で隠れないように）
+function AutoTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  function fit() {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
+  useEffect(fit, [props.value])
+  return <textarea ref={ref} {...props} onInput={fit} />
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

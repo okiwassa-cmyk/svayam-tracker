@@ -75,7 +75,7 @@ const FIELDS = [
   'description', 'photo_url', 'ingredients', 'steps', 'tags', 'season',
   'favorite', 'is_paid', 'published',
   'vata_effect', 'pitta_effect', 'kapha_effect', 'rasa', 'virya',
-  'advice', 'note',
+  'advice', 'note', 'source',
 ]
 function sanitize(body: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}

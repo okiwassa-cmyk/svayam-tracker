@@ -159,6 +159,7 @@ export type Recipe = {
   virya: string | null
   advice: string | null
   note: string | null
+  source: string | null
   created_at: string
   updated_at: string
 }

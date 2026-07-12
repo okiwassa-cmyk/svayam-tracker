@@ -53,6 +53,7 @@ export default function RecipeDetail() {
         virya: r.virya,
         advice: r.advice,
         note: r.note,
+        source: r.source,
         favorite: false,
         is_paid: false,
         published: false,
@@ -137,6 +138,10 @@ export default function RecipeDetail() {
             ))}
           </ol>
         </div>
+      )}
+
+      {r.source && (
+        <p className="border-t border-[#eee6d8] pt-3 text-xs leading-relaxed text-[#8a7d64]">出典・レシピ元：{r.source}</p>
       )}
 
       <div className="flex gap-3 pt-2">
