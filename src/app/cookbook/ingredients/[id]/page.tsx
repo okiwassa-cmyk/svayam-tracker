@@ -93,9 +93,30 @@ export default function IngredientDetail() {
         </Section>
       )}
 
-      {item.nutrition && (
+      {(item.nutrition || item.energy_kcal !== null) && (
         <Section title="現代栄養データ">
-          <p className="text-sm leading-relaxed text-[#6b5d45]">{item.nutrition}</p>
+          {item.nutrition && <p className="text-sm leading-relaxed text-[#6b5d45]">{item.nutrition}</p>}
+          {item.energy_kcal !== null && (
+            <div className="mt-2 rounded-xl border border-[#e4ddd0] bg-[#faf7f1] p-3">
+              <p className="mb-2 text-[11px] text-[#7d6d4c]">{item.nutrient_basis || '可食部100gあたり'}</p>
+              <div className="grid grid-cols-3 gap-x-2 gap-y-2 text-xs text-[#4a4234]">
+                <NutrientCell label="エネルギー" value={item.energy_kcal} unit="kcal" />
+                <NutrientCell label="たんぱく質" value={item.protein_g} unit="g" />
+                <NutrientCell label="脂質" value={item.fat_g} unit="g" />
+                <NutrientCell label="炭水化物" value={item.carb_g} unit="g" />
+                <NutrientCell label="食物繊維" value={item.fiber_g} unit="g" />
+                <NutrientCell label="カルシウム" value={item.calcium_mg} unit="mg" />
+                <NutrientCell label="鉄" value={item.iron_mg} unit="mg" />
+                <NutrientCell label="ビタミンC" value={item.vitamin_c_mg} unit="mg" />
+                <NutrientCell label="ビタミンA" value={item.vitamin_a_ug} unit="μg" />
+                <NutrientCell label="カリウム" value={item.potassium_mg} unit="mg" />
+                <NutrientCell label="ナトリウム" value={item.sodium_mg} unit="mg" />
+              </div>
+              {item.nutrient_source && (
+                <p className="mt-2 text-[11px] text-[#a99878]">出典：{item.nutrient_source}</p>
+              )}
+            </div>
+          )}
         </Section>
       )}
 
@@ -152,6 +173,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div>
       <h2 className="mb-1.5 text-sm text-[#7d6d4c]">{title}</h2>
       {children}
+    </div>
+  )
+}
+
+function NutrientCell({ label, value, unit }: { label: string; value: number | null; unit: string }) {
+  if (value === null) return null
+  return (
+    <div>
+      <span className="text-[#7d6d4c]">{label}</span>
+      <span className="ml-1">{value}{unit}</span>
     </div>
   )
 }

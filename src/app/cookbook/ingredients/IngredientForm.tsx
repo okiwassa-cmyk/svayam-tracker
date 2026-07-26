@@ -242,9 +242,33 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
 
       {/* 現代栄養・注意 */}
       <SectionTitle>栄養・注意</SectionTitle>
-      <Field label="現代栄養データ">
+      <Field label="現代栄養データ（ひとこと）">
         <textarea value={f.nutrition ?? ''} onChange={(e) => set('nutrition', e.target.value)} className={textCls} rows={2} />
       </Field>
+
+      <p className="text-xs text-[#7d6d4c]">可食部100gあたりの数値（わかる範囲でOK）</p>
+      <div className="grid grid-cols-2 gap-3">
+        <NumField label="エネルギー(kcal)" value={f.energy_kcal} onChange={(v) => set('energy_kcal', v)} />
+        <NumField label="たんぱく質(g)" value={f.protein_g} onChange={(v) => set('protein_g', v)} />
+        <NumField label="脂質(g)" value={f.fat_g} onChange={(v) => set('fat_g', v)} />
+        <NumField label="炭水化物(g)" value={f.carb_g} onChange={(v) => set('carb_g', v)} />
+        <NumField label="食物繊維(g)" value={f.fiber_g} onChange={(v) => set('fiber_g', v)} />
+        <NumField label="カルシウム(mg)" value={f.calcium_mg} onChange={(v) => set('calcium_mg', v)} />
+        <NumField label="鉄(mg)" value={f.iron_mg} onChange={(v) => set('iron_mg', v)} />
+        <NumField label="ビタミンC(mg)" value={f.vitamin_c_mg} onChange={(v) => set('vitamin_c_mg', v)} />
+        <NumField label="ビタミンA(μg)" value={f.vitamin_a_ug} onChange={(v) => set('vitamin_a_ug', v)} />
+        <NumField label="カリウム(mg)" value={f.potassium_mg} onChange={(v) => set('potassium_mg', v)} />
+        <NumField label="ナトリウム(mg)" value={f.sodium_mg} onChange={(v) => set('sodium_mg', v)} />
+      </div>
+      <Field label="栄養データの出典">
+        <input
+          value={f.nutrient_source ?? ''}
+          onChange={(e) => set('nutrient_source', e.target.value)}
+          placeholder="例：日本食品標準成分表(八訂)目安値 / 推定値"
+          className={inputCls}
+        />
+      </Field>
+
       <Field label="注意（食べ合わせ・毒性など）">
         <textarea value={f.caution ?? ''} onChange={(e) => set('caution', e.target.value)} className={textCls} rows={2} />
       </Field>
@@ -285,6 +309,29 @@ export default function IngredientForm({ initial }: { initial?: Ingredient }) {
 
 const inputCls = 'w-full rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2.5 text-sm outline-none'
 const textCls = 'w-full rounded-xl border border-[#e4ddd0] bg-[#faf7f1] px-3 py-2.5 text-sm outline-none resize-none'
+
+function NumField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: number | null | undefined
+  onChange: (v: number | null) => void
+}) {
+  return (
+    <Field label={label}>
+      <input
+        type="number"
+        step="0.1"
+        inputMode="decimal"
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+        className={inputCls}
+      />
+    </Field>
+  )
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

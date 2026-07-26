@@ -116,6 +116,19 @@ export type Ingredient = {
   favorite: boolean
   created_at: string
   updated_at: string
+  energy_kcal: number | null
+  protein_g: number | null
+  fat_g: number | null
+  carb_g: number | null
+  fiber_g: number | null
+  calcium_mg: number | null
+  iron_mg: number | null
+  vitamin_c_mg: number | null
+  vitamin_a_ug: number | null
+  potassium_mg: number | null
+  sodium_mg: number | null
+  nutrient_source: string | null
+  nutrient_basis: string | null
 }
 
 // レシピの材料1行
