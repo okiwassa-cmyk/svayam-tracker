@@ -66,9 +66,9 @@ export default function MorningPage() {
   const [tongue, setTongue] = useState<1|2|3|null>(null)
   const [tongueColor, setTongueColor] = useState<1|2|3|null>(null) // 1=白, 2=黄色, 3=褐色
   const [hunger, setHunger] = useState<1|2|3|null>(null)
-  const [dinnerTime, setDinnerTime] = useState<0|1|2|3>(1) // 0=食べなかった
-  const [dinnerAmount, setDinnerAmount] = useState<1|2|3>(1)
-  const [alcohol, setAlcohol] = useState<1|2|3>(1)
+  const [dinnerTime, setDinnerTime] = useState<0|1|2|3|null>(null) // 0=食べなかった
+  const [dinnerAmount, setDinnerAmount] = useState<1|2|3|null>(null)
+  const [alcohol, setAlcohol] = useState<1|2|3|null>(null)
   // SOXAI sleep data (manual input)
   const [sleepScore, setSleepScore] = useState('')
   const [hrv, setHrv] = useState('')
@@ -140,6 +140,7 @@ export default function MorningPage() {
   }
 
   async function handleSave() {
+    if (incomplete) return
     if (clarity === null || tongue === null || tongueColor === null || hunger === null) return
     setSaving(true)
     try {
@@ -184,7 +185,9 @@ export default function MorningPage() {
   }
 
   const dinacharyaDone = Object.values(dinacharya).filter(Boolean).length
-  const incomplete = clarity === null || tongue === null || tongueColor === null || hunger === null
+  // 夕食を食べた日は時間と量まで、飲酒は毎日必須（HRV・睡眠との突き合わせに使うため）
+  const dinnerIncomplete = dinnerTime === null || (dinnerTime !== 0 && dinnerAmount === null) || alcohol === null
+  const incomplete = clarity === null || tongue === null || tongueColor === null || hunger === null || dinnerIncomplete
 
   return (
     <div className="min-h-screen pb-8">
@@ -332,10 +335,15 @@ export default function MorningPage() {
         />
 
         {/* Previous night dinner */}
-        <section className="bg-white rounded-2xl p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-stone-600 mb-3">昨夜の夕食</h2>
+        <section className={`bg-white rounded-2xl p-4 shadow-sm ${dinnerIncomplete ? 'ring-2 ring-amber-400' : ''}`}>
+          <h2 className="text-sm font-semibold text-stone-600 mb-3">
+            昨夜の夕食
+            {dinnerIncomplete && (
+              <span className="ml-2 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">必須</span>
+            )}
+          </h2>
           <div className="space-y-3">
-            <button onClick={() => setDinnerTime(dinnerTime === 0 ? 1 : 0)}
+            <button onClick={() => setDinnerTime(dinnerTime === 0 ? null : 0)}
               className={`w-full py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${dinnerTime === 0 ? 'bg-amber-700 text-white' : 'bg-stone-50 text-stone-600'}`}>
               食べなかった
             </button>

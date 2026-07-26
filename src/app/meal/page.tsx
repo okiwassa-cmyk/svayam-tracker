@@ -248,8 +248,8 @@ export default function MealPage() {
     loadMeals()
   }
 
-  // 昼食はアグニの指標として必ず記録する（朝の空腹感と対になる）
-  const hungerRequired = mealType === 'lunch' && hungryBefore === null
+  // 朝食・昼食はアグニの指標として必ず記録する（朝の記録の空腹感と対になる）
+  const hungerRequired = (mealType === 'breakfast' || mealType === 'lunch') && hungryBefore === null
 
   async function deleteMeal(id: string) {
     await fetch(`/api/meal?id=${id}`, { method: 'DELETE' })
@@ -443,13 +443,18 @@ export default function MealPage() {
 
 const RASA_ALL = ['甘', '酸', '塩', '辛', '苦', '渋']
 
+type RasaDish = { name: string; tastes: string[]; note: string }
+
 function RasaPanel({ date, refreshKey }: { date: string; refreshKey: number }) {
-  const [data, setData] = useState<{ got: string[]; missing: string[]; suggestions: Record<string, string[]> } | null>(null)
+  const [data, setData] = useState<{ got: string[]; missing: string[]; dishes: RasaDish[] } | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     fetch(`/api/rasa-suggest?date=${date}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => { if (!j.error) setData(j) })
+      .finally(() => setLoading(false))
   }, [date, refreshKey])
 
   if (!data) return null
@@ -475,14 +480,30 @@ function RasaPanel({ date, refreshKey }: { date: string; refreshKey: number }) {
       {data.missing.length === 0 ? (
         <p className="text-xs text-teal-700">六味がそろいました。</p>
       ) : (
-        <div className="space-y-1.5">
-          {data.missing.map((r) => (
-            <p key={r} className="text-xs text-stone-500 leading-relaxed">
-              <span className="font-semibold text-stone-600">{r}</span>
-              {data.suggestions[r]?.length ? ` ── ${data.suggestions[r].join('・')}` : ' ── 食材事典にまだ登録がありません'}
-            </p>
-          ))}
-        </div>
+        <>
+          <p className="text-xs text-stone-400 mb-2">
+            足りない味：<span className="font-semibold text-stone-600">{data.missing.join('・')}</span>
+          </p>
+          {loading ? (
+            <p className="text-xs text-stone-400">今日の献立に足せる一品を考えています...</p>
+          ) : data.dishes.length === 0 ? (
+            <p className="text-xs text-stone-400">提案を出せませんでした。</p>
+          ) : (
+            <div className="space-y-2">
+              {data.dishes.map((d) => (
+                <div key={d.name} className="bg-stone-50 rounded-xl px-3 py-2">
+                  <p className="text-sm font-semibold text-stone-700">
+                    {d.name}
+                    <span className="ml-1.5 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded align-middle">
+                      {d.tastes?.join('・')}
+                    </span>
+                  </p>
+                  <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{d.note}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </section>
   )
