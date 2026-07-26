@@ -64,7 +64,7 @@ export default function MorningPage() {
   const [clarity, setClarity] = useState<1|2|3>(2)
   const [tongue, setTongue] = useState<1|2|3>(1)
   const [tongueColor, setTongueColor] = useState<1|2|3>(1) // 1=白, 2=黄色, 3=褐色
-  const [hunger, setHunger] = useState<1|2|3>(1)
+  const [hunger, setHunger] = useState<1|2|3|null>(null) // 必須：未選択のまま保存させない
   const [dinnerTime, setDinnerTime] = useState<0|1|2|3>(1) // 0=食べなかった
   const [dinnerAmount, setDinnerAmount] = useState<1|2|3>(1)
   const [alcohol, setAlcohol] = useState<1|2|3>(1)
@@ -139,6 +139,7 @@ export default function MorningPage() {
   }
 
   async function handleSave() {
+    if (hunger === null) return
     setSaving(true)
     try {
       const clarityToEnergy: Record<number, number> = { 1: 8, 2: 5, 3: 2 }
@@ -312,9 +313,10 @@ export default function MorningPage() {
           onChange={(v) => setTongueColor(v as 1|2|3)}
         />
 
-        {/* Morning Hunger */}
+        {/* Morning Hunger（必須：アグニの指標なので初期値を置かない） */}
         <ChoiceSection
           label="朝の空腹感（アグニ）"
+          required
           options={[
             { value: 1, label: 'お腹空いた' },
             { value: 2, label: '少し' },
@@ -483,16 +485,16 @@ export default function MorningPage() {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          disabled={saving || saved}
+          disabled={saving || saved || hunger === null}
           className={`w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 ${
             saved
               ? 'bg-teal-600'
-              : saving
+              : saving || hunger === null
               ? 'bg-stone-300'
               : 'bg-amber-800 shadow-md'
           }`}
         >
-          {saved ? '記録完了！' : saving ? '保存中...' : '記録を保存'}
+          {saved ? '記録完了！' : saving ? '保存中...' : hunger === null ? '朝の空腹感を選んでください' : '記録を保存'}
         </button>
       </div>
     </div>
@@ -500,16 +502,22 @@ export default function MorningPage() {
 }
 
 function ChoiceSection({
-  label, options, value, onChange,
+  label, options, value, onChange, required = false,
 }: {
   label: string
   options: { value: number; label: string }[]
-  value: number
+  value: number | null
   onChange: (v: number) => void
+  required?: boolean
 }) {
   return (
-    <section className="bg-white rounded-2xl p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-stone-600 mb-3">{label}</h2>
+    <section className={`bg-white rounded-2xl p-4 shadow-sm ${required && value === null ? 'ring-2 ring-amber-400' : ''}`}>
+      <h2 className="text-sm font-semibold text-stone-600 mb-3 flex items-center gap-2">
+        {label}
+        {required && value === null && (
+          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">必須</span>
+        )}
+      </h2>
       <div className="grid grid-cols-3 gap-2">
         {options.map((opt) => (
           <button
