@@ -248,6 +248,9 @@ export default function MealPage() {
     loadMeals()
   }
 
+  // 昼食はアグニの指標として必ず記録する（朝の空腹感と対になる）
+  const hungerRequired = mealType === 'lunch' && hungryBefore === null
+
   async function deleteMeal(id: string) {
     await fetch(`/api/meal?id=${id}`, { method: 'DELETE' })
     loadMeals()
@@ -340,7 +343,12 @@ export default function MealPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-stone-500 flex-shrink-0">食前お腹が空いていた？</span>
+              <span className="text-xs text-stone-500 flex-shrink-0">
+                食前お腹が空いていた？
+                {hungerRequired && (
+                  <span className="ml-1.5 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">必須</span>
+                )}
+              </span>
               <div className="flex gap-1.5 ml-auto">
                 <button
                   onClick={() => setHungryBefore(hungryBefore === true ? null : true)}
@@ -367,15 +375,18 @@ export default function MealPage() {
 
             <button
               onClick={analyze}
-              disabled={(!file && !textInput.trim()) || analyzing}
+              disabled={(!file && !textInput.trim()) || analyzing || hungerRequired}
               className={`w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95 ${
-                (file || textInput.trim()) && !analyzing ? 'bg-stone-700 shadow-md' : 'bg-stone-300'
+                (file || textInput.trim()) && !analyzing && !hungerRequired ? 'bg-stone-700 shadow-md' : 'bg-stone-300'
               }`}
             >
-              {analyzing ? '分析中...' : 'ドーシャ判定する'}
+              {analyzing ? '分析中...' : hungerRequired ? '食前の空腹感を選んでください' : 'ドーシャ判定する'}
             </button>
           </div>
         </section>
+
+        {/* 今日の六味（満たされたか） */}
+        <RasaPanel date={today} refreshKey={meals.length} />
 
         {/* Today's meals */}
         <section>
@@ -427,6 +438,53 @@ export default function MealPage() {
 
       <BottomNav />
     </div>
+  )
+}
+
+const RASA_ALL = ['甘', '酸', '塩', '辛', '苦', '渋']
+
+function RasaPanel({ date, refreshKey }: { date: string; refreshKey: number }) {
+  const [data, setData] = useState<{ got: string[]; missing: string[]; suggestions: Record<string, string[]> } | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/rasa-suggest?date=${date}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((j) => { if (!j.error) setData(j) })
+  }, [date, refreshKey])
+
+  if (!data) return null
+
+  return (
+    <section className="bg-white rounded-2xl p-4 shadow-sm">
+      <div className="flex items-baseline justify-between mb-3">
+        <h2 className="text-sm font-semibold text-stone-500">今日の六味</h2>
+        <span className="text-xs text-stone-400">{data.got.length} / 6</span>
+      </div>
+      <div className="flex gap-1.5 mb-3">
+        {RASA_ALL.map((r) => (
+          <span
+            key={r}
+            className={`flex-1 py-1.5 rounded-lg text-center text-xs font-semibold ${
+              data.got.includes(r) ? 'bg-stone-600 text-white' : 'bg-stone-50 text-stone-300 border border-dashed border-stone-200'
+            }`}
+          >
+            {r}
+          </span>
+        ))}
+      </div>
+      {data.missing.length === 0 ? (
+        <p className="text-xs text-teal-700">六味がそろいました。</p>
+      ) : (
+        <div className="space-y-1.5">
+          {data.missing.map((r) => (
+            <p key={r} className="text-xs text-stone-500 leading-relaxed">
+              <span className="font-semibold text-stone-600">{r}</span>
+              {data.suggestions[r]?.length ? ` ── ${data.suggestions[r].join('・')}` : ' ── 食材事典にまだ登録がありません'}
+            </p>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 

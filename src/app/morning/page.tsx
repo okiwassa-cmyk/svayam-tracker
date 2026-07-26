@@ -61,10 +61,11 @@ export default function MorningPage() {
   })
 
   // 1=スッキリ/なし/ある, 2=普通/少し/少し, 3=だるい/多い/ない
-  const [clarity, setClarity] = useState<1|2|3>(2)
-  const [tongue, setTongue] = useState<1|2|3>(1)
-  const [tongueColor, setTongueColor] = useState<1|2|3>(1) // 1=白, 2=黄色, 3=褐色
-  const [hunger, setHunger] = useState<1|2|3|null>(null) // 必須：未選択のまま保存させない
+  // オージャス・アーマ・アグニの指標なので初期値を置かない（未入力と「1」を取り違えないため）
+  const [clarity, setClarity] = useState<1|2|3|null>(null)
+  const [tongue, setTongue] = useState<1|2|3|null>(null)
+  const [tongueColor, setTongueColor] = useState<1|2|3|null>(null) // 1=白, 2=黄色, 3=褐色
+  const [hunger, setHunger] = useState<1|2|3|null>(null)
   const [dinnerTime, setDinnerTime] = useState<0|1|2|3>(1) // 0=食べなかった
   const [dinnerAmount, setDinnerAmount] = useState<1|2|3>(1)
   const [alcohol, setAlcohol] = useState<1|2|3>(1)
@@ -139,7 +140,7 @@ export default function MorningPage() {
   }
 
   async function handleSave() {
-    if (hunger === null) return
+    if (clarity === null || tongue === null || tongueColor === null || hunger === null) return
     setSaving(true)
     try {
       const clarityToEnergy: Record<number, number> = { 1: 8, 2: 5, 3: 2 }
@@ -183,6 +184,7 @@ export default function MorningPage() {
   }
 
   const dinacharyaDone = Object.values(dinacharya).filter(Boolean).length
+  const incomplete = clarity === null || tongue === null || tongueColor === null || hunger === null
 
   return (
     <div className="min-h-screen pb-8">
@@ -277,9 +279,10 @@ export default function MorningPage() {
           </div>
         </section>
 
-        {/* Morning Clarity */}
+        {/* Morning Clarity（オージャス／サットヴァの指標） */}
         <ChoiceSection
-          label="目覚め"
+          label="目覚め（オージャス）"
+          required
           options={[
             { value: 1, label: 'スッキリ' },
             { value: 2, label: '普通' },
@@ -289,9 +292,10 @@ export default function MorningPage() {
           onChange={(v) => setClarity(v as 1|2|3)}
         />
 
-        {/* Tongue Coating amount */}
+        {/* Tongue Coating amount（アーマの量） */}
         <ChoiceSection
-          label="舌苔の量（起床後に確認）"
+          label="舌苔の量（アーマ）"
+          required
           options={[
             { value: 1, label: 'なし' },
             { value: 2, label: '少し' },
@@ -301,9 +305,10 @@ export default function MorningPage() {
           onChange={(v) => setTongue(v as 1|2|3)}
         />
 
-        {/* Tongue Coating color */}
+        {/* Tongue Coating color（アーマの質） */}
         <ChoiceSection
-          label="舌苔の色"
+          label="舌苔の色（アーマ）"
+          required
           options={[
             { value: 1, label: '白' },
             { value: 2, label: '黄色' },
@@ -313,7 +318,7 @@ export default function MorningPage() {
           onChange={(v) => setTongueColor(v as 1|2|3)}
         />
 
-        {/* Morning Hunger（必須：アグニの指標なので初期値を置かない） */}
+        {/* Morning Hunger（アグニが燃えているか） */}
         <ChoiceSection
           label="朝の空腹感（アグニ）"
           required
@@ -485,16 +490,16 @@ export default function MorningPage() {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          disabled={saving || saved || hunger === null}
+          disabled={saving || saved || incomplete}
           className={`w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 ${
             saved
               ? 'bg-teal-600'
-              : saving || hunger === null
+              : saving || incomplete
               ? 'bg-stone-300'
               : 'bg-amber-800 shadow-md'
           }`}
         >
-          {saved ? '記録完了！' : saving ? '保存中...' : hunger === null ? '朝の空腹感を選んでください' : '記録を保存'}
+          {saved ? '記録完了！' : saving ? '保存中...' : incomplete ? '必須項目が未入力です' : '記録を保存'}
         </button>
       </div>
     </div>
