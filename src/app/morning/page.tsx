@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ToiletLogger from '@/components/ToiletLogger'
 import CaffeineLogger from '@/components/CaffeineLogger'
+import YesterdayReview from '@/components/YesterdayReview'
 
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP', {
@@ -13,6 +14,14 @@ function getTodayJST() {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+  }).replace(/\//g, '-')
+}
+
+function previousDay(date: string) {
+  const d = new Date(`${date}T00:00:00+09:00`)
+  d.setDate(d.getDate() - 1)
+  return d.toLocaleDateString('ja-JP', {
+    timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
   }).replace(/\//g, '-')
 }
 
@@ -171,10 +180,7 @@ export default function MorningPage() {
           dinacharya_flags: dinacharya,
         }),
       })
-      if (res.ok) {
-        setSaved(true)
-        setTimeout(() => router.push('/'), 1000)
-      }
+      if (res.ok) setSaved(true)
     } finally {
       setSaving(false)
     }
@@ -509,6 +515,19 @@ export default function MorningPage() {
         >
           {saved ? '記録完了！' : saving ? '保存中...' : incomplete ? '必須項目が未入力です' : '記録を保存'}
         </button>
+
+        {/* 記録を終えてから昨日を見返す。忘れないうちに直せる場所がここしかない */}
+        {saved && (
+          <>
+            <YesterdayReview date={previousDay(today)} />
+            <button
+              onClick={() => router.push('/')}
+              className="w-full py-4 rounded-2xl font-bold text-stone-600 text-base bg-stone-100 active:scale-95 transition-all"
+            >
+              ホームへ
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
