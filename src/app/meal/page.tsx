@@ -443,68 +443,49 @@ export default function MealPage() {
 
 const RASA_ALL = ['甘', '酸', '塩', '辛', '苦', '渋']
 
-type RasaDish = { name: string; tastes: string[]; note: string }
+type RasaMeal = { meal_type: string; label: string; menu: string; got: string[]; missing: string[] }
 
 function RasaPanel({ date, refreshKey }: { date: string; refreshKey: number }) {
-  const [data, setData] = useState<{ got: string[]; missing: string[]; dishes: RasaDish[] } | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<{ meals: RasaMeal[] } | null>(null)
 
   useEffect(() => {
-    setLoading(true)
     fetch(`/api/rasa-suggest?date=${date}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => { if (!j.error) setData(j) })
-      .finally(() => setLoading(false))
   }, [date, refreshKey])
 
-  if (!data) return null
+  if (!data || data.meals.length === 0) return null
 
   return (
     <section className="bg-white rounded-2xl p-4 shadow-sm">
-      <div className="flex items-baseline justify-between mb-3">
-        <h2 className="text-sm font-semibold text-stone-500">今日の六味</h2>
-        <span className="text-xs text-stone-400">{data.got.length} / 6</span>
-      </div>
-      <div className="flex gap-1.5 mb-3">
-        {RASA_ALL.map((r) => (
-          <span
-            key={r}
-            className={`flex-1 py-1.5 rounded-lg text-center text-xs font-semibold ${
-              data.got.includes(r) ? 'bg-stone-600 text-white' : 'bg-stone-50 text-stone-300 border border-dashed border-stone-200'
-            }`}
-          >
-            {r}
-          </span>
-        ))}
-      </div>
-      {data.missing.length === 0 ? (
-        <p className="text-xs text-teal-700">六味がそろいました。</p>
-      ) : (
-        <>
-          <p className="text-xs text-stone-400 mb-2">
-            足りない味：<span className="font-semibold text-stone-600">{data.missing.join('・')}</span>
-          </p>
-          {loading ? (
-            <p className="text-xs text-stone-400">今日の献立に足せる一品を考えています...</p>
-          ) : data.dishes.length === 0 ? (
-            <p className="text-xs text-stone-400">提案を出せませんでした。</p>
-          ) : (
-            <div className="space-y-2">
-              {data.dishes.map((d) => (
-                <div key={d.name} className="bg-stone-50 rounded-xl px-3 py-2">
-                  <p className="text-sm font-semibold text-stone-700">
-                    {d.name}
-                    <span className="ml-1.5 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded align-middle">
-                      {d.tastes?.join('・')}
-                    </span>
-                  </p>
-                  <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{d.note}</p>
-                </div>
+      <h2 className="text-sm font-semibold text-stone-500 mb-1">食事ごとの六味</h2>
+      <p className="text-[10px] text-stone-400 mb-3">1日の合計ではなく、1食の中にそろっているかで見ます</p>
+
+      <div className="space-y-2.5">
+        {data.meals.map((m) => (
+          <div key={`${m.meal_type}-${m.menu}`}>
+            <div className="flex items-baseline justify-between mb-1">
+              <span className="text-xs font-semibold text-stone-600">{m.label}</span>
+              <span className="text-[10px] text-stone-400">
+                {m.got.length} / 6
+                {m.missing.length > 0 && <span className="ml-1.5">足りない味：{m.missing.join('・')}</span>}
+              </span>
+            </div>
+            <div className="flex gap-1.5">
+              {RASA_ALL.map((r) => (
+                <span
+                  key={r}
+                  className={`flex-1 py-1 rounded-lg text-center text-xs font-semibold ${
+                    m.got.includes(r) ? 'bg-stone-600 text-white' : 'bg-stone-50 text-stone-300 border border-dashed border-stone-200'
+                  }`}
+                >
+                  {r}
+                </span>
               ))}
             </div>
-          )}
-        </>
-      )}
+          </div>
+        ))}
+      </div>
     </section>
   )
 }
