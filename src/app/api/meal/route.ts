@@ -73,14 +73,14 @@ ${AYURVEDA_EATING_METHOD}`
       const base64 = Buffer.from(arrayBuffer).toString('base64')
       const mediaType = image.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
       const textHint = textDescription?.trim()
-        ? `\n\nユーザーが入力した料理名・食材メモ（こちらを優先してください）：「${textDescription.trim()}」\n写真と合わせて正確に分析してください。`
-        : '\n\nこの食事写真を分析してください。'
+        ? `\n\nユーザーが入力した料理名・食材メモ：「${textDescription.trim()}」\nこのテキストが唯一の正解です。descriptionはこのテキストに書かれた品だけで構成してください。\n- テキストに無い食材・料理・飲み物を足さない（写真に写って見えても足さない）\n- テキストにある品を落とさない\n- テキストと写真が食い違ったらテキストを採用する（例：テキストが「豆腐ハンバーグ」なら「ハンバーグ」にしない、「青さ汁」を「わかめスープ」にしない、「キチディ」を「煮物丼」にしない）\n写真は量やカロリーの見積もりの補助としてのみ使ってください。`
+        : '\n\nこの食事写真を分析してください。写真から確実に判別できるものだけを書き、推測で食材を足さないでください。'
       messageContent = [
-        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
         { type: 'text', text: `${systemPrompt}${textHint}` },
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
       ]
     } else {
-      messageContent = `${systemPrompt}\n\n次の食事を分析してください：${textDescription}`
+      messageContent = `${systemPrompt}\n\n次の食事を分析してください：${textDescription}\n\ndescriptionはこのテキストに書かれた品だけで構成してください。書かれていない食材・料理・飲み物を足さない、書かれている品を落とさない、料理名を言い換えない。`
     }
 
     const response = await anthropic.messages.create({
