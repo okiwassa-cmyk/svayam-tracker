@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import BottomNav from '@/components/BottomNav'
+import IngredientDosha from '@/components/IngredientDosha'
 import type { MealLog } from '@/lib/types'
+import type { MatchedIngredient } from '@/lib/match-ingredients'
 
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP', {
@@ -101,11 +103,17 @@ export default function MealPage() {
   const [editingInput, setEditingInput] = useState<{ id: string; text: string } | null>(null)
   const [hungryBefore, setHungryBefore] = useState<boolean | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [ingredientsByMeal, setIngredientsByMeal] = useState<Record<string, MatchedIngredient[]>>({})
 
   const loadMeals = useCallback(async () => {
-    const res = await fetch(`/api/meal?date=${today}`, { cache: 'no-store' })
-    const { data } = await res.json()
+    const [mealRes, ingRes] = await Promise.all([
+      fetch(`/api/meal?date=${today}`, { cache: 'no-store' }),
+      fetch(`/api/meal-ingredients?date=${today}`, { cache: 'no-store' }),
+    ])
+    const { data } = await mealRes.json()
+    const { byMeal } = await ingRes.json()
     setMeals(data ?? [])
+    setIngredientsByMeal(byMeal ?? {})
     setLoadingMeals(false)
   }, [today])
 
@@ -403,6 +411,7 @@ export default function MealPage() {
                   meal={meal}
                   mealTypes={mealTypes}
                   scoreLabels={scoreLabels}
+                  ingredients={ingredientsByMeal[meal.id] ?? []}
                   copiedId={copiedId}
                   editingTime={editingTime}
                   editingNote={editingNote}
@@ -491,13 +500,14 @@ function RasaPanel({ date, refreshKey }: { date: string; refreshKey: number }) {
 }
 
 function MealCard({
-  meal, mealTypes, scoreLabels, copiedId, editingTime, editingNote, editingInput,
+  meal, mealTypes, scoreLabels, ingredients, copiedId, editingTime, editingNote, editingInput,
   onCopy, onDelete, onEditTime, onSaveTime, onCancelTime, onEditNote, onSaveNote, onCancelNote,
   onSaveHungry, onEditInput, onSaveInput, onCancelInput,
 }: {
   meal: MealLog
   mealTypes: { value: string; label: string }[]
   scoreLabels: Record<string, { text: string; short: string; class: string }>
+  ingredients: MatchedIngredient[]
   copiedId: string | null
   editingTime: { id: string; time: string } | null
   editingNote: { id: string; note: string } | null
@@ -615,6 +625,9 @@ function MealCard({
         {meal.calories_estimate && (
           <p className="text-sm text-stone-500 mb-2">約 {meal.calories_estimate} kcal</p>
         )}
+
+        {/* 食材ごとのドーシャ作用（事典に載っているものだけ・タップで食材ページへ） */}
+        <IngredientDosha items={ingredients} />
 
         {/* Scores */}
         {(kapha || pitta) && (
