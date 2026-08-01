@@ -7,37 +7,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 })
 
-export async function POST(req: NextRequest) {
-  try {
-    const formData = await req.formData()
-    const image = formData.get('image') as File | null
-    const textDescription = formData.get('text_description') as string | null
-    const date = formData.get('date') as string
-    const mealType = formData.get('meal_type') as string
-    const loggedAt = formData.get('logged_at') as string | null
-    const skipped = formData.get('skipped') === 'true'
-    const hungryBeforeRaw = formData.get('hungry_before') as string | null
-    const hungryBefore = hungryBeforeRaw === 'true' ? true : hungryBeforeRaw === 'false' ? false : null
-
-    if (!date) {
-      return NextResponse.json({ error: 'date is required' }, { status: 400 })
-    }
-
-    // Handle skip without AI analysis
-    if (skipped) {
-      const { data, error } = await supabaseAdmin
-        .from('meal_logs')
-        .insert({ date, meal_type: mealType || 'breakfast', skipped: true, logged_at: loggedAt || new Date().toISOString() })
-        .select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-      return NextResponse.json({ data, analysis: null })
-    }
-
-    if (!image && !textDescription) {
-      return NextResponse.json({ error: 'image or text_description required' }, { status: 400 })
-    }
-
-    const systemPrompt = `あなたはアーユルヴェーダ専門家です。ユーザーの体質：カファ・ピッタ（インドのドクター診断済み）
+const systemPrompt = `あなたはアーユルヴェーダ専門家です。ユーザーの体質：カファ・ピッタ（インドのドクター診断済み）
 
 以下の形式でJSONのみを返してください（他のテキストは不要）：
 {
@@ -74,6 +44,69 @@ ${AYURVEDA_FOOD_REFERENCE}
 
 ${AYURVEDA_EATING_METHOD}`
 
+// テキストだけで判定する。写真を伴わない登録と、あとからテキストを直したときの付け直しで使う
+const TEXT_ONLY_RULES = `descriptionはこのテキストに書かれた品だけで構成してください。書かれていない食材・料理・飲み物を足さない、書かれている品を落とさない、料理名を言い換えない。`
+
+type MealAnalysis = {
+  description: string
+  calories_estimate: number
+  kapha_score: string
+  pitta_score: string
+  rasa: string | null
+  advice: string
+}
+
+async function analyze(content: Anthropic.MessageParam['content']): Promise<MealAnalysis | null> {
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 500,
+    messages: [{ role: 'user', content }],
+  })
+  const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) return null
+
+  const parsed = JSON.parse(jsonMatch[0])
+  return {
+    ...parsed,
+    rasa: Array.isArray(parsed.rasa)
+      ? parsed.rasa.join('・')
+      : typeof parsed.rasa === 'string'
+        ? parsed.rasa
+        : null,
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData()
+    const image = formData.get('image') as File | null
+    const textDescription = formData.get('text_description') as string | null
+    const date = formData.get('date') as string
+    const mealType = formData.get('meal_type') as string
+    const loggedAt = formData.get('logged_at') as string | null
+    const skipped = formData.get('skipped') === 'true'
+    const hungryBeforeRaw = formData.get('hungry_before') as string | null
+    const hungryBefore = hungryBeforeRaw === 'true' ? true : hungryBeforeRaw === 'false' ? false : null
+
+    if (!date) {
+      return NextResponse.json({ error: 'date is required' }, { status: 400 })
+    }
+
+    // Handle skip without AI analysis
+    if (skipped) {
+      const { data, error } = await supabaseAdmin
+        .from('meal_logs')
+        .insert({ date, meal_type: mealType || 'breakfast', skipped: true, logged_at: loggedAt || new Date().toISOString() })
+        .select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ data, analysis: null })
+    }
+
+    if (!image && !textDescription) {
+      return NextResponse.json({ error: 'image or text_description required' }, { status: 400 })
+    }
+
     let messageContent: Anthropic.MessageParam['content']
 
     if (image) {
@@ -88,29 +121,13 @@ ${AYURVEDA_EATING_METHOD}`
         { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
       ]
     } else {
-      messageContent = `${systemPrompt}\n\n次の食事を分析してください：${textDescription}\n\ndescriptionはこのテキストに書かれた品だけで構成してください。書かれていない食材・料理・飲み物を足さない、書かれている品を落とさない、料理名を言い換えない。`
+      messageContent = `${systemPrompt}\n\n次の食事を分析してください：${textDescription}\n\n${TEXT_ONLY_RULES}`
     }
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 500,
-      messages: [{ role: 'user', content: messageContent }],
-    })
-
-    const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
-
-    // Extract JSON from response
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
+    const analysis = await analyze(messageContent)
+    if (!analysis) {
       return NextResponse.json({ error: 'Failed to parse Claude response' }, { status: 500 })
     }
-
-    const analysis = JSON.parse(jsonMatch[0])
-    const rasaText = Array.isArray(analysis.rasa)
-      ? analysis.rasa.join('・')
-      : typeof analysis.rasa === 'string'
-        ? analysis.rasa
-        : null
 
     // Upload image to Supabase Storage if provided
     let imageUrl: string | null = null
@@ -140,7 +157,7 @@ ${AYURVEDA_EATING_METHOD}`
         calories_estimate: analysis.calories_estimate,
         kapha_score: analysis.kapha_score,
         pitta_score: analysis.pitta_score,
-        rasa: rasaText,
+        rasa: analysis.rasa,
         advice: analysis.advice,
         image_url: imageUrl,
         user_input: textDescription?.trim() || null,
@@ -205,6 +222,31 @@ export async function PATCH(req: NextRequest) {
   if ('logged_at' in body) updates.logged_at = body.logged_at
   if ('hungry_before' in body) updates.hungry_before = body.hungry_before
   if ('user_input' in body) updates.user_input = body.user_input
+
+  // テキストを直したら六味も付け直す。直したのに古い判定が残ると、
+  // 六味の集計がテキストと食い違ったまま積み上がる
+  const newText = typeof body.user_input === 'string' ? body.user_input.trim() : ''
+  if (newText) {
+    const { data: current } = await supabaseAdmin
+      .from('meal_logs')
+      .select('user_input')
+      .eq('id', id)
+      .single()
+
+    if (current && current.user_input !== newText) {
+      const analysis = await analyze(
+        `${systemPrompt}\n\n次の食事を分析してください：${newText}\n\n${TEXT_ONLY_RULES}`
+      )
+      if (analysis) {
+        updates.description = analysis.description
+        updates.calories_estimate = analysis.calories_estimate
+        updates.kapha_score = analysis.kapha_score
+        updates.pitta_score = analysis.pitta_score
+        updates.rasa = analysis.rasa
+        updates.advice = analysis.advice
+      }
+    }
+  }
 
   const { data, error } = await supabaseAdmin
     .from('meal_logs')

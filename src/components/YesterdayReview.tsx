@@ -23,7 +23,7 @@ function isoForDateTime(date: string, time: string) {
 }
 
 // 朝の記録を終えたあとに、昨日の食事を見返して直すための画面。
-// 六味は記録時のAI判定をそのまま出している（テキストを直しても付け直されない）
+// テキストを直すとサーバー側で六味を付け直すので、保存には少し時間がかかる
 export default function YesterdayReview({ date }: { date: string }) {
   const [meals, setMeals] = useState<MealLog[] | null>(null)
   const [drafts, setDrafts] = useState<Record<string, { menu: string; time: string }>>({})
@@ -106,7 +106,9 @@ export default function YesterdayReview({ date }: { date: string }) {
                       disabled={savingId === meal.id}
                       className="ml-auto text-xs font-semibold text-teal-600"
                     >
-                      {savingId === meal.id ? '保存中...' : '保存'}
+                      {savingId === meal.id
+                        ? d.menu !== (meal.user_input ?? '') ? '六味を付け直し中...' : '保存中...'
+                        : '保存'}
                     </button>
                   )}
                 </div>
