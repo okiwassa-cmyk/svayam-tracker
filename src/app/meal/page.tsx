@@ -222,12 +222,14 @@ export default function MealPage() {
     loadMeals()
   }
 
+  // 記録の日付＋JSTの時刻から直接ISOを組む。
+  // 端末のタイムゾーンを経由すると、JSTの端末では9時間ずれて前日に飛ぶ
   async function saveTime(id: string, timeStr: string) {
     const [h, m] = timeStr.split(':').map(Number)
-    const jstDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
-    jstDate.setHours(h, m, 0, 0)
-    const utcMs = jstDate.getTime() - (9 * 60 * 60 * 1000)
-    const logged_at = new Date(utcMs).toISOString()
+    const date = meals.find((x) => x.id === id)?.date ?? today
+    const logged_at = new Date(
+      `${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+09:00`
+    ).toISOString()
     await fetch('/api/meal', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
