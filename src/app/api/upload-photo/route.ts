@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+const COLUMN: Record<string, string> = {
+  asukken: 'asukken_photo_url',
+  tongue: 'tongue_photo_url',
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     const date = formData.get('date') as string | null
+    const kind = String(formData.get('kind') ?? 'asukken')
 
     if (!file || !date) {
       return NextResponse.json({ error: 'file and date required' }, { status: 400 })
     }
+    const column = COLUMN[kind]
+    if (!column) {
+      return NextResponse.json({ error: 'unknown kind' }, { status: 400 })
+    }
 
     const ext = file.name.split('.').pop() ?? 'jpg'
-    const path = `asukken/${date}.${ext}`
+    const path = `${kind}/${date}.${ext}`
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
@@ -27,7 +37,7 @@ export async function POST(req: NextRequest) {
     // Also update the daily_records row
     await supabaseAdmin
       .from('daily_records')
-      .upsert({ date, asukken_photo_url: publicUrl }, { onConflict: 'date' })
+      .upsert({ date, [column]: publicUrl }, { onConflict: 'date' })
 
     return NextResponse.json({ url: publicUrl })
   } catch (e) {

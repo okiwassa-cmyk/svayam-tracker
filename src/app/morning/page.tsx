@@ -93,6 +93,11 @@ export default function MorningPage() {
   const [photoUploading, setPhotoUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Tongue photo upload（3段階の目盛りでは拾えない差を後から見返すため）
+  const [tonguePhotoUrl, setTonguePhotoUrl] = useState<string | null>(null)
+  const [tongueUploading, setTongueUploading] = useState(false)
+  const tongueInputRef = useRef<HTMLInputElement>(null)
+
   // Load existing data + check fasting schedule
   useEffect(() => {
     fetch(`/api/record?date=${today}`, { cache: 'no-store' })
@@ -115,6 +120,7 @@ export default function MorningPage() {
         }
         if (data.note) setNote(data.note)
         if (data.asukken_photo_url) setPhotoUrl(data.asukken_photo_url)
+        if (data.tongue_photo_url) setTonguePhotoUrl(data.tongue_photo_url)
         if (data.dinacharya_flags) setDinacharya((prev) => ({ ...prev, ...data.dinacharya_flags }))
       })
 
@@ -130,21 +136,27 @@ export default function MorningPage() {
       })
   }, [today])
 
-  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function uploadPhoto(
+    e: React.ChangeEvent<HTMLInputElement>,
+    kind: 'asukken' | 'tongue',
+    setUploading: (v: boolean) => void,
+    setUrl: (v: string) => void,
+  ) {
     const file = e.target.files?.[0]
     if (!file) return
-    setPhotoUploading(true)
+    setUploading(true)
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('date', today)
-      const res = await fetch('/api/upload-asukken', { method: 'POST', body: formData })
+      formData.append('kind', kind)
+      const res = await fetch('/api/upload-photo', { method: 'POST', body: formData })
       if (res.ok) {
         const { url } = await res.json()
-        setPhotoUrl(url)
+        setUrl(url)
       }
     } finally {
-      setPhotoUploading(false)
+      setUploading(false)
     }
   }
 
@@ -177,6 +189,7 @@ export default function MorningPage() {
           sleep_hours: (sleepH || sleepM) ? hhmmToDecimal(`${sleepH || '0'}:${sleepM || '0'}`) : null,
           note: note || null,
           asukken_photo_url: photoUrl || null,
+          tongue_photo_url: tonguePhotoUrl || null,
           dinacharya_flags: dinacharya,
         }),
       })
@@ -326,6 +339,44 @@ export default function MorningPage() {
           value={tongueColor}
           onChange={(v) => setTongueColor(v as 1|2|3)}
         />
+
+        {/* Tongue photo（任意） */}
+        <section className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-stone-600 mb-3">舌の写真（任意）</h2>
+          {tonguePhotoUrl ? (
+            <div className="relative">
+              <img src={tonguePhotoUrl} alt="舌" className="w-full rounded-xl object-cover max-h-64" />
+              <button
+                onClick={() => setTonguePhotoUrl(null)}
+                className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-lg"
+              >
+                削除
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => tongueInputRef.current?.click()}
+              disabled={tongueUploading}
+              className="w-full py-8 rounded-xl border-2 border-dashed border-stone-200 text-stone-400 text-sm flex flex-col items-center gap-2 active:bg-stone-50"
+            >
+              {tongueUploading ? (
+                <span>アップロード中...</span>
+              ) : (
+                <>
+                  <span className="text-2xl">📷</span>
+                  <span>写真を追加</span>
+                </>
+              )}
+            </button>
+          )}
+          <input
+            ref={tongueInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => uploadPhoto(e, 'tongue', setTongueUploading, setTonguePhotoUrl)}
+          />
+        </section>
 
         {/* Morning Hunger（アグニが燃えているか） */}
         <ChoiceSection
@@ -485,7 +536,7 @@ export default function MorningPage() {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={handlePhotoChange}
+            onChange={(e) => uploadPhoto(e, 'asukken', setPhotoUploading, setPhotoUrl)}
           />
         </section>
 
