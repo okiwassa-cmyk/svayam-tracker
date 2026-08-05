@@ -59,9 +59,12 @@ type MealAnalysis = {
 async function analyze(content: Anthropic.MessageParam['content']): Promise<MealAnalysis | null> {
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 500,
+    max_tokens: 1500,
     messages: [{ role: 'user', content }],
   })
+  if (response.stop_reason === 'max_tokens') {
+    throw new Error('AIの回答が長すぎて途中で切れました（品数が多い食事で起きやすい）')
+  }
   const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
   const jsonMatch = rawText.match(/\{[\s\S]*\}/)
   if (!jsonMatch) return null
