@@ -60,15 +60,19 @@ export default function IngredientDetail() {
 
       {/* サマリー */}
       <div className="rounded-2xl border border-[#e4ddd0] bg-[#faf7f1] p-4 shadow-sm">
+        <p className="mb-2 text-xs text-[#7d6d4c]">アーユルヴェーダ</p>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-[#6b5d45]">
-            {item.virya && <span className="rounded-full bg-[#efe3c4] px-2.5 py-0.5 text-xs">{item.virya}</span>}
-            {item.rasa?.length > 0 && <span>{item.rasa.join('・')}</span>}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[#6b5d45]">
+            {item.virya && <Tag>ヴィールヤ：{item.virya}</Tag>}
+            {item.rasa?.length > 0 && <Tag>ラサ：{item.rasa.join('・')}</Tag>}
+            {item.guna && <Tag>グナ：{item.guna}</Tag>}
           </div>
           <DoshaBadges vata={item.vata_effect} pitta={item.pitta_effect} kapha={item.kapha_effect} />
         </div>
-        {item.guna && <p className="mt-2 text-sm text-[#6b5d45]">グナ：{item.guna}</p>}
-        {item.karma && <p className="mt-1 text-sm text-[#6b5d45]">{item.karma}</p>}
+        {item.karma && <p className="mt-2 text-sm leading-relaxed text-[#6b5d45]">薬効：{item.karma}</p>}
+        {!item.karma && !item.guna && !item.virya && (!item.rasa || item.rasa.length === 0) && (
+          <p className="mt-2 text-xs text-[#a99878]">アーユルヴェーダの記録なし（古典的根拠が確認できていません）</p>
+        )}
       </div>
 
       {(item.tcm_nature || item.tcm_taste || item.tcm_meridian || item.tcm_effect) && (
