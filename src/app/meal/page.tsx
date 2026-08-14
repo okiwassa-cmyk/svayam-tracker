@@ -248,6 +248,15 @@ export default function MealPage() {
     loadMeals()
   }
 
+  async function saveRasa(id: string, rasa: string | null) {
+    await fetch('/api/meal', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, rasa }),
+    })
+    loadMeals()
+  }
+
   async function saveInput(id: string, text: string) {
     await fetch('/api/meal', {
       method: 'PATCH',
@@ -427,6 +436,7 @@ export default function MealPage() {
                   onSaveNote={saveNote}
                   onCancelNote={() => setEditingNote(null)}
                   onSaveHungry={saveHungry}
+                  onSaveRasa={saveRasa}
                   onEditInput={(id, text) => setEditingInput({ id, text })}
                   onSaveInput={saveInput}
                   onCancelInput={() => setEditingInput(null)}
@@ -504,7 +514,7 @@ function RasaPanel({ date, refreshKey }: { date: string; refreshKey: number }) {
 function MealCard({
   meal, mealTypes, scoreLabels, ingredients, copiedId, editingTime, editingNote, editingInput,
   onCopy, onDelete, onEditTime, onSaveTime, onCancelTime, onEditNote, onSaveNote, onCancelNote,
-  onSaveHungry, onEditInput, onSaveInput, onCancelInput,
+  onSaveHungry, onSaveRasa, onEditInput, onSaveInput, onCancelInput,
 }: {
   meal: MealLog
   mealTypes: { value: string; label: string }[]
@@ -523,6 +533,7 @@ function MealCard({
   onSaveNote: (id: string, note: string) => void
   onCancelNote: () => void
   onSaveHungry: (id: string, value: boolean | null) => void
+  onSaveRasa: (id: string, rasa: string | null) => void
   onEditInput: (id: string, text: string) => void
   onSaveInput: (id: string, text: string) => void
   onCancelInput: () => void
@@ -647,17 +658,8 @@ function MealCard({
           </div>
         )}
 
-        {/* Rasa (six tastes) */}
-        {meal.rasa && (
-          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-            <span className="text-xs text-stone-400">六味</span>
-            {meal.rasa.split('・').map((r, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600">
-                {r}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Rasa (six tastes) — AIの判定が違うときにタップで直せる */}
+        <RasaEditor rasa={meal.rasa} onChange={(next) => onSaveRasa(meal.id, next)} />
 
         {/* Advice */}
         {meal.advice && (
@@ -711,6 +713,56 @@ function MealCard({
           </button>
         )}
       </div>
+    </div>
+  )
+}
+
+function RasaEditor({ rasa, onChange }: { rasa: string | null; onChange: (next: string | null) => void }) {
+  const [editing, setEditing] = useState(false)
+  const selected = rasa ? rasa.split('・').filter(Boolean) : []
+
+  function toggle(r: string) {
+    // 強く感じる順という並びを壊さないよう、外すときは抜くだけ・足すときは末尾に付ける
+    const next = selected.includes(r) ? selected.filter((x) => x !== r) : [...selected, r]
+    onChange(next.length > 0 ? next.join('・') : null)
+  }
+
+  if (!editing) {
+    return (
+      <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 mb-3 flex-wrap text-left">
+        <span className="text-xs text-stone-400">六味</span>
+        {selected.length > 0 ? (
+          selected.map((r) => (
+            <span key={r} className="px-2 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600">
+              {r}
+            </span>
+          ))
+        ) : (
+          <span className="text-xs text-stone-300">未判定</span>
+        )}
+        <span className="text-xs text-stone-300 ml-1">直す</span>
+      </button>
+    )
+  }
+
+  return (
+    <div className="mb-3">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-xs text-stone-400">六味</span>
+        {RASA_ALL.map((r) => (
+          <button
+            key={r}
+            onClick={() => toggle(r)}
+            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+              selected.includes(r) ? 'bg-stone-700 text-white' : 'bg-stone-100 text-stone-400'
+            }`}
+          >
+            {r}
+          </button>
+        ))}
+        <button onClick={() => setEditing(false)} className="text-xs text-teal-600 font-semibold ml-1">完了</button>
+      </div>
+      <p className="text-[10px] text-stone-400 mt-1">タップで付け外し。手で直した六味はAIの判定より優先されます。</p>
     </div>
   )
 }

@@ -86,7 +86,10 @@ export default function MorningPage() {
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [fastingAlert, setFastingAlert] = useState<'eve' | 'day' | null>(null)
+  // 'after' = 昨日がアーマパーチャナの日だった。できたかどうかは終わってみないと分からないので翌朝に振り返る
+  const [fastingAlert, setFastingAlert] = useState<'eve' | 'day' | 'after' | null>(null)
+  const [fastingHabitId, setFastingHabitId] = useState<string | null>(null)
+  const [fastingDone, setFastingDone] = useState<boolean | null>(null)
 
   // Asukken photo upload
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
@@ -131,10 +134,34 @@ export default function MorningPage() {
         const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
         const todayDow = nowJST.getDay()
         const tomorrowDow = (todayDow + 1) % 7
+        const yesterdayDow = (todayDow + 6) % 7
         if (todayDow === data.fasting_day) setFastingAlert('day')
         else if (tomorrowDow === data.fasting_day) setFastingAlert('eve')
+        else if (yesterdayDow === data.fasting_day) {
+          // 昨日の分をこれから振り返る。すでに付けてあれば、その状態を出す
+          setFastingAlert('after')
+          fetch(`/api/habits?date=${previousDay(today)}`)
+            .then((r) => r.json())
+            .then(({ data: habits }) => {
+              const h = (habits ?? []).find((x: { name: string }) => x.name === 'ファスティング')
+              if (!h) return
+              setFastingHabitId(h.id)
+              if (h.log_id) setFastingDone(h.completed)
+            })
+        }
       })
   }, [today])
+
+  // 昨日の日付で habit_logs に書く。当日チェックだと「やりきったか」がまだ分からない
+  async function saveFasting(done: boolean) {
+    if (!fastingHabitId) return
+    setFastingDone(done)
+    await fetch('/api/habits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: previousDay(today), habit_id: fastingHabitId, completed: done }),
+    })
+  }
 
   async function uploadPhoto(
     e: React.ChangeEvent<HTMLInputElement>,
@@ -204,9 +231,18 @@ export default function MorningPage() {
   }
 
   const dinacharyaDone = Object.values(dinacharya).filter(Boolean).length
-  // 夕食を食べた日は時間と量まで、飲酒は毎日必須（HRV・睡眠との突き合わせに使うため）
+  // 夕食を食べた日は時間と量まで、飲酒は毎日（HRV・睡眠との突き合わせに使うため）
+  // 揃わなくても保存はできる。抜けはあとで日別画面から埋める
   const dinnerIncomplete = dinnerTime === null || (dinnerTime !== 0 && dinnerAmount === null) || alcohol === null
-  const incomplete = clarity === null || tongue === null || tongueColor === null || hunger === null || dinnerIncomplete
+  const missing = [
+    clarity === null && '頭のクリアさ',
+    tongue === null && '舌の苔',
+    tongueColor === null && '舌の色',
+    hunger === null && '朝の空腹感',
+    dinnerTime === null && '昨夜の夕食の時間',
+    dinnerTime !== null && dinnerTime !== 0 && dinnerAmount === null && '昨夜の夕食の量',
+    alcohol === null && '飲酒',
+  ].filter(Boolean) as string[]
 
   return (
     <div className="min-h-screen pb-8">
@@ -266,6 +302,28 @@ export default function MorningPage() {
               </div>
             </div>
             <p className="text-xs text-teal-600 mt-2">白湯・生姜湯・ハーブティーを飲んで過ごしましょう。</p>
+          </section>
+        )}
+        {fastingAlert === 'after' && fastingHabitId && (
+          <section className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-stone-600 mb-1">昨日のアーマパーチャナ</p>
+            <p className="text-xs text-stone-400 mb-3">終わってから振り返る記録です</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'できた', value: true },
+                { label: 'できなかった', value: false },
+              ].map((o) => (
+                <button
+                  key={o.label}
+                  onClick={() => saveFasting(o.value)}
+                  className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+                    fastingDone === o.value ? 'bg-teal-600 text-white' : 'bg-stone-100 text-stone-500'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </section>
         )}
 
@@ -396,7 +454,7 @@ export default function MorningPage() {
           <h2 className="text-sm font-semibold text-stone-600 mb-3">
             昨夜の夕食
             {dinnerIncomplete && (
-              <span className="ml-2 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">必須</span>
+              <span className="ml-2 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">未入力</span>
             )}
           </h2>
           <div className="space-y-3">
@@ -553,18 +611,21 @@ export default function MorningPage() {
         </section>
 
         {/* Save Button */}
+        {!saved && missing.length > 0 && (
+          <p className="text-xs text-stone-500 leading-relaxed">
+            未入力：{missing.join('・')}
+            <br />
+            <span className="text-stone-400">このまま保存できます。あとから日別の記録で埋められます。</span>
+          </p>
+        )}
         <button
           onClick={handleSave}
-          disabled={saving || saved || incomplete}
+          disabled={saving || saved}
           className={`w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 ${
-            saved
-              ? 'bg-teal-600'
-              : saving || incomplete
-              ? 'bg-stone-300'
-              : 'bg-amber-800 shadow-md'
+            saved ? 'bg-teal-600' : saving ? 'bg-stone-300' : 'bg-amber-800 shadow-md'
           }`}
         >
-          {saved ? '記録完了！' : saving ? '保存中...' : incomplete ? '必須項目が未入力です' : '記録を保存'}
+          {saved ? '記録完了！' : saving ? '保存中...' : missing.length > 0 ? `未入力${missing.length}件のまま保存` : '記録を保存'}
         </button>
 
         {/* 記録を終えてから昨日を見返す。忘れないうちに直せる場所がここしかない */}
@@ -598,7 +659,7 @@ function ChoiceSection({
       <h2 className="text-sm font-semibold text-stone-600 mb-3 flex items-center gap-2">
         {label}
         {required && value === null && (
-          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">必須</span>
+          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">未入力</span>
         )}
       </h2>
       <div className="grid grid-cols-3 gap-2">

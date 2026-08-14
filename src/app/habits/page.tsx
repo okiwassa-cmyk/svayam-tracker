@@ -119,10 +119,14 @@ export default function HabitsPage() {
         <div className="px-4 py-4 space-y-4">
           <section className="bg-white rounded-2xl overflow-hidden shadow-sm">
             <div className="divide-y divide-stone-50">
-              {habits.map((habit) => (
+              {habits.map((habit) => {
+                // ファスティングはやりきれたか当日中に分からないので、翌朝の記録で振り返る。
+                // ここでは状態を見せるだけにして、入口を二重にしない
+                const isFasting = habit.name === 'ファスティング'
+                return (
                 <div key={habit.id}>
                   <button
-                    onClick={() => !editMode && toggle(habit)}
+                    onClick={() => !editMode && !isFasting && toggle(habit)}
                     className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-stone-50 transition-colors text-left"
                   >
                     <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${
@@ -144,7 +148,7 @@ export default function HabitsPage() {
                     </span>
                     {!editMode && (
                       <span className="text-xs text-stone-300">
-                        {formatDays(parseDays(habit.days_of_week ?? null))}
+                        {isFasting ? '翌朝に記録' : formatDays(parseDays(habit.days_of_week ?? null))}
                       </span>
                     )}
                   </button>
@@ -175,7 +179,8 @@ export default function HabitsPage() {
                     </div>
                   )}
                 </div>
-              ))}
+                )
+              })}
             </div>
           </section>
 

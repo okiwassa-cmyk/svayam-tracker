@@ -5,6 +5,10 @@ import { AYURVEDA_FOOD_REFERENCE, AYURVEDA_EATING_METHOD } from '@/lib/ayurveda-
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+const MEAL_LABEL: Record<string, string> = {
+  breakfast: '朝食', lunch: '昼食', dinner: '夕食', snack: '間食',
+}
+
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP', {
     timeZone: 'Asia/Tokyo',
@@ -58,7 +62,17 @@ const SYSTEM_PROMPT = `あなたはアーユルヴェーダ専門の食事アド
 - 毎回「生姜・ターメリック」に頼らないこと。クミン・コリアンダー・フェンネル・カルダモン・黒胡椒など、リファレンスのスパイスを日替わりでローテーションする
 - 穀物や豆もムング豆一択にせず、大麦・雑穀・レンズ豆・そばなど変化をつける
 - 六味（甘酸塩辛苦渋）のバランスで提案を組み立て、その日の体調・季節・すでに食べたものを踏まえて毎回違う具体案を出す
-- 同じ食材ばかり繰り返していると感じたら、意識的に別の食材・調理法（スープ・蒸し・煮込み・テンパリング）を提案する
+- 【直近に食べたもの】が渡されているときは必ず読むこと。そこに出ている食材・スパイス・調理法は、今日の提案では意識的に外す。同じ組み合わせを二度出さない
+
+【美味しさの条件（制約と同じくらい大事）】
+この方は調理師。栄養条件を満たしただけの「体にいいごはん」は、作っていて退屈だし食べていて悲しくなる。
+条件を満たすことと、食べたくなることは別の仕事。両方やること。
+- **食感のコントラストを必ず1つ入れる**：とろみのあるものにカリッとしたもの（テンパリングのスパイス、炒った豆、砕いたナッツ、焼き目）、やわらかいものにシャキッとしたもの
+- **香りの立ち上がりを作る**：ギーでのテンパリング、仕上げの生の薬味、焦がしの香り、レモン系の酸を最後にひとふり。いつ・どの順で香りを出すかまで書く
+- **味の輪郭をつける**：塩・酸・辛のどれかで輪郭を立てる。薄味＝健康的、ではない。だしと塩梅をきちんと決める
+- **料理名をつける**：「野菜スープ」ではなく、その日のスープに名前をつけて呼ぶ。名前があるものは食べたくなる
+- **なぜ美味しいのかを一言添える**：何が効いているのか（この酸が油を切る、この焦がしが甘みを出す、等）を書く。栄養の理由だけで終わらせない
+- 型の中の変化は素材だけでなく調理法でつける：蒸す／焼きつける／煮込む／テンパリングを変える／すりつぶす／あんかけにする／汁気を飛ばす
 
 【会話スタイル】
 - 日本語で答える
@@ -91,19 +105,73 @@ export async function POST(req: NextRequest) {
       ).join('\n')
     }
 
-    const systemWithContext = SYSTEM_PROMPT + mealContext
+    // 直近2週間の実際のメニューを渡す。これが無いとAIは自分が何を出したか覚えていられず、
+    // 「同じ食材を繰り返さない」というルールを守りようがない（提案が飽きる原因）
+    // description はAI生成なので使わず、本人が書いた user_input を正とする
+    const today = getTodayJST()
+    const since = new Date(today + 'T00:00:00+09:00')
+    since.setDate(since.getDate() - 14)
+    const sinceStr = since.toISOString().slice(0, 10)
+
+    const { data: recent } = await supabaseAdmin
+      .from('meal_logs')
+      .select('date, meal_type, user_input')
+      .gte('date', sinceStr)
+      .lt('date', today)
+      .order('date', { ascending: false })
+
+    let historyContext = ''
+    const history = (recent ?? []).filter((m) => m.user_input?.trim())
+    if (history.length > 0) {
+      historyContext =
+        '\n\n【直近2週間に実際に食べたもの（新しい順・これと同じ提案はしない）】\n' +
+        history
+          .map((m) => `- ${m.date} ${MEAL_LABEL[m.meal_type] ?? m.meal_type}：${m.user_input.trim()}`)
+          .join('\n')
+    }
+
+    // 曜日は必ずこちらで計算して渡す。AIに日付から曜日を推測させると間違え、
+    // 金曜のアーマパーチャナ（消化を休める日）を取りこぼす
+    const weekday = ['日', '月', '火', '水', '木', '金', '土'][
+      new Date(today + 'T00:00:00+09:00').getDay()
+    ]
+    const dateContext =
+      `\n\n【今日の日付】${today}（${weekday}曜日）` +
+      (weekday === '金'
+        ? '\n今日は金曜。アーマパーチャナの日なので、通常の献立ではなくこの日の過ごし方として答える。'
+        : '')
+
+    const systemWithContext = SYSTEM_PROMPT + dateContext + historyContext + mealContext
+
+    const convo = messages.map((m: { role: string; content: string }) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }))
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 600,
+      max_tokens: 2000,
       system: systemWithContext,
-      messages: messages.map((m: { role: string; content: string }) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: convo,
     })
 
-    const reply = response.content[0].type === 'text' ? response.content[0].text : ''
+    let reply = response.content[0].type === 'text' ? response.content[0].text : ''
+
+    // レシピは長くなるので上限に当たって文の途中で切れることがある。
+    // 切れていたら続きを生成して繋ぐ（最大2回）
+    let stop = response.stop_reason
+    for (let i = 0; i < 2 && stop === 'max_tokens'; i++) {
+      const cont = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: systemWithContext,
+        // 途中まで書いた回答を assistant として渡すと、その続きから書いてくれる
+        messages: [...convo, { role: 'assistant' as const, content: reply.trimEnd() }],
+      })
+      reply = reply.trimEnd() + (cont.content[0].type === 'text' ? cont.content[0].text : '')
+      stop = cont.stop_reason
+    }
+
     return NextResponse.json({ reply })
   } catch (e) {
     console.error(e)

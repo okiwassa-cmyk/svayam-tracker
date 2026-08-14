@@ -251,6 +251,9 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
+  // 手で直した六味はAI判定より優先する（AIの取りこぼしを人が上書きするための口）
+  if ('rasa' in body) updates.rasa = body.rasa
+
   const { data, error } = await supabaseAdmin
     .from('meal_logs')
     .update(updates)

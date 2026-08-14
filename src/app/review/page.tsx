@@ -268,7 +268,10 @@ function DataHistory({ records, loading }: { records: DailyRecord[]; loading: bo
 
         return (
           <section key={r.date} className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-bold text-teal-700 mb-3">{dateLabel}</p>
+            <Link href={`/day/${r.date}`} className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-teal-700">{dateLabel}</span>
+              <span className="text-xs text-stone-400">記録を見る・直す →</span>
+            </Link>
             <div className="grid grid-cols-3 gap-2">
               {r.weight && <DataCell label="体重" value={`${r.weight}kg`} />}
               {r.body_fat && <DataCell label="体脂肪" value={`${r.body_fat}%`} />}

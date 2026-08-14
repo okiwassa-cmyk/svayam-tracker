@@ -94,7 +94,8 @@ export default async function HomePage() {
     { label: '運動', detail: exerciseDone ? '記録あり' : '未記録', done: exerciseDone, fraction: exerciseDone ? 1 : 0, link: '/habits', ama: false },
     { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '未記録', done: abhyangaDone, fraction: abhyangaDone ? 1 : 0, link: '/habits', ama: false },
     { label: '夕食時間', detail: dinnerDetail, done: dinnerDone, fraction: dinnerDone ? 1 : 0, link: '/morning', ama: false },
-    ...(isFastingDay ? [{ label: 'ファスティング', detail: fastingThisWeek ? '達成' : 'まだ', done: fastingThisWeek, fraction: fastingThisWeek ? 1 : 0, link: '/habits', ama: true }] : []),
+    // できたかどうかは翌朝の記録で付ける。当日は「まだ」ではなく、これから振り返る状態として見せる
+    ...(isFastingDay ? [{ label: 'ファスティング', detail: fastingThisWeek ? '達成' : '翌朝に記録', done: fastingThisWeek, fraction: fastingThisWeek ? 1 : 0, link: '/morning', ama: true }] : []),
   ]
 
   const achievementScore = keyHabits.reduce((sum, h) => sum + h.fraction, 0)
