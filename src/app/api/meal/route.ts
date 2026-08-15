@@ -69,7 +69,14 @@ async function analyze(content: Anthropic.MessageParam['content']): Promise<Meal
   const jsonMatch = rawText.match(/\{[\s\S]*\}/)
   if (!jsonMatch) return null
 
-  const parsed = JSON.parse(jsonMatch[0])
+  let parsed
+  try {
+    parsed = JSON.parse(jsonMatch[0])
+  } catch {
+    // AIが末尾にカンマを付けたJSONを返すことがある（"advice": "…",} ）。
+    // 仕様上これは読めないので、閉じ括弧の直前のカンマだけ落として読み直す
+    parsed = JSON.parse(jsonMatch[0].replace(/,(\s*[}\]])/g, '$1'))
+  }
   return {
     ...parsed,
     rasa: Array.isArray(parsed.rasa)

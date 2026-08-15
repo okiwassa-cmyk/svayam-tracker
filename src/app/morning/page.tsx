@@ -188,14 +188,16 @@ export default function MorningPage() {
   }
 
   async function handleSave() {
-    if (incomplete) return
-    if (clarity === null || tongue === null || tongueColor === null || hunger === null) return
     setSaving(true)
     try {
       const clarityToEnergy: Record<number, number> = { 1: 8, 2: 5, 3: 2 }
       const tongueScore: Record<number, number> = { 1: 9, 2: 5, 3: 2 }
       const hungerScore: Record<number, number> = { 1: 9, 2: 5, 3: 2 }
-      const agniVal = Math.round((tongueScore[tongue] + hungerScore[hunger]) / 2)
+      // energy_level と agni は元の入力から計算した値。元が抜けていたら計算せず null で置く
+      const agniVal =
+        tongue !== null && hunger !== null
+          ? Math.round((tongueScore[tongue] + hungerScore[hunger]) / 2)
+          : null
 
       const res = await fetch('/api/record', {
         method: 'POST',
@@ -206,7 +208,7 @@ export default function MorningPage() {
           tongue_coating: tongue,
           tongue_color: tongueColor,
           morning_hunger: hunger,
-          energy_level: clarityToEnergy[clarity],
+          energy_level: clarity !== null ? clarityToEnergy[clarity] : null,
           agni: agniVal,
           dinner_time: dinnerTime,
           dinner_amount: dinnerTime === 0 ? null : dinnerAmount,
