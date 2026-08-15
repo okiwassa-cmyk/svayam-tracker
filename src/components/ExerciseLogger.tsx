@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { timeInJST, isoForDateTime, nowTimeJST } from '@/lib/time'
 
 type ExerciseLog = {
   id: string
   date: string
+  logged_at: string
   type: string
   duration_min: number
   note: string | null
@@ -19,6 +21,7 @@ export default function ExerciseLogger({ date }: { date: string }) {
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [duration, setDuration] = useState('')
   const [note, setNote] = useState('')
+  const [time, setTime] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -34,6 +37,7 @@ export default function ExerciseLogger({ date }: { date: string }) {
     setSelectedType(null)
     setDuration('')
     setNote('')
+    setTime(nowTimeJST())
   }
 
   function cancel() {
@@ -41,6 +45,7 @@ export default function ExerciseLogger({ date }: { date: string }) {
     setSelectedType(null)
     setDuration('')
     setNote('')
+    setTime('')
   }
 
   async function save() {
@@ -51,27 +56,33 @@ export default function ExerciseLogger({ date }: { date: string }) {
     await fetch('/api/exercise', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, type: selectedType, duration_min: mins, note: note || null }),
+      body: JSON.stringify({
+        date,
+        type: selectedType,
+        duration_min: mins,
+        note: note || null,
+        logged_at: time ? isoForDateTime(date, time) : null,
+      }),
     })
-    setShowForm(false)
-    setSelectedType(null)
-    setDuration('')
-    setNote('')
+    cancel()
     setSaving(false)
     load()
+  }
+
+  // 運動した時刻を後から直せる。記録した時刻とは別物
+  async function updateTime(id: string, next: string) {
+    if (!next) return
+    setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, logged_at: isoForDateTime(date, next) } : l)))
+    await fetch('/api/exercise', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, logged_at: isoForDateTime(date, next) }),
+    })
   }
 
   async function remove(id: string) {
     await fetch(`/api/exercise?id=${id}`, { method: 'DELETE' })
     load()
-  }
-
-  function formatTime(iso: string) {
-    return new Date(iso).toLocaleTimeString('ja-JP', {
-      timeZone: 'Asia/Tokyo',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
   }
 
   const totalMin = logs.reduce((sum, l) => sum + l.duration_min, 0)
@@ -106,7 +117,12 @@ export default function ExerciseLogger({ date }: { date: string }) {
                 {log.note && <span className="text-xs text-stone-400">{log.note}</span>}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-stone-400">{formatTime(log.created_at)}</span>
+                <input
+                  type="time"
+                  value={timeInJST(log.logged_at)}
+                  onChange={(e) => updateTime(log.id, e.target.value)}
+                  className="text-xs bg-white rounded px-1.5 py-0.5 outline-none text-stone-500"
+                />
                 <button onClick={() => remove(log.id)} className="text-stone-300 text-xs active:text-red-400">✕</button>
               </div>
             </div>
@@ -149,6 +165,17 @@ export default function ExerciseLogger({ date }: { date: string }) {
               className="flex-1 text-sm bg-stone-50 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-teal-700/20 text-center font-semibold"
             />
             <span className="text-sm text-stone-500 font-semibold">分</span>
+          </div>
+
+          {/* いつ運動したか */}
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-stone-500 font-medium">時刻：</p>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="text-sm bg-stone-50 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-teal-700/20 text-stone-700"
+            />
           </div>
 
           {/* Note */}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { timeInJST, isoForDateTime, nowTimeJST } from '@/lib/time'
 
 type CaffeineLog = {
   id: string
@@ -30,6 +31,7 @@ export default function CaffeineLogger({ date }: { date: string }) {
   const [type, setType] = useState<string | null>(null)
   const [cups, setCups] = useState(1)
   const [note, setNote] = useState('')
+  const [time, setTime] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -45,6 +47,7 @@ export default function CaffeineLogger({ date }: { date: string }) {
     setType(null)
     setCups(1)
     setNote('')
+    setTime(nowTimeJST())
   }
 
   function cancel() {
@@ -52,6 +55,7 @@ export default function CaffeineLogger({ date }: { date: string }) {
     setType(null)
     setCups(1)
     setNote('')
+    setTime('')
   }
 
   async function save() {
@@ -60,24 +64,33 @@ export default function CaffeineLogger({ date }: { date: string }) {
     await fetch('/api/caffeine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, type, cups, note: note || null }),
+      body: JSON.stringify({
+        date,
+        type,
+        cups,
+        note: note || null,
+        logged_at: time ? isoForDateTime(date, time) : null,
+      }),
     })
     cancel()
     setSaving(false)
     load()
   }
 
+  // 飲んだ時刻を後から直せる。睡眠・HRVとの突き合わせに効くのは「記録した時刻」ではなく「飲んだ時刻」
+  async function updateTime(id: string, next: string) {
+    if (!next) return
+    setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, logged_at: isoForDateTime(date, next) } : l)))
+    await fetch('/api/caffeine', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, logged_at: isoForDateTime(date, next) }),
+    })
+  }
+
   async function remove(id: string) {
     await fetch(`/api/caffeine?id=${id}`, { method: 'DELETE' })
     load()
-  }
-
-  function formatTime(iso: string) {
-    return new Date(iso).toLocaleTimeString('ja-JP', {
-      timeZone: 'Asia/Tokyo',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
   }
 
   return (
@@ -102,7 +115,12 @@ export default function CaffeineLogger({ date }: { date: string }) {
                 {log.note && <span className="text-xs text-stone-500">{log.note}</span>}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-stone-400">{formatTime(log.logged_at)}</span>
+                <input
+                  type="time"
+                  value={timeInJST(log.logged_at)}
+                  onChange={(e) => updateTime(log.id, e.target.value)}
+                  className="text-xs bg-white rounded px-1.5 py-0.5 outline-none text-stone-500"
+                />
                 <button onClick={() => remove(log.id)} className="text-stone-300 text-xs active:text-red-400">✕</button>
               </div>
             </div>
@@ -147,6 +165,16 @@ export default function CaffeineLogger({ date }: { date: string }) {
             >
               ＋
             </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-stone-500 font-medium">飲んだ時刻：</p>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="text-sm bg-stone-50 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-700/20 text-stone-700"
+            />
           </div>
 
           <input

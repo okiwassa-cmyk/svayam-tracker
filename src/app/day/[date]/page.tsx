@@ -5,8 +5,10 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 import ToiletLogger from '@/components/ToiletLogger'
+import CaffeineLogger from '@/components/CaffeineLogger'
 import ExerciseLogger from '@/components/ExerciseLogger'
 import AbhyangaCheck from '@/components/AbhyangaCheck'
+import { timeInJST, isoForDateTime } from '@/lib/time'
 import type { MealLog } from '@/lib/types'
 
 const RASA_ALL = ['甘', '酸', '塩', '辛', '苦', '渋']
@@ -26,18 +28,6 @@ function shiftDay(date: string, diff: number) {
 function fmtDate(date: string) {
   const d = new Date(`${date}T00:00:00+09:00`)
   return `${d.getMonth() + 1}月${d.getDate()}日(${DAY_MAP[d.getDay()]})`
-}
-
-function timeInJST(iso: string | null) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('ja-JP', {
-    timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false,
-  })
-}
-
-function isoForDateTime(date: string, time: string) {
-  const [h, m] = time.split(':').map(Number)
-  return new Date(`${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+09:00`).toISOString()
 }
 
 type DayRecord = {
@@ -313,6 +303,7 @@ export default function DayDetail() {
           </section>
 
           <ToiletLogger date={date} />
+          <CaffeineLogger date={date} />
           <ExerciseLogger date={date} />
           <AbhyangaCheck date={date} />
 

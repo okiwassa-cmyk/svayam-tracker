@@ -18,13 +18,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { date, type, cups, note } = await req.json()
+    const { date, type, cups, note, logged_at } = await req.json()
     if (!date || !type || cups == null)
       return NextResponse.json({ error: 'date, type, cups required' }, { status: 400 })
 
     const { data, error } = await supabaseAdmin
       .from('caffeine_logs')
-      .insert({ date, type, cups, note: note || null })
+      // logged_at を渡さなければDBの now() が入る（＝これまでの挙動）
+      .insert({ date, type, cups, note: note || null, ...(logged_at ? { logged_at } : {}) })
       .select()
       .single()
 
@@ -33,6 +34,22 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
+}
+
+export async function PATCH(req: NextRequest) {
+  const { id, logged_at } = await req.json()
+  if (!id || !logged_at)
+    return NextResponse.json({ error: 'id, logged_at required' }, { status: 400 })
+
+  const { data, error } = await supabaseAdmin
+    .from('caffeine_logs')
+    .update({ logged_at })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ data })
 }
 
 export async function DELETE(req: NextRequest) {

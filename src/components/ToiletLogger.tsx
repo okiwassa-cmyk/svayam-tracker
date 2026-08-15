@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { timeInJST, isoForDateTime, nowTimeJST } from '@/lib/time'
 
 type ToiletLog = {
   id: string
@@ -28,6 +29,7 @@ export default function ToiletLogger({ date }: { date: string }) {
   const [activeType, setActiveType] = useState<'bowel' | null>(null)
   const [selectedCondition, setSelectedCondition] = useState<number | null>(null)
   const [note, setNote] = useState('')
+  const [time, setTime] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -42,12 +44,14 @@ export default function ToiletLogger({ date }: { date: string }) {
     setActiveType('bowel')
     setSelectedCondition(null)
     setNote('')
+    setTime(nowTimeJST())
   }
 
   function cancel() {
     setActiveType(null)
     setSelectedCondition(null)
     setNote('')
+    setTime('')
   }
 
   async function save() {
@@ -56,26 +60,33 @@ export default function ToiletLogger({ date }: { date: string }) {
     await fetch('/api/toilet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, type: 'bowel', condition: selectedCondition, note: note || null }),
+      body: JSON.stringify({
+        date,
+        type: 'bowel',
+        condition: selectedCondition,
+        note: note || null,
+        logged_at: time ? isoForDateTime(date, time) : null,
+      }),
     })
-    setActiveType(null)
-    setSelectedCondition(null)
-    setNote('')
+    cancel()
     setSaving(false)
     load()
+  }
+
+  // 朝一で出たか昼以降にずれたかはアグニの目安になるので、記録した時刻ではなく実際の時刻を残せるようにする
+  async function updateTime(id: string, next: string) {
+    if (!next) return
+    setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, logged_at: isoForDateTime(date, next) } : l)))
+    await fetch('/api/toilet', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, logged_at: isoForDateTime(date, next) }),
+    })
   }
 
   async function remove(id: string) {
     await fetch(`/api/toilet?id=${id}`, { method: 'DELETE' })
     load()
-  }
-
-  function formatTime(iso: string) {
-    return new Date(iso).toLocaleTimeString('ja-JP', {
-      timeZone: 'Asia/Tokyo',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
   }
 
   const bowelLogs = logs.filter((l) => l.type === 'bowel')
@@ -111,7 +122,12 @@ export default function ToiletLogger({ date }: { date: string }) {
                   {log.note && <span className="text-xs text-stone-500">{log.note}</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-400">{formatTime(log.created_at)}</span>
+                  <input
+                    type="time"
+                    value={timeInJST(log.logged_at)}
+                    onChange={(e) => updateTime(log.id, e.target.value)}
+                    className="text-xs bg-white rounded px-1.5 py-0.5 outline-none text-stone-500"
+                  />
                   <button onClick={() => remove(log.id)} className="text-stone-300 text-xs active:text-red-400">✕</button>
                 </div>
               </div>
@@ -142,6 +158,15 @@ export default function ToiletLogger({ date }: { date: string }) {
                 {opt.label}
               </button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-stone-500 font-medium">時刻：</p>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="text-sm bg-stone-50 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-700/20 text-stone-700"
+            />
           </div>
           <input
             type="text"
