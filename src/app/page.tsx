@@ -5,6 +5,7 @@ import Image from 'next/image'
 import BottomNav from '@/components/BottomNav'
 import EncouragementCard from '@/components/EncouragementCard'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getCheckupNotice } from '@/lib/checkup'
 import type { DailyRecord, HabitLog, Habit, UserSettings } from '@/lib/types'
 
 function getTodayJST() {
@@ -124,6 +125,8 @@ export default async function HomePage() {
   ]
   const currentPhase = phase != null ? PHASES[phase - 1] : null
 
+  const checkup = getCheckupNotice(today)
+
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
@@ -148,6 +151,20 @@ export default async function HomePage() {
       </header>
 
       <div className="px-4 py-4 space-y-4">
+        {/* Checkup Notice */}
+        {checkup && (
+          <section
+            className={`rounded-2xl p-4 border ${
+              checkup.tone === 'alert'
+                ? 'bg-rose-50 border-rose-200 text-rose-900'
+                : 'bg-amber-50 border-amber-200 text-amber-900'
+            }`}
+          >
+            <h2 className="text-base font-bold">{checkup.title}</h2>
+            <p className="text-xs mt-1 leading-relaxed opacity-80">{checkup.body}</p>
+          </section>
+        )}
+
         {/* Phase Banner */}
         {currentPhase && phase != null && phaseDay != null && (
           <section className={`rounded-2xl p-4 border ${currentPhase.light}`}>

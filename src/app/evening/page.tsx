@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { NO_ALCOHOL_DATES } from '@/lib/checkup'
 
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP', {
@@ -97,6 +98,12 @@ export default function EveningPage() {
           value={dinnerAmount}
           onChange={(v) => setDinnerAmount(v as 1|2|3)}
         />
+        {NO_ALCOHOL_DATES.includes(today) && (
+          <div className="rounded-2xl p-4 border bg-rose-50 border-rose-200 text-rose-900">
+            <p className="text-sm font-bold">今日は禁酒日</p>
+            <p className="text-xs mt-1 leading-relaxed opacity-80">9月9日の採血まで飲まない。γ-GTPが直前の飲酒で動くので、90日後の再検査と条件をそろえるため。</p>
+          </div>
+        )}
         <ChoiceSection
           label="飲酒"
           options={[
