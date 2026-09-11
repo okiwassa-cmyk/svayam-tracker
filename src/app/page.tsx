@@ -32,7 +32,7 @@ async function getTodayData() {
   monday.setDate(nowJST.getDate() - ((dayOfWeek + 6) % 7))
   const weekStart = monday.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-')
 
-  const [recordRes, habitLogsRes, habitsRes, settingsRes, exerciseRes, abhyangaRes, mealRes, fastingThisWeekRes] = await Promise.all([
+  const [recordRes, habitLogsRes, habitsRes, settingsRes, exerciseRes, abhyangaRes, mealRes, fastingThisWeekRes, cardioRes] = await Promise.all([
     supabaseAdmin.from('daily_records').select('*').eq('date', today).maybeSingle(),
     supabaseAdmin.from('habit_logs').select('*').eq('date', today),
     supabaseAdmin.from('habits').select('*').order('sort_order'),
@@ -41,7 +41,15 @@ async function getTodayData() {
     supabaseAdmin.from('abhyanga_logs').select('id').eq('date', today).limit(1),
     supabaseAdmin.from('meal_logs').select('meal_type,logged_at,skipped,kapha_score').eq('date', today),
     supabaseAdmin.from('habit_logs').select('habit_id,completed').gte('date', weekStart).eq('completed', true),
+    // 週3回の有酸素（北斗など）。朝のヨガ・筋トレは毎日なので数に入れない
+    supabaseAdmin.from('exercise_logs').select('date,type').gte('date', weekStart).lte('date', today),
   ])
+
+  const CARDIO_TYPES = ['ボクササイズ', 'ランニング', '自転車', '散歩']
+  const cardioDates = new Set(
+    (cardioRes.data ?? []).filter((r: { type: string }) => CARDIO_TYPES.includes(r.type))
+      .map((r: { date: string }) => r.date)
+  )
 
   return {
     today,
@@ -53,11 +61,19 @@ async function getTodayData() {
     abhyangaDone: (abhyangaRes.data?.length ?? 0) > 0,
     meals: (mealRes.data ?? []) as { meal_type: string; logged_at: string | null; skipped: boolean; kapha_score: string | null }[],
     fastingLogIds: (fastingThisWeekRes.data ?? []).map((l: { habit_id: string }) => l.habit_id),
+    cardioDays: cardioDates.size,
+    // 昨日が予定日（火・金・日）で記録が無いか。※昨日のことは画面に書かない。誘いを出すかの判定にだけ使う
+    cardioMissedYesterday: (() => {
+      const y = new Date(nowJST); y.setDate(nowJST.getDate() - 1)
+      const yStr = y.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-')
+      const planned = [2, 5, 0] // 火・金・日
+      return planned.includes(y.getDay()) && !cardioDates.has(yStr) && yStr >= weekStart
+    })(),
   }
 }
 
 export default async function HomePage() {
-  const { today, record, habits, settings, exerciseDone, abhyangaDone, meals, fastingLogIds } = await getTodayData()
+  const { today, record, habits, settings, exerciseDone, abhyangaDone, meals, fastingLogIds, cardioDays, cardioMissedYesterday } = await getTodayData()
 
   const experimentDay = settings?.start_date
     ? Math.floor((Date.now() - new Date(settings.start_date + 'T00:00:00+09:00').getTime()) / 86400000) + 1
@@ -187,6 +203,19 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* 有酸素の週3回。昨日のことは書かない＝後ろでなく前を向いた言い方にする */}
+        {cardioDays >= 3 ? (
+          <section className="bg-[#e8f0ea] border border-[#cbdccf] rounded-2xl px-4 py-3">
+            <p className="text-sm font-semibold text-[#3f5c47]">今週3回。達成です。</p>
+          </section>
+        ) : cardioMissedYesterday ? (
+          <section className="bg-[#f3ece0] border border-[#e3d7c3] rounded-2xl px-4 py-3">
+            <p className="text-sm font-semibold text-[#6b5137]">
+              今週はあと{3 - cardioDays}回。今日、北斗どうですか？
+            </p>
+          </section>
+        ) : null}
 
         {/* My Rhythm */}
         {(settings?.wake_time || settings?.lunch_time || settings?.sleep_time) && (
