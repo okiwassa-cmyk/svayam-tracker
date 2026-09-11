@@ -8,6 +8,8 @@ const items = [
   { href: '/cookbook/ingredients', label: '食材事典', match: (p: string) => p.startsWith('/cookbook/ingredients') },
   { href: '/cookbook/recipes', label: 'レシピ', match: (p: string) => p.startsWith('/cookbook/recipes') },
   { href: '/cookbook/search', label: '体質で探す', match: (p: string) => p.startsWith('/cookbook/search') },
+  // レシピブックに入ると記録側へ帰る道が無くなっていたので、出口を置く
+  { href: '/', label: '記録へ', match: () => false },
 ]
 
 export default function CookbookNav() {

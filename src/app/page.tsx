@@ -92,7 +92,7 @@ export default async function HomePage() {
   const dinnerTime = record?.dinner_time ?? null
   const dinnerSkipped = dinnerTime === 0
   const dinnerDone = dinnerTime === 0 || dinnerTime === 1 || dinnerTime === 2
-  const dinnerDetail = dinnerTime == null ? '未記録'
+  const dinnerDetail = dinnerTime == null ? '—'
     : dinnerTime === 0 ? '食べなかった'
     : dinnerTime === 1 ? '18時台'
     : dinnerTime === 2 ? '19時台' : '20時以降'
@@ -108,8 +108,8 @@ export default async function HomePage() {
 
   const keyHabits = [
     { label: '朝のディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, fraction: dinacharyaFraction, link: '/morning', ama: false },
-    { label: '運動', detail: exerciseDone ? '記録あり' : '未記録', done: exerciseDone, fraction: exerciseDone ? 1 : 0, link: '/habits', ama: false },
-    { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '未記録', done: abhyangaDone, fraction: abhyangaDone ? 1 : 0, link: '/habits', ama: false },
+    { label: '運動', detail: exerciseDone ? '記録あり' : '—', done: exerciseDone, fraction: exerciseDone ? 1 : 0, link: '/habits', ama: false },
+    { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '—', done: abhyangaDone, fraction: abhyangaDone ? 1 : 0, link: '/habits', ama: false },
     { label: '夕食時間', detail: dinnerDetail, done: dinnerDone, fraction: dinnerDone ? 1 : 0, link: '/morning', ama: false },
     // できたかどうかは翌朝の記録で付ける。当日は「まだ」ではなく、これから振り返る状態として見せる
     ...(isFastingDay ? [{ label: 'ファスティング', detail: fastingThisWeek ? '達成' : '翌朝に記録', done: fastingThisWeek, fraction: fastingThisWeek ? 1 : 0, link: '/morning', ama: true }] : []),
@@ -236,12 +236,12 @@ export default async function HomePage() {
             <StatusCard
               label="朝の記録"
               done={morningDone}
-              detail={morningDone ? `E${record?.energy_level} A${record?.agni} 排${record?.bowel_movement ? '○' : '×'}` : '未記録'}
+              detail={morningDone ? `E${record?.energy_level} A${record?.agni} 排${record?.bowel_movement ? '○' : '×'}` : '—'}
             />
             <StatusCard
               label="昨夜の夕食"
               done={eveningDone}
-              detail={!eveningDone ? '未記録' : dinnerSkipped ? '食べなかった' : `${dinnerDetail} / ${['軽め','普通','重め'][((record?.dinner_amount ?? 1) as number) - 1]}`}
+              detail={!eveningDone ? '—' : dinnerSkipped ? '食べなかった' : `${dinnerDetail} / ${['軽め','普通','重め'][((record?.dinner_amount ?? 1) as number) - 1]}`}
             />
           </div>
         </section>

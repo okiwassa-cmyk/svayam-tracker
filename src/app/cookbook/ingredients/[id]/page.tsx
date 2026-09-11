@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { CookingPot } from 'lucide-react'
 import type { Ingredient, Recipe } from '@/lib/types'
@@ -10,6 +10,8 @@ import DoshaBadges from '../../DoshaBadges'
 export default function IngredientDetail() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  // 食事の記録から開いたときは、食材事典ではなく元の画面に帰す
+  const from = useSearchParams().get('from')
   const [item, setItem] = useState<Ingredient | null>(null)
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,7 +41,11 @@ export default function IngredientDetail() {
 
   return (
     <div className="space-y-5 pb-4">
-      <Link href="/cookbook/ingredients" className="text-xs text-[#7d6d4c]">← 食材事典</Link>
+      {from === 'meal' ? (
+        <Link href="/meal" className="text-xs text-[#7d6d4c]">← 食事の記録にもどる</Link>
+      ) : (
+        <Link href="/cookbook/ingredients" className="text-xs text-[#7d6d4c]">← 食材事典</Link>
+      )}
 
       {item.photo_url && (
         // eslint-disable-next-line @next/next/no-img-element

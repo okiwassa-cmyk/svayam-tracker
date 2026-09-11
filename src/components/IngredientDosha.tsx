@@ -14,7 +14,7 @@ export default function IngredientDosha({ items }: { items: MatchedIngredient[] 
       {items.map((ing) => (
         <Link
           key={ing.id}
-          href={`/cookbook/ingredients/${ing.id}`}
+          href={`/cookbook/ingredients/${ing.id}?from=meal`}
           className="inline-flex items-center gap-1 rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-xs active:bg-stone-100"
         >
           <span className="text-stone-600">
