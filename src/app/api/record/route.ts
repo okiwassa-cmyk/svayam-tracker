@@ -21,8 +21,12 @@ export async function POST(req: NextRequest) {
     const sanitized: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(fields)) {
       if (numericFields.includes(k)) {
-        const n = Number(v)
-        sanitized[k] = (v === '' || v === null || v === undefined || isNaN(n)) ? null : n
+        // ショートカットから来る値は "8,432" や "1,234 kcal" のように
+        // 3桁区切りや単位が付くことがある。数字・小数点・マイナス以外を落としてから読む
+        const cleaned = typeof v === 'string' ? v.replace(/[^\d.-]/g, '') : v
+        const n = Number(cleaned)
+        sanitized[k] =
+          (cleaned === '' || cleaned === null || cleaned === undefined || isNaN(n)) ? null : n
       } else {
         sanitized[k] = v
       }
