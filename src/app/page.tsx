@@ -110,7 +110,8 @@ export default async function HomePage() {
     { label: '朝のディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, fraction: dinacharyaFraction, link: '/morning', ama: false },
     { label: '運動', detail: exerciseDone ? '記録あり' : '—', done: exerciseDone, fraction: exerciseDone ? 1 : 0, link: '/habits', ama: false },
     { label: 'アビヤンガ', detail: abhyangaDone ? '達成' : '—', done: abhyangaDone, fraction: abhyangaDone ? 1 : 0, link: '/habits', ama: false },
-    { label: '夕食時間', detail: dinnerDetail, done: dinnerDone, fraction: dinnerDone ? 1 : 0, link: '/morning', ama: false },
+    // 夜は基本食べないので、毎日は出さない。食べて記録した日だけ並ぶ
+    ...(dinnerTime != null ? [{ label: '夕食時間', detail: dinnerDetail, done: dinnerDone, fraction: dinnerDone ? 1 : 0, link: '/morning', ama: false }] : []),
     // できたかどうかは翌朝の記録で付ける。当日は「まだ」ではなく、これから振り返る状態として見せる
     ...(isFastingDay ? [{ label: 'ファスティング', detail: fastingThisWeek ? '達成' : '翌朝に記録', done: fastingThisWeek, fraction: fastingThisWeek ? 1 : 0, link: '/morning', ama: true }] : []),
   ]
@@ -119,13 +120,12 @@ export default async function HomePage() {
   const achievementTotal = keyHabits.length
   const achievementLabel = Number.isInteger(achievementScore) ? String(achievementScore) : achievementScore.toFixed(1)
 
-  // 習慣化率（個別項目カウント：朝のディナチャリア9 + 運動 + アビヤンガ + 夕食 = 12、金曜のみ+ファスティング=13）
+  // 習慣化率（個別項目カウント：朝のディナチャリア9 + 運動 + アビヤンガ = 11、金曜のみ+ファスティング=12）
   const habitFormationDone = dinacharyaDoneCount
     + (exerciseDone ? 1 : 0)
     + (abhyangaDone ? 1 : 0)
-    + (dinnerDone ? 1 : 0)
     + (isFastingDay && fastingThisWeek ? 1 : 0)
-  const habitFormationTotal = isFastingDay ? 13 : 12
+  const habitFormationTotal = isFastingDay ? 12 : 11
   const habitFormationRate = Math.round((habitFormationDone / habitFormationTotal) * 100)
 
   const phase = experimentDay != null && experimentDay > 0
