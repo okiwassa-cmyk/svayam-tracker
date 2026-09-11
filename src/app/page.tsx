@@ -39,7 +39,7 @@ async function getTodayData() {
     supabaseAdmin.from('user_settings').select('*').eq('id', 1).maybeSingle(),
     supabaseAdmin.from('exercise_logs').select('id').eq('date', today).limit(1),
     supabaseAdmin.from('abhyanga_logs').select('id').eq('date', today).limit(1),
-    supabaseAdmin.from('meal_logs').select('meal_type,logged_at,skipped,kapha_score').eq('date', today),
+    supabaseAdmin.from('meal_logs').select('meal_type,logged_at,skipped,kapha_score,calories_estimate').eq('date', today),
     supabaseAdmin.from('habit_logs').select('habit_id,completed').gte('date', weekStart).eq('completed', true),
     // 週3回の有酸素（北斗など）。朝のヨガ・筋トレは毎日なので数に入れない
     supabaseAdmin.from('exercise_logs').select('date,type').gte('date', weekStart).lte('date', today),
@@ -59,7 +59,7 @@ async function getTodayData() {
     settings: settingsRes.data as UserSettings | null,
     exerciseDone: (exerciseRes.data?.length ?? 0) > 0,
     abhyangaDone: (abhyangaRes.data?.length ?? 0) > 0,
-    meals: (mealRes.data ?? []) as { meal_type: string; logged_at: string | null; skipped: boolean; kapha_score: string | null }[],
+    meals: (mealRes.data ?? []) as { meal_type: string; logged_at: string | null; skipped: boolean; kapha_score: string | null; calories_estimate: number | null }[],
     fastingLogIds: (fastingThisWeekRes.data ?? []).map((l: { habit_id: string }) => l.habit_id),
     cardioDays: cardioDates.size,
     // 昨日が予定日（火・金・日）で記録が無いか。※昨日のことは画面に書かない。誘いを出すかの判定にだけ使う
@@ -105,6 +105,9 @@ export default async function HomePage() {
 
   const mealLogs = meals.filter((m) => !m.skipped)
   const excellentMeals = mealLogs.filter((m) => m.kapha_score === 'excellent').length
+  // カロリーは食事の写真からAIが出した概算の合計。手で入れた値があればそちらを優先する
+  const estimatedCalories = mealLogs.reduce((sum, m) => sum + (m.calories_estimate ?? 0), 0)
+  const caloriesToday = record?.calories ?? (estimatedCalories > 0 ? estimatedCalories : null)
 
   const keyHabits = [
     { label: '朝のディナチャリア', detail: `${dinacharyaDoneCount}/${dinacharyaTotal}`, done: dinacharyaDoneCount === dinacharyaTotal, fraction: dinacharyaFraction, link: '/morning', ama: false },
@@ -298,39 +301,39 @@ export default async function HomePage() {
         </section>
 
         {/* Biometrics */}
-        {(record?.weight || record?.hrv || record?.sleep_hours || record?.waist_cm || record?.resting_hr) && (
+        {(record?.weight || record?.hrv || record?.sleep_hours || record?.waist_cm || record?.resting_hr || caloriesToday) && (
           <section className="bg-white rounded-2xl p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-stone-500 mb-3">バイオデータ</h2>
             <div className="grid grid-cols-3 gap-2">
-              {record.weight && (
-                <MetricCard label="体重" value={`${record.weight}kg`} />
+              {record?.weight && (
+                <MetricCard label="体重" value={`${record?.weight}kg`} />
               )}
-              {record.waist_cm && (
-                <MetricCard label="腹囲" value={`${record.waist_cm}cm`} />
+              {record?.waist_cm && (
+                <MetricCard label="腹囲" value={`${record?.waist_cm}cm`} />
               )}
-              {record.upper_arm_cm && (
-                <MetricCard label="二の腕" value={`${record.upper_arm_cm}cm`} />
+              {record?.upper_arm_cm && (
+                <MetricCard label="二の腕" value={`${record?.upper_arm_cm}cm`} />
               )}
-              {record.hip_cm && (
-                <MetricCard label="お尻" value={`${record.hip_cm}cm`} />
+              {record?.hip_cm && (
+                <MetricCard label="お尻" value={`${record?.hip_cm}cm`} />
               )}
-              {record.hrv && (
-                <MetricCard label="HRV" value={`${record.hrv}ms`} />
+              {record?.hrv && (
+                <MetricCard label="HRV" value={`${record?.hrv}ms`} />
               )}
-              {record.resting_hr && (
-                <MetricCard label="安静時心拍" value={`${record.resting_hr}bpm`} />
+              {record?.resting_hr && (
+                <MetricCard label="安静時心拍" value={`${record?.resting_hr}bpm`} />
               )}
-              {record.sleep_hours && (
-                <MetricCard label="睡眠" value={`${record.sleep_hours}h`} />
+              {record?.sleep_hours && (
+                <MetricCard label="睡眠" value={`${record?.sleep_hours}h`} />
               )}
-              {record.energy_level && (
-                <MetricCard label="エネルギー" value={`${record.energy_level}/10`} />
+              {record?.energy_level && (
+                <MetricCard label="エネルギー" value={`${record?.energy_level}/10`} />
               )}
-              {record.agni && (
-                <MetricCard label="アグニ" value={`${record.agni}/10`} />
+              {record?.agni && (
+                <MetricCard label="アグニ" value={`${record?.agni}/10`} />
               )}
-              {record.calories && (
-                <MetricCard label="カロリー" value={`${record.calories}kcal`} />
+              {caloriesToday && (
+                <MetricCard label="カロリー" value={`${caloriesToday}kcal`} />
               )}
             </div>
           </section>
@@ -340,7 +343,7 @@ export default async function HomePage() {
         <EncouragementCard
           keyScore={{ done: Math.round(achievementScore * 10) / 10, total: achievementTotal }}
           weight={record?.weight ?? null}
-          calories={record?.calories ?? null}
+          calories={caloriesToday}
           energy={record?.energy_level ?? null}
           excellentMeals={excellentMeals}
           totalMeals={mealLogs.length}
