@@ -23,6 +23,12 @@ export type DailyRecord = {
   alcohol: number | null
   dinacharya_flags: Record<string, boolean> | null
   asukken_photo_url: string | null
+  resting_hr: number | null
+  upper_arm_cm: number | null
+  hip_cm: number | null
+  body_photo_front_url: string | null
+  body_photo_side_url: string | null
+  body_photo_back_url: string | null
   created_at: string
 }
 

@@ -13,7 +13,7 @@ type ExerciseLog = {
   created_at: string
 }
 
-const EXERCISE_TYPES = ['ヨガ', 'ボクササイズ', 'ランニング', '自転車', '散歩', 'その他']
+const EXERCISE_TYPES = ['ヨガ', '筋トレ', 'ボクササイズ', 'ランニング', '自転車', '散歩', 'その他']
 
 export default function ExerciseLogger({ date }: { date: string }) {
   const [logs, setLogs] = useState<ExerciseLog[]>([])
@@ -23,11 +23,15 @@ export default function ExerciseLogger({ date }: { date: string }) {
   const [note, setNote] = useState('')
   const [time, setTime] = useState('')
   const [saving, setSaving] = useState(false)
+  const [cardioDays, setCardioDays] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/exercise?date=${date}`)
     const { data } = await res.json()
     setLogs(data ?? [])
+    // 曜日ごとの○×は作らない。週で数えるので、曜日がずれても何も起きない
+    const w = await fetch(`/api/exercise?date=${date}&week=1`).then((r) => r.json())
+    setCardioDays(typeof w.cardioDays === 'number' ? w.cardioDays : null)
   }, [date])
 
   useEffect(() => { load() }, [load])
@@ -94,6 +98,16 @@ export default function ExerciseLogger({ date }: { date: string }) {
           <h2 className="text-sm font-semibold text-stone-600">運動記録</h2>
           {totalMin > 0 && (
             <p className="text-xs text-teal-600 font-semibold mt-0.5">合計 {totalMin} 分</p>
+          )}
+          {/* 週で数える。できなかった日を責める表示は作らない */}
+          {cardioDays !== null && (
+            <p className="text-xs mt-1">
+              <span className="text-stone-400">今週の有酸素 </span>
+              <span className={`font-bold ${cardioDays >= 3 ? 'text-teal-600' : 'text-stone-600'}`}>
+                {cardioDays} / 3
+              </span>
+              {cardioDays >= 3 && <span className="text-teal-600 font-semibold"> 達成</span>}
+            </p>
           )}
         </div>
         <button

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import ToiletLogger from '@/components/ToiletLogger'
-import CaffeineLogger from '@/components/CaffeineLogger'
 import YesterdayReview from '@/components/YesterdayReview'
 
 function getTodayJST() {
@@ -46,7 +45,9 @@ function hhmmToDecimal(str: string): number | null {
   return isNaN(n) ? null : n
 }
 
-const DINACHARYA_ITEMS = [
+// 90日の実績で全項目88〜100%＝もう型になっているので、毎朝ひとつずつ聞かない。
+// 「いつも通り」1タップにまとめ、違う日だけ開いて個別に外す。
+const ROUTINE_ITEMS = [
   { key: 'sleep', label: '昨日22〜23時に就寝した' },
   { key: 'wake', label: '5時に起きる' },
   { key: 'water', label: 'コップ1杯のお水を飲む' },
@@ -58,6 +59,13 @@ const DINACHARYA_ITEMS = [
   { key: 'hayu', label: '白湯を作る' },
 ] as const
 
+// まだ習慣になっていないものだけ、個別に聞く（数えたくなる＝まだ型でない）
+const WATCH_ITEMS = [
+  { key: 'digital_off', label: '昨夜21時にスマホを置いた' },
+] as const
+
+const DINACHARYA_ITEMS = [...WATCH_ITEMS, ...ROUTINE_ITEMS] as const
+
 type DinacharyaKey = typeof DINACHARYA_ITEMS[number]['key']
 
 export default function MorningPage() {
@@ -66,21 +74,30 @@ export default function MorningPage() {
 
   // Dinacharya checklist (local only, not persisted)
   const [dinacharya, setDinacharya] = useState<Record<DinacharyaKey, boolean>>({
-    sleep: false, wake: false, water: false, tongue_check: false, brush: false, gandusha: false, jala_neti: false, nasya: false, hayu: false,
+    digital_off: false, sleep: false, wake: false, water: false, tongue_check: false, brush: false, gandusha: false, jala_neti: false, nasya: false, hayu: false,
   })
 
   // 1=スッキリ/なし/ある, 2=普通/少し/少し, 3=だるい/多い/ない
   // オージャス・アーマ・アグニの指標なので初期値を置かない（未入力と「1」を取り違えないため）
   const [clarity, setClarity] = useState<1|2|3|null>(null)
-  const [tongue, setTongue] = useState<1|2|3|null>(null)
-  const [tongueColor, setTongueColor] = useState<1|2|3|null>(null) // 1=白, 2=黄色, 3=褐色
+  // 舌苔は 1=ほとんどない 2=すくない 3=ある 4=多い（2026-09-14から4段階。3段階では69日中50日が「2」に潰れていた）
+  const [tongue, setTongue] = useState<1|2|3|4|null>(null)
+  // 色は69日すべて「白」で一度も動かなかったので、いつもと違う日だけ入れる（未入力＝白）
+  const [tongueColor, setTongueColor] = useState<1|2|3|null>(null)
   const [hunger, setHunger] = useState<1|2|3|null>(null)
   const [dinnerTime, setDinnerTime] = useState<0|1|2|3|null>(null) // 0=食べなかった
   const [dinnerAmount, setDinnerAmount] = useState<1|2|3|null>(null)
   const [alcohol, setAlcohol] = useState<1|2|3|null>(null)
+  // 生理（1=少ない 2=ふつう 3=多い / null=なし）。開始日と終了日は連続する日から自動で出る
+  const [menstruation, setMenstruation] = useState<1|2|3|null>(null)
+  // 家庭血圧・朝1回。単日では判定しない（2週間ぶんの平均で見る）
+  const [bpSys, setBpSys] = useState('')
+  const [bpDia, setBpDia] = useState('')
+  const [bpPulse, setBpPulse] = useState('')
   // SOXAI sleep data (manual input)
   const [sleepScore, setSleepScore] = useState('')
   const [hrv, setHrv] = useState('')
+  const [restingHr, setRestingHr] = useState('')
   const [sleepH, setSleepH] = useState('')
   const [sleepM, setSleepM] = useState('')
   const [note, setNote] = useState('')
@@ -99,6 +116,7 @@ export default function MorningPage() {
   // Tongue photo upload（3段階の目盛りでは拾えない差を後から見返すため）
   const [tonguePhotoUrl, setTonguePhotoUrl] = useState<string | null>(null)
   const [tongueUploading, setTongueUploading] = useState(false)
+  const [routineOpen, setRoutineOpen] = useState(false)
   const tongueInputRef = useRef<HTMLInputElement>(null)
 
   // Load existing data + check fasting schedule
@@ -109,14 +127,19 @@ export default function MorningPage() {
         if (!data) return
         if (data.morning_clarity) setClarity(data.morning_clarity as 1|2|3)
         else if (data.energy_level) setClarity(data.energy_level >= 7 ? 1 : data.energy_level >= 4 ? 2 : 3)
-        if (data.tongue_coating) setTongue(data.tongue_coating as 1|2|3)
+        if (data.tongue_coating) setTongue(data.tongue_coating as 1|2|3|4)
         if (data.tongue_color) setTongueColor(data.tongue_color as 1|2|3)
         if (data.morning_hunger) setHunger(data.morning_hunger as 1|2|3)
         if (data.dinner_time != null) setDinnerTime(data.dinner_time as 0|1|2|3)
         if (data.dinner_amount) setDinnerAmount(data.dinner_amount as 1|2|3)
         if (data.alcohol) setAlcohol(data.alcohol as 1|2|3)
+        if (data.menstruation) setMenstruation(data.menstruation as 1|2|3)
+        if (data.bp_systolic != null) setBpSys(String(data.bp_systolic))
+        if (data.bp_diastolic != null) setBpDia(String(data.bp_diastolic))
+        if (data.bp_pulse != null) setBpPulse(String(data.bp_pulse))
         if (data.sleep_score != null) setSleepScore(String(data.sleep_score))
         if (data.hrv != null) setHrv(String(data.hrv))
+        if (data.resting_hr != null) setRestingHr(String(data.resting_hr))
         if (data.sleep_hours != null) {
           const [h, m] = decimalToHHMM(Number(data.sleep_hours)).split(':')
           setSleepH(h); setSleepM(m)
@@ -191,7 +214,7 @@ export default function MorningPage() {
     setSaving(true)
     try {
       const clarityToEnergy: Record<number, number> = { 1: 8, 2: 5, 3: 2 }
-      const tongueScore: Record<number, number> = { 1: 9, 2: 5, 3: 2 }
+      const tongueScore: Record<number, number> = { 1: 9, 2: 7, 3: 4, 4: 2 }
       const hungerScore: Record<number, number> = { 1: 9, 2: 5, 3: 2 }
       // energy_level と agni は元の入力から計算した値。元が抜けていたら計算せず null で置く
       const agniVal =
@@ -213,8 +236,13 @@ export default function MorningPage() {
           dinner_time: dinnerTime,
           dinner_amount: dinnerTime === 0 ? null : dinnerAmount,
           alcohol,
+          menstruation,
+          bp_systolic: bpSys || null,
+          bp_diastolic: bpDia || null,
+          bp_pulse: bpPulse || null,
           sleep_score: sleepScore,
           hrv,
+          resting_hr: restingHr,
           sleep_hours: (sleepH || sleepM) ? hhmmToDecimal(`${sleepH || '0'}:${sleepM || '0'}`) : null,
           note: note || null,
           asukken_photo_url: photoUrl || null,
@@ -228,6 +256,17 @@ export default function MorningPage() {
     }
   }
 
+  // ROUTINE がすべて true なら「いつも通り」
+  const routineAllDone = ROUTINE_ITEMS.every((i) => dinacharya[i.key])
+  function toggleRoutineAll() {
+    const next = !routineAllDone
+    setDinacharya((prev) => {
+      const d = { ...prev }
+      for (const i of ROUTINE_ITEMS) d[i.key] = next
+      return d
+    })
+  }
+
   function toggleDinacharya(key: DinacharyaKey) {
     setDinacharya((prev) => ({ ...prev, [key]: !prev[key] }))
   }
@@ -239,7 +278,6 @@ export default function MorningPage() {
   const missing = [
     clarity === null && '頭のクリアさ',
     tongue === null && '舌の苔',
-    tongueColor === null && '舌の色',
     hunger === null && '朝の空腹感',
     dinnerTime === null && '昨夜の夕食の時間',
     dinnerTime !== null && dinnerTime !== 0 && dinnerAmount === null && '昨夜の夕食の量',
@@ -249,7 +287,7 @@ export default function MorningPage() {
   return (
     <div className="min-h-screen pb-8">
       {/* Header */}
-      <header className="bg-amber-800 text-white px-4 pt-12 pb-6">
+      <header className="bg-[#5c4433] text-white px-4 pt-12 pb-6">
         <Link href="/" className="text-amber-200 text-sm mb-2 inline-block">← ホームへ</Link>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Image src="/icons/sunrise.svg" unoptimized alt="" width={26} height={26} className="invert opacity-90" />
@@ -262,48 +300,18 @@ export default function MorningPage() {
         {/* Fasting Alert */}
         {fastingAlert === 'eve' && (
           <section className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <p className="text-sm font-bold text-amber-800 mb-1">明日はアーマパーチャナの日</p>
-            <p className="text-xs text-amber-700 leading-relaxed mb-3">
-              明日のファスティングに向けて、今日の食事で消化器を整えましょう。
+            <p className="text-sm font-bold text-[#6b5137] mb-1">明日はアーマパーチャナの日</p>
+            <p className="text-xs text-[#8a7358] leading-relaxed">
+              今日の昼を一番大きく、夕食は軽く早めに。明日に向けて消化を整えておく。
             </p>
-            <div className="space-y-2">
-              <div className="bg-white rounded-xl p-3">
-                <p className="text-xs font-semibold text-amber-800 mb-1">昼食（今日一番の食事）</p>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  ムング豆のスープ・蒸し野菜・温かいお粥など消化しやすいものを。スパイスは生姜・クミン・コリアンダーで消化を助ける。
-                </p>
-              </div>
-              <div className="bg-white rounded-xl p-3">
-                <p className="text-xs font-semibold text-amber-800 mb-1">夕食（18時までに・軽め）</p>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  野菜スープかムング豆粥のみ。乳製品・揚げ物・生野菜・重い食べ物は避ける。白湯をたっぷり飲む。
-                </p>
-              </div>
-              <div className="bg-amber-100 rounded-xl p-3">
-                <p className="text-xs text-amber-800 leading-relaxed">
-                  避けるもの：乳製品、小麦、砂糖、肉、油っこいもの、冷たい飲み物
-                </p>
-              </div>
-            </div>
           </section>
         )}
         {fastingAlert === 'day' && (
-          <section className="bg-teal-50 border border-teal-200 rounded-2xl p-4">
-            <p className="text-sm font-bold text-teal-800 mb-1">今日はアーマパーチャナ（ファスティング）</p>
-            <p className="text-xs text-teal-700 leading-relaxed mb-2">
-              体の毒素を燃やす浄化の日。瞑想・ヨーガ・呼吸法は通常通り行いましょう。激しい運動はお休みです。
+          <section className="bg-[#f3ece0] border border-[#e3d7c3] rounded-2xl px-4 py-3">
+            <p className="text-sm font-bold text-[#6b5137] mb-1">今日はアーマパーチャナ</p>
+            <p className="text-xs text-[#8a7358] leading-relaxed">
+              火を休ませる日。ヨガと呼吸はいつも通り、激しい運動だけお休み。白湯・生姜湯・ハーブティーで過ごす。
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white rounded-xl p-2.5 text-center">
-                <p className="text-xs text-teal-700">続ける</p>
-                <p className="text-xs font-semibold text-stone-700 mt-0.5">瞑想・ヨーガ・呼吸法</p>
-              </div>
-              <div className="bg-white rounded-xl p-2.5 text-center">
-                <p className="text-xs text-stone-400">お休み</p>
-                <p className="text-xs font-semibold text-stone-400 mt-0.5">激しい運動</p>
-              </div>
-            </div>
-            <p className="text-xs text-teal-600 mt-2">白湯・生姜湯・ハーブティーを飲んで過ごしましょう。</p>
           </section>
         )}
         {fastingAlert === 'after' && fastingHabitId && (
@@ -335,15 +343,15 @@ export default function MorningPage() {
             <h2 className="text-sm font-semibold text-stone-600">朝のディナチャリア</h2>
             <span className="text-xs text-amber-700 font-semibold">{dinacharyaDone} / {DINACHARYA_ITEMS.length}</span>
           </div>
-          <div className="space-y-2">
-            {DINACHARYA_ITEMS.map((item) => (
+
+          {/* まだ習慣になっていないものは、個別に聞く */}
+          <div className="space-y-2 mb-3">
+            {WATCH_ITEMS.map((item) => (
               <button
                 key={item.key}
                 onClick={() => toggleDinacharya(item.key)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all active:scale-[0.98] ${
-                  dinacharya[item.key]
-                    ? 'bg-amber-700 text-white'
-                    : 'bg-stone-50 text-stone-600'
+                  dinacharya[item.key] ? 'bg-amber-700 text-white' : 'bg-stone-50 text-stone-600'
                 }`}
               >
                 <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
@@ -359,6 +367,60 @@ export default function MorningPage() {
               </button>
             ))}
           </div>
+
+          {/* 定着済みの9つは「いつも通り」1タップ */}
+          <button
+            onClick={toggleRoutineAll}
+            className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-left transition-all active:scale-[0.98] ${
+              routineAllDone ? 'bg-amber-700 text-white' : 'bg-stone-50 text-stone-600'
+            }`}
+          >
+            <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+              routineAllDone ? 'border-white bg-white' : 'border-stone-300'
+            }`}>
+              {routineAllDone && (
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="#92400e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </span>
+            <span className="text-sm font-semibold">いつも通りできた</span>
+            <span className={`ml-auto text-[11px] flex-shrink-0 ${routineAllDone ? 'text-amber-100' : 'text-stone-400'}`}>
+              9項目
+            </span>
+          </button>
+
+          <button
+            onClick={() => setRoutineOpen((v) => !v)}
+            className="mt-2 text-xs text-stone-400 px-1 py-1"
+          >
+            {routineOpen ? '閉じる' : '違う日だった →'}
+          </button>
+
+          {routineOpen && (
+            <div className="space-y-2 mt-2">
+              {ROUTINE_ITEMS.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => toggleDinacharya(item.key)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all active:scale-[0.98] ${
+                    dinacharya[item.key] ? 'bg-amber-700 text-white' : 'bg-stone-50 text-stone-600'
+                  }`}
+                >
+                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    dinacharya[item.key] ? 'border-white bg-white' : 'border-stone-300'
+                  }`}>
+                    {dinacharya[item.key] && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="#92400e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </span>
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Morning Clarity（オージャス／サットヴァの指標） */}
@@ -374,31 +436,38 @@ export default function MorningPage() {
           onChange={(v) => setClarity(v as 1|2|3)}
         />
 
-        {/* Tongue Coating amount（アーマの量） */}
+        {/* Tongue Coating amount（アーマの量）4段階 */}
         <ChoiceSection
           label="舌苔の量（アーマ）"
           required
           options={[
-            { value: 1, label: 'なし' },
-            { value: 2, label: '少し' },
-            { value: 3, label: '多い' },
+            { value: 1, label: 'ほぼない' },
+            { value: 2, label: 'すくない' },
+            { value: 3, label: 'ある' },
+            { value: 4, label: '多い' },
           ]}
           value={tongue}
-          onChange={(v) => setTongue(v as 1|2|3)}
+          onChange={(v) => setTongue(v as 1|2|3|4)}
         />
 
-        {/* Tongue Coating color（アーマの質） */}
-        <ChoiceSection
-          label="舌苔の色（アーマ）"
-          required
-          options={[
-            { value: 1, label: '白' },
-            { value: 2, label: '黄色' },
-            { value: 3, label: '褐色' },
-          ]}
-          value={tongueColor}
-          onChange={(v) => setTongueColor(v as 1|2|3)}
-        />
+        {/* Tongue Coating color（アーマの質）＝いつもと違う日だけ */}
+        <section className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-stone-600 mb-1">舌の色</h2>
+          <p className="text-xs text-stone-400 mb-3">いつもどおり白ならさわらなくて大丈夫</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[{ value: 2, label: '黄色' }, { value: 3, label: '褐色' }, { value: 1, label: '白' }].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setTongueColor(tongueColor === opt.value ? null : (opt.value as 1|2|3))}
+                className={`py-3 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                  tongueColor === opt.value ? 'bg-amber-700 text-white shadow-sm' : 'bg-stone-50 text-stone-600'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </section>
 
         {/* Tongue photo（任意） */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
@@ -504,14 +573,63 @@ export default function MorningPage() {
           </div>
         </section>
 
+        {/* 血圧（朝1回）＝判定を出さない。単日では意味がなく、2週間の平均ではじめて読める */}
+        <section className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-stone-600 mb-1">血圧（朝いちばん）</h2>
+          <p className="text-xs text-stone-400 mb-3">トイレのあと、朝ごはんとコーヒーの前に。手首は心臓の高さで</p>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { label: '上', value: bpSys, set: setBpSys },
+              { label: '下', value: bpDia, set: setBpDia },
+              { label: '脈', value: bpPulse, set: setBpPulse },
+            ] as const).map((f) => (
+              <div key={f.label}>
+                <p className="text-xs text-stone-400 mb-1 text-center">{f.label}</p>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  step="1"
+                  value={f.value}
+                  onChange={(e) => f.set(e.target.value)}
+                  placeholder="-"
+                  className="w-full text-center text-base font-semibold text-stone-700 bg-stone-50 rounded-xl px-2 py-2.5 outline-none"
+                />
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-stone-400 mt-3 leading-relaxed">
+            1日ぶんの数字は高くも低くも出ます。ここでは良し悪しを出しません。2週間ぶんたまったら平均が見られます。
+          </p>
+        </section>
+
+        {/* 生理（1=少ない 2=ふつう 3=多い / 押すと解除）＝開始日と終了日は連続した日から自動で出す */}
+        <section className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-stone-600 mb-1">生理</h2>
+          <p className="text-xs text-stone-400 mb-3">ない日はさわらなくて大丈夫</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[{ value: 1, label: '少ない' }, { value: 2, label: 'ふつう' }, { value: 3, label: '多い' }].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setMenstruation(menstruation === opt.value ? null : (opt.value as 1|2|3))}
+                className={`py-3 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                  menstruation === opt.value ? 'bg-rose-500 text-white shadow-sm' : 'bg-stone-50 text-stone-600'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* SOXAI sleep data */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-600 mb-1">睡眠データ（SOXAI）</h2>
           <p className="text-xs text-stone-400 mb-3">SOXAIアプリの昨夜の数値を入力</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {([
               { label: '睡眠スコア', value: sleepScore, set: setSleepScore, unit: '', step: '1' },
               { label: 'HRV', value: hrv, set: setHrv, unit: 'ms', step: '1' },
+              { label: '安静時心拍', value: restingHr, set: setRestingHr, unit: 'bpm', step: '1' },
             ] as const).map((f) => (
               <div key={f.label}>
                 <p className="text-xs text-stone-400 mb-1 text-center">{f.label}</p>
@@ -559,8 +677,6 @@ export default function MorningPage() {
         {/* Toilet Logger */}
         <ToiletLogger date={today} />
 
-        {/* Caffeine Logger */}
-        <CaffeineLogger date={today} />
 
         {/* Asukken Photo Upload */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
@@ -624,7 +740,7 @@ export default function MorningPage() {
           onClick={handleSave}
           disabled={saving || saved}
           className={`w-full py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95 ${
-            saved ? 'bg-teal-600' : saving ? 'bg-stone-300' : 'bg-amber-800 shadow-md'
+            saved ? 'bg-teal-600' : saving ? 'bg-stone-300' : 'bg-[#5c4433] shadow-md'
           }`}
         >
           {saved ? '記録完了！' : saving ? '保存中...' : missing.length > 0 ? `未入力${missing.length}件のまま保存` : '記録を保存'}
@@ -664,7 +780,7 @@ function ChoiceSection({
           <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">未入力</span>
         )}
       </h2>
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid gap-2 ${options.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
         {options.map((opt) => (
           <button
             key={opt.value}

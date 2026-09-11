@@ -4,6 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase'
 const COLUMN: Record<string, string> = {
   asukken: 'asukken_photo_url',
   tongue: 'tongue_photo_url',
+  body_front: 'body_photo_front_url',
+  body_side: 'body_photo_side_url',
+  body_back: 'body_photo_back_url',
 }
 
 export async function POST(req: NextRequest) {

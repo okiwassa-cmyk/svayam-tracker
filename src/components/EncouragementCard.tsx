@@ -103,12 +103,12 @@ export default function EncouragementCard({
         )}
       </div>
 
-      {/* Guru section */}
+      {/* くろからのひとこと */}
       {message ? (
         <div>
           <div className="flex items-center gap-2 mb-2 text-teal-600">
             <YogaIcon />
-            <p className="text-xs font-semibold">グルからのメッセージ</p>
+            <p className="text-xs font-semibold">くろから</p>
           </div>
           <p className="text-sm text-teal-800 leading-relaxed">{message}</p>
           <button onClick={() => setMessage('')} className="mt-3 text-xs text-teal-400">閉じる</button>
@@ -122,12 +122,12 @@ export default function EncouragementCard({
           {loading ? (
             <>
               <span className="w-4 h-4 border-2 border-teal-300 border-t-teal-600 rounded-full animate-spin" />
-              メッセージを受け取り中...
+              くろが見てます...
             </>
           ) : (
             <>
               <YogaIcon />
-              グルに励ましてもらう
+              くろに聞いてみる
             </>
           )}
         </button>

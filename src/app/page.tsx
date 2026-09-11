@@ -269,7 +269,7 @@ export default async function HomePage() {
         </section>
 
         {/* Biometrics */}
-        {(record?.weight || record?.hrv || record?.sleep_hours || record?.waist_cm) && (
+        {(record?.weight || record?.hrv || record?.sleep_hours || record?.waist_cm || record?.resting_hr) && (
           <section className="bg-white rounded-2xl p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-stone-500 mb-3">バイオデータ</h2>
             <div className="grid grid-cols-3 gap-2">
@@ -279,8 +279,17 @@ export default async function HomePage() {
               {record.waist_cm && (
                 <MetricCard label="腹囲" value={`${record.waist_cm}cm`} />
               )}
+              {record.upper_arm_cm && (
+                <MetricCard label="二の腕" value={`${record.upper_arm_cm}cm`} />
+              )}
+              {record.hip_cm && (
+                <MetricCard label="お尻" value={`${record.hip_cm}cm`} />
+              )}
               {record.hrv && (
                 <MetricCard label="HRV" value={`${record.hrv}ms`} />
+              )}
+              {record.resting_hr && (
+                <MetricCard label="安静時心拍" value={`${record.resting_hr}bpm`} />
               )}
               {record.sleep_hours && (
                 <MetricCard label="睡眠" value={`${record.sleep_hours}h`} />

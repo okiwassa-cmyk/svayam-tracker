@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={`${geist.variable} ${shippori.variable} h-full`}>
-      <body className="min-h-full bg-stone-50 text-stone-900 font-sans">
+      <body className="min-h-full bg-[#faf7f0] text-stone-800 font-sans">
         {children}
       </body>
     </html>

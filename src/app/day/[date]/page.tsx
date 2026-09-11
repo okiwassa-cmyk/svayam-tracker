@@ -43,13 +43,26 @@ type DayRecord = {
   sleep_hours: number | null
   sleep_score: number | null
   hrv: number | null
+  resting_hr: number | null
+  waist_cm: number | null
+  upper_arm_cm: number | null
+  hip_cm: number | null
+  bust_cm: number | null
+  thigh_cm: number | null
+  calf_cm: number | null
   note: string | null
+  body_photo_front_url: string | null
+  body_photo_side_url: string | null
+  body_photo_back_url: string | null
 }
 
 const EMPTY: DayRecord = {
   morning_clarity: null, tongue_coating: null, tongue_color: null, morning_hunger: null,
   dinner_time: null, dinner_amount: null, alcohol: null,
-  weight: null, body_fat: null, sleep_hours: null, sleep_score: null, hrv: null, note: null,
+  weight: null, body_fat: null, sleep_hours: null, sleep_score: null, hrv: null, resting_hr: null,
+  waist_cm: null, upper_arm_cm: null, hip_cm: null,
+  bust_cm: null, thigh_cm: null, calf_cm: null, note: null,
+  body_photo_front_url: null, body_photo_side_url: null, body_photo_back_url: null,
 }
 
 // あとから抜けを埋めるための画面。朝の記録で必須をやめた分、
@@ -224,6 +237,11 @@ export default function DayDetail() {
           {/* 数値 */}
           <NumberSection rec={rec} onSave={patchRecord} />
 
+          {/* 体の写真はここでは扱わない（2026-09-11 決定）。
+              保存先のバケットが公開設定で、アプリにも認証が無いため、URLを知られると見られる。
+              体の写真は端末内のアプリ（Photo Diary等）＋写真アプリの非表示アルバムに置く。
+              サイズの数字だけここに入れる。 */}
+
           {/* 食事 */}
           <section className="bg-white rounded-2xl p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-stone-600 mb-3">食事</h2>
@@ -367,6 +385,17 @@ function NumberSection({ rec, onSave }: { rec: DayRecord; onSave: (f: Partial<Da
     { key: 'sleep_hours' as const, label: '睡眠時間', unit: 'h' },
     { key: 'sleep_score' as const, label: '睡眠スコア', unit: '' },
     { key: 'hrv' as const, label: 'HRV', unit: 'ms' },
+    { key: 'resting_hr' as const, label: '安静時心拍', unit: 'bpm' },
+  ]
+  // 月1回だけ測る6か所。あすけんの体型タブと項目をそろえてある（＋太ももはsvayamのみ）
+  // ⚠️「腹囲」＝へそ周り。あすけんの「ウエスト」欄にも同じ場所の値を入れる（あすけんが例示する"いちばん細い位置"では測らない）
+  const monthlyFields = [
+    { key: 'bust_cm' as const, label: '胸囲', unit: 'cm' },
+    { key: 'waist_cm' as const, label: '腹囲（へそ周り）', unit: 'cm' },
+    { key: 'hip_cm' as const, label: 'ヒップ', unit: 'cm' },
+    { key: 'upper_arm_cm' as const, label: '二の腕', unit: 'cm' },
+    { key: 'thigh_cm' as const, label: '太もも', unit: 'cm' },
+    { key: 'calf_cm' as const, label: 'ふくらはぎ', unit: 'cm' },
   ]
 
   return (
@@ -395,7 +424,32 @@ function NumberSection({ rec, onSave }: { rec: DayRecord; onSave: (f: Partial<Da
           </div>
         ))}
       </div>
-      <p className="text-[10px] text-stone-400 mt-2">入力欄から離れると保存されます</p>
+      <p className="text-[10px] text-stone-400 mt-2 mb-3">入力欄から離れると保存されます</p>
+
+      <h2 className="text-sm font-semibold text-stone-600 mb-3">サイズ計測（月1回）</h2>
+      <div className="grid grid-cols-3 gap-2">
+        {monthlyFields.map((f) => (
+          <div key={f.key}>
+            <p className="text-xs text-stone-400 mb-1 text-center">{f.label}</p>
+            <div className="flex items-baseline bg-stone-50 rounded-xl px-2 py-2.5">
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                defaultValue={rec[f.key] ?? ''}
+                onBlur={(e) => {
+                  const raw = e.target.value
+                  const n = raw === '' ? null : Number(raw)
+                  if (n !== rec[f.key]) onSave({ [f.key]: Number.isNaN(n) ? null : n })
+                }}
+                placeholder="-"
+                className="w-full text-center text-base font-semibold text-stone-700 bg-transparent outline-none"
+              />
+              {f.unit && <span className="text-xs text-stone-400 flex-shrink-0">{f.unit}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   )
 }
