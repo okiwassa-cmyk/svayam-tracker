@@ -50,6 +50,7 @@ type DayRecord = {
   bust_cm: number | null
   thigh_cm: number | null
   calf_cm: number | null
+  waist_min_cm: number | null
   note: string | null
   body_photo_front_url: string | null
   body_photo_side_url: string | null
@@ -61,7 +62,7 @@ const EMPTY: DayRecord = {
   dinner_time: null, dinner_amount: null, alcohol: null,
   weight: null, body_fat: null, sleep_hours: null, sleep_score: null, hrv: null, resting_hr: null,
   waist_cm: null, upper_arm_cm: null, hip_cm: null,
-  bust_cm: null, thigh_cm: null, calf_cm: null, note: null,
+  bust_cm: null, thigh_cm: null, calf_cm: null, waist_min_cm: null, note: null,
   body_photo_front_url: null, body_photo_side_url: null, body_photo_back_url: null,
 }
 
@@ -392,6 +393,7 @@ function NumberSection({ rec, onSave }: { rec: DayRecord; onSave: (f: Partial<Da
   const monthlyFields = [
     { key: 'bust_cm' as const, label: '胸囲', unit: 'cm' },
     { key: 'waist_cm' as const, label: '腹囲（へそ周り）', unit: 'cm' },
+    { key: 'waist_min_cm' as const, label: 'ウエスト（細い所）', unit: 'cm' },
     { key: 'hip_cm' as const, label: 'ヒップ', unit: 'cm' },
     { key: 'upper_arm_cm' as const, label: '二の腕', unit: 'cm' },
     { key: 'thigh_cm' as const, label: '太もも', unit: 'cm' },

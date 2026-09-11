@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         }).replace(/\//g, '-')
 
     // Parse numeric fields, convert empty strings to null
-    const numericFields = ['energy_level', 'agni', 'weight', 'body_fat', 'waist_cm', 'sleep_hours', 'hrv', 'calories', 'morning_clarity', 'tongue_coating', 'morning_hunger', 'dinner_time', 'dinner_amount', 'alcohol', 'sleep_score', 'resting_hr', 'steps', 'upper_arm_cm', 'hip_cm', 'thigh_cm', 'bust_cm', 'calf_cm', 'menstruation', 'bp_systolic', 'bp_diastolic', 'bp_pulse']
+    const numericFields = ['energy_level', 'agni', 'weight', 'body_fat', 'waist_cm', 'sleep_hours', 'hrv', 'calories', 'morning_clarity', 'tongue_coating', 'morning_hunger', 'dinner_time', 'dinner_amount', 'alcohol', 'sleep_score', 'resting_hr', 'steps', 'upper_arm_cm', 'hip_cm', 'thigh_cm', 'bust_cm', 'calf_cm', 'waist_min_cm', 'menstruation', 'bp_systolic', 'bp_diastolic', 'bp_pulse']
     const sanitized: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(fields)) {
       if (numericFields.includes(k)) {
