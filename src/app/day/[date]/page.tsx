@@ -51,6 +51,8 @@ type DayRecord = {
   thigh_cm: number | null
   calf_cm: number | null
   waist_min_cm: number | null
+  muscle_kg: number | null
+  subcutaneous_fat_pct: number | null
   note: string | null
   body_photo_front_url: string | null
   body_photo_side_url: string | null
@@ -62,7 +64,7 @@ const EMPTY: DayRecord = {
   dinner_time: null, dinner_amount: null, alcohol: null,
   weight: null, body_fat: null, sleep_hours: null, sleep_score: null, hrv: null, resting_hr: null,
   waist_cm: null, upper_arm_cm: null, hip_cm: null,
-  bust_cm: null, thigh_cm: null, calf_cm: null, waist_min_cm: null, note: null,
+  bust_cm: null, thigh_cm: null, calf_cm: null, waist_min_cm: null, muscle_kg: null, subcutaneous_fat_pct: null, note: null,
   body_photo_front_url: null, body_photo_side_url: null, body_photo_back_url: null,
 }
 
@@ -388,6 +390,12 @@ function NumberSection({ rec, onSave }: { rec: DayRecord; onSave: (f: Partial<Da
     { key: 'hrv' as const, label: 'HRV', unit: 'ms' },
     { key: 'resting_hr' as const, label: '安静時心拍', unit: 'bpm' },
   ]
+  // 週1回だけ入れる2項目。あすけんの画面にしか無く、ヘルスケアにも書き出されないので手入力。
+  // 筋肉量は水分で日ごとにふらつくため毎日は追わない（記事を書く日にまとめて）
+  const weeklyFields = [
+    { key: 'muscle_kg' as const, label: '筋肉量', unit: 'kg' },
+    { key: 'subcutaneous_fat_pct' as const, label: '皮下脂肪率', unit: '%' },
+  ]
   // 月1回だけ測る6か所。あすけんの体型タブと項目をそろえてある（＋太ももはsvayamのみ）
   // ⚠️「腹囲」＝へそ周り。あすけんの「ウエスト」欄にも同じ場所の値を入れる（あすけんが例示する"いちばん細い位置"では測らない）
   const monthlyFields = [
@@ -427,6 +435,31 @@ function NumberSection({ rec, onSave }: { rec: DayRecord; onSave: (f: Partial<Da
         ))}
       </div>
       <p className="text-[10px] text-stone-400 mt-2 mb-3">入力欄から離れると保存されます</p>
+
+      <h2 className="text-sm font-semibold text-stone-600 mb-3">体組成（週1回・あすけんを見て）</h2>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {weeklyFields.map((f) => (
+          <div key={f.key}>
+            <p className="text-xs text-stone-400 mb-1 text-center">{f.label}</p>
+            <div className="flex items-baseline bg-stone-50 rounded-xl px-2 py-2.5">
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                defaultValue={rec[f.key] ?? ''}
+                onBlur={(e) => {
+                  const raw = e.target.value
+                  const n = raw === '' ? null : Number(raw)
+                  if (n !== rec[f.key]) onSave({ [f.key]: Number.isNaN(n) ? null : n })
+                }}
+                placeholder="-"
+                className="w-full text-center text-base font-semibold text-stone-700 bg-transparent outline-none"
+              />
+              {f.unit && <span className="text-xs text-stone-400 flex-shrink-0">{f.unit}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
 
       <h2 className="text-sm font-semibold text-stone-600 mb-3">サイズ計測（月1回）</h2>
       <div className="grid grid-cols-3 gap-2">
