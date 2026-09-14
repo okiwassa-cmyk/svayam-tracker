@@ -13,7 +13,9 @@ type ExerciseLog = {
   created_at: string
 }
 
-const EXERCISE_TYPES = ['ヨガ', '筋トレ', 'ボクササイズ', 'ランニング', '自転車', '散歩', 'その他']
+// 第2期の型に合わせた並び（朝＝太陽礼拝・筋トレ／夜＝北斗・緩めるヨガ）。
+// 以前の「ヨガ」「ボクササイズ」の記録は消さず、集計側で同じものとして数える
+const EXERCISE_TYPES = ['ヨガ（太陽礼拝）', '筋トレ', '北斗の拳', 'ヨガ（緩める）', '散歩', 'その他']
 
 export default function ExerciseLogger({ date }: { date: string }) {
   const [logs, setLogs] = useState<ExerciseLog[]>([])

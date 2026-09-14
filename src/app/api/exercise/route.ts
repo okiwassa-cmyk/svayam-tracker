@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
 // 週3回の目標は有酸素（北斗など）。朝のヨガ・筋トレは毎日なので数に入れない
-const CARDIO_TYPES = ['ボクササイズ', 'ランニング', '自転車', '散歩']
+const CARDIO_TYPES = ['北斗の拳', 'ボクササイズ', 'ランニング', '自転車', '散歩']
 
 // date を含む週（月曜はじまり）の頭と終わりを返す
 function weekRange(date: string) {

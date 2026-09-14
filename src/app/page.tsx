@@ -45,7 +45,7 @@ async function getTodayData() {
     supabaseAdmin.from('exercise_logs').select('date,type').gte('date', weekStart).lte('date', today),
   ])
 
-  const CARDIO_TYPES = ['ボクササイズ', 'ランニング', '自転車', '散歩']
+  const CARDIO_TYPES = ['北斗の拳', 'ボクササイズ', 'ランニング', '自転車', '散歩']
   const cardioDates = new Set(
     (cardioRes.data ?? []).filter((r: { type: string }) => CARDIO_TYPES.includes(r.type))
       .map((r: { date: string }) => r.date)
