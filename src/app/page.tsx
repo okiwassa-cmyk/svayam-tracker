@@ -156,7 +156,7 @@ export default async function HomePage() {
             <h1 className="text-2xl font-bold mt-1">Svayam</h1>
             <p className="text-stone-300 text-sm mt-0.5">
               {experimentDay != null && experimentDay > 0
-                ? `実験 ${experimentDay} 日目`
+                ? `第2期 ${experimentDay} 日目`
                 : 'アーユルヴェーダ実験トラッカー'}
             </p>
           </div>
